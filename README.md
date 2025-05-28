@@ -51,5 +51,5 @@ MIT License により、個人・商用利用、改変・再配布が自由に�
 
 ## 👤 作者について
 
-開発者：[@kanonabe](https://github.com/kanonabe)  
+開発者：[@kamonabe](https://github.com/kamonabe)  
 「自分が欲しいと思ったものを形にして公開してみる」がこのプロジェクトの原点です。
