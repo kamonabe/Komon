@@ -2,3 +2,16 @@ thresholds:
   cpu: 85
   mem: 80
   disk: 80
+
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
+  email:
+    enabled: false
+    smtp_server: "smtp.example.com"
+    smtp_port: 587
+    from: "komon@example.com"
+    to: "user@example.com"
+    username: "komon@example.com"
+    password: "env:KOMON_EMAIL_PASSWORD"  # 環境変数で読み込み推奨
