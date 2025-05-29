@@ -16,11 +16,12 @@
 | ✅ 閾値判定と警戒通知 | 実装済 | `settings.yml` で設定可能 |
 | ✅ Slack通知／メール通知 | 実装済 | 通知ON/OFF、両方対応 |
 | ✅ 使用履歴の世代保存 | 実装済 | 最大95世代まで自動ローテーション |
-| 🟡 CLI操作（例：`komon advise`） | 構想済 | 実装予定、対話型通知を想定 |
-| 🟡 履歴ベースの傾向分析 | 構想済 | グラフ生成／急増傾向の検知予定 |
-| 🟡 pip / OS更新の提案 | 構想済 | 自動実行せず、対話式通知のみ |
-| 🟡 systemctl 再起動の提案 | 構想済 | サービス監視と連動予定 |
-| ❌ エラーログの急増検知 | 未実装 | ログ監視ロジックは未着手 |
+| 🔰 CLI通知（`advise.py`） | 初期実装済 | 今後は対話型通知を予定 |
+| 🟡 ログ急増検知 | 設計済 | ベースライン比較型。開発着手前 |
+| 🟡 ベースライン学習（ログ量） | 設計済 | 初回48時間を学習期間として平均算出 |
+| 🟡 CLI操作強化（`komon advise`） | 構想済 | 提案リスト表示など柔らかい対話形式に |
+| 🟡 pip / OS更新の提案 | 構想済 | 対話形式通知。自動実行は行わない |
+| 🟡 systemctl 再起動の提案 | 構想済 | サービス過負荷時に提案のみ行う |
 
 ---
 
@@ -32,34 +33,84 @@
 
 ---
 
-## 📊 通知と保存の仕組み
+## ⚙️ 設定ファイル（`settings.yml`）
 
-- **閾値超過**時は即時通知（Slack / メール）
-- **履歴ファイル（CSV）**は最大95件を保存（約3ヶ月相当）
-- **通知方法は個別にON/OFF設定可能**
-  - `notifications.slack.enabled`
-  - `notifications.email.enabled`
+```yaml
+thresholds:
+  cpu: 85
+  mem: 80
+  disk: 80
+
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
+  email:
+    enabled: false
+    smtp_server: "smtp.example.com"
+    smtp_port: 587
+    from: "komon@example.com"
+    to: "user@example.com"
+    username: "komon@example.com"
+    password: "env:KOMON_EMAIL_PASSWORD"
+
+log_monitor_targets:
+  /var/log/messages: true
+  /var/log/syslog: false
+  /var/log/nginx/error.log: true
+  systemd journal: true
+  # 任意追加ログ（絶対パス推奨）
+  # /home/user/logs/myapp.log: true
+```
 
 ---
 
-## 💬 今後のロードマップ（予定）
+## 📊 保存と通知の仕組み
 
-- [ ] ログファイルの傾向分析（時間帯別・日別）
-- [ ] 使用履歴からの異常傾向検出（スパイク通知など）
-- [ ] `komon advise` による対話型提案（Slack送信含む）
-- [ ] pip / OS更新提案（環境別・安全な範囲で）
-- [ ] systemctlの再起動／コマンド提案（過負荷時）
+- **リソース閾値超過時**は即時通知（Slack／メール）
+- **履歴ファイル（CSV）**は最大95件まで自動ローテーション保存
+- 通知方式は個別にON/OFF切り替え可能
 
 ---
 
-## 🚀 導入方法（準備中）
+## 📁 ディレクトリ構成（例）
 
-1. `git clone https://github.com/kanonabe/Komon.git`
-2. `cd Komon`
-3. `python main.py`
-※ 実行前に `settings.yml` をプロジェクトルートに配置してください。
+```
+Komon/
+├── main.py
+├── advise.py
+├── settings.yml
+├── komon/
+│   ├── analyzer.py
+│   ├── history.py
+│   ├── monitor.py
+│   └── notification.py
+├── logs/
+│   └── usage_history_000.csv 〜 usage_history_095.csv
+└── README.md
+```
 
-※ 現在は開発中のため、仕様が大きく変わる可能性があります
+---
+
+## 💬 今後のロードマップ
+
+- [ ] ログ急増検知（ベースライン比較）
+- [ ] 使用履歴からの異常傾向検出（スパイク通知）
+- [ ] `komon advise` による対話型通知
+- [ ] pip / OS更新の提案（自動実行は行わない）
+- [ ] systemctlの再起動／任意コマンドの提案
+
+---
+
+## 🚀 導入方法（開発中）
+
+```bash
+git clone https://github.com/kanonabe/Komon.git
+cd Komon
+python main.py
+```
+
+※ `settings.yml` をルートディレクトリに配置してから実行してください。
 
 ---
 
