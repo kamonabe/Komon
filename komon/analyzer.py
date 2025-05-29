@@ -1,15 +1,16 @@
-# komon/analyzer.py
-
-import yaml
-
-def load_thresholds(path="settings.yml") -> dict:
-    with open(path, "r") as f:
-        config = yaml.safe_load(f)
+def load_thresholds(config: dict) -> dict:
+    """設定から閾値を取得する"""
     return config.get("thresholds", {})
 
-def analyze_usage(usage: dict, thresholds: dict) -> dict:
-    alerts = {}
-    for k in usage:
-        if usage[k] >= thresholds.get(k, 100):  # デフォルト100なら警告なし
-            alerts[k] = usage[k]
+def analyze_usage(usage: dict, thresholds: dict) -> list:
+    """実測値と閾値を比較して警戒情報を返す"""
+    alerts = []
+
+    for key in ["cpu", "mem", "disk"]:
+        actual = usage.get(key)
+        limit = thresholds.get(key)
+
+        if actual is not None and limit is not None and actual >= limit:
+            alerts.append(f"{key.upper()} 使用率 {actual}% が閾値 {limit}% を超過")
+
     return alerts
