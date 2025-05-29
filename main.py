@@ -1,28 +1,42 @@
-# main.py
-
-from komon.monitor import collect_resource_usage
+import yaml
+from komon.monitor import collect_usage
 from komon.analyzer import load_thresholds, analyze_usage
 from komon.history import rotate_history, save_current_usage
+from komon.notification import send_slack_alert, send_email_alert
 
-def main():
-    usage = collect_resource_usage()
-    thresholds = load_thresholds()
-    alerts = analyze_usage(usage, thresholds)
+# 設定ファイル読み込み
+with open("settings.yml", "r", encoding="utf-8") as f:
+    config = yaml.safe_load(f)
 
-    print("🧠 Komon Resource Report")
-    for k, v in usage.items():
-        print(f"  {k.upper()}: {v:.1f}%")
+# 使用状況取得
+usage = collect_usage()
 
-    if alerts:
-        print("\n⚠️ 警戒情報あり")
-        for k, v in alerts.items():
-            print(f"  🚨 {k.upper()} 使用率が高すぎます: {v:.1f}%")
-    else:
-        print("\n✅ 問題なし：使用率はしきい値以下です")
+# 閾値ロード＆判定
+thresholds = load_thresholds(config)
+alerts = analyze_usage(usage, thresholds)
 
-    # === 履歴のローテーションと保存 ===
-    rotate_history(max_generations=95)
-    save_current_usage(usage)
+# 履歴保存
+rotate_history()
+save_current_usage(usage)
 
-if __name__ == "__main__":
-    main()
+# 警戒情報の表示
+if alerts:
+    print("⚠️ 警戒情報:")
+    for alert in alerts:
+        print(f"- {alert}")
+
+    # 通知処理
+    notification_cfg = config.get("notifications", {})
+
+    if notification_cfg.get("slack", {}).get("enabled"):
+        webhook_url = notification_cfg["slack"]["webhook_url"]
+        slack_msg = "⚠️ Komon 警戒情報:\n" + "\n".join(f"- {a}" for a in alerts)
+        send_slack_alert(slack_msg, webhook_url)
+
+    if notification_cfg.get("email", {}).get("enabled"):
+        email_cfg = notification_cfg["email"]
+        email_msg = "⚠️ Komon 警戒情報:\n" + "\n".join(f"- {a}" for a in alerts)
+        send_email_alert(email_msg, email_cfg)
+
+else:
+    print("✅ 警戒情報はありません。")
