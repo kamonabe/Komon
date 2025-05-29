@@ -1,0 +1,4 @@
+thresholds:
+  cpu: 80
+  mem: 80
+  disk: 80
