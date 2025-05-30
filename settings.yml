@@ -24,3 +24,7 @@ log_monitor_targets:  # true＝監視対象、false＝除外
   systemd journal: false
   # 任意ログ追加例（絶対パス推奨）
   # /home/user/logs/custom.log: true
+
+log_analysis:
+  anomaly_threshold_percent: 30
+  baseline_learning_rate: 0.1
