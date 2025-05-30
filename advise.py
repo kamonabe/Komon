@@ -1,6 +1,7 @@
 import yaml
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.monitor import get_resource_usage
+from komon.log_trends import analyze_log_trend
 
 
 def ask_yes_no(question: str) -> bool:
@@ -83,6 +84,13 @@ def run_advise():
     # 提案⑦：Komon自身の更新確認（ユーモア枠）
     if ask_yes_no("Komonのコードがしばらく更新されていない気がします。最新状態を確認しますか？"):
         print("→ `git pull` でリポジトリを最新状態に保てます。Komonは静かに進化を続けています。")
+
+    # 提案⑧：ログ傾向分析
+    print("\n📈 ログ傾向分析")
+    for log_id, enabled in config.get("log_monitor_targets", {}).items():
+        if enabled:
+            result = analyze_log_trend(log_id)
+            print(result)
 
 
 if __name__ == "__main__":
