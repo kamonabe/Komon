@@ -1,4 +1,4 @@
-thresholds:
+thresholds:  # リソース使用率の警告閾値（％）
   cpu: 85
   mem: 80
   disk: 80
@@ -7,16 +7,20 @@ notifications:
   slack:
     enabled: true
     webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
+
   email:
     enabled: false
     smtp_server: "smtp.example.com"
     smtp_port: 587
+    use_tls: true  # STARTTLSを使うか（必要に応じて）
     from: "komon@example.com"
     to: "user@example.com"
     username: "komon@example.com"
     password: "env:KOMON_EMAIL_PASSWORD"  # 環境変数で読み込み推奨
 
-log_monitor_targets:
+log_monitor_targets:  # true＝監視対象、false＝除外
   /var/log/messages: true
   /var/log/nginx/error.log: true
   systemd journal: false
+  # 任意ログ追加例（絶対パス推奨）
+  # /home/user/logs/custom.log: true
