@@ -15,3 +15,8 @@ notifications:
     to: "user@example.com"
     username: "komon@example.com"
     password: "env:KOMON_EMAIL_PASSWORD"  # 環境変数で読み込み推奨
+
+log_monitor_targets:
+  /var/log/messages: true
+  /var/log/nginx/error.log: true
+  systemd journal: false
