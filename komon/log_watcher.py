@@ -1,7 +1,7 @@
 import os
 import pickle
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 import yaml
 
 class LogWatcher:
@@ -38,39 +38,38 @@ class LogWatcher:
     def get_monitor_targets(self) -> Dict[str, bool]:
         return self.settings.get("log_monitor_targets", {})
 
-    def get_inode(self, filepath: str) -> Optional[int]:
-        try:
-            return os.stat(filepath).st_ino
-        except FileNotFoundError:
-            return None
+    def _get_inode(self, filepath: str) -> int:
+        return os.stat(filepath).st_ino
 
-    def read_log_diff(self, filepath: str):
-        try:
-            with open(filepath, "r") as f:
-                inode = self.get_inode(filepath)
-                if inode is None:
-                    print(f"[{filepath}] File not found.")
-                    return
+    def read_log_diff(self, path: str):
+        if path == "systemd journal":
+            print(f"[{path}] systemd journalの差分取得は未実装です")
+            return
 
-                last_state = self.load_log_stat(filepath)
-                if last_state and last_state.get("inode") == inode:
-                    # 差分読み取り
-                    for _ in range(last_state["last_line"]):
+        try:
+            with open(path, "r") as f:
+                inode = self._get_inode(path)
+                last_state = self.load_log_stat(path)
+                last_inode = last_state.get("inode")
+                last_line = last_state.get("last_line", 0)
+
+                if last_inode == inode:
+                    # 差分取得
+                    for _ in range(last_line):
                         f.readline()
                     new_lines = f.readlines()
-                    new_line_count = len(new_lines)
-                    print(f"[{filepath}] {new_line_count} new lines.")
-                    self.save_log_stat(filepath, {
-                        "inode": inode,
-                        "last_line": last_state["last_line"] + new_line_count
-                    })
+                    print(f"[{path}] {len(new_lines)} new lines.")
+                    self.save_log_stat(path, {"inode": inode, "last_line": last_line + len(new_lines)})
                 else:
-                    # ローテーション or 初回読み取り
+                    # ログローテ or 初回
                     lines = f.readlines()
-                    print(f"[{filepath}] (rotated or first-time) {len(lines)} lines.")
-                    self.save_log_stat(filepath, {
-                        "inode": inode,
-                        "last_line": len(lines)
-                    })
-        except Exception as e:
-            print(f"[{filepath}] Error reading file: {e}")
+                    print(f"[{path}] (rotated or first-time) {len(lines)} lines.")
+                    self.save_log_stat(path, {"inode": inode, "last_line": len(lines)})
+        except FileNotFoundError:
+            print(f"[{path}] File not found.")
+
+    def watch_logs(self):
+        targets = self.get_monitor_targets()
+        for path, enabled in targets.items():
+            if enabled:
+                self.read_log_diff(path)
