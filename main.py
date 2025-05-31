@@ -2,7 +2,8 @@ import yaml
 from komon.monitor import get_resource_usage
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.notification import send_slack_alert, send_email_alert
-from settings_validator import validate_settings
+from komon.history import rotate_history, save_current_usage
+from komon.settings_validator import validate_settings
 
 
 def main():
@@ -19,13 +20,23 @@ def main():
         print(f"❌ settings.yml の読み込みに失敗しました: {e}")
         return
 
-    # 使用状況の取得と解析
+    # 使用状況の取得
     usage = get_resource_usage()
+
+    # 閾値読み込みと解析
     thresholds = load_thresholds(config)
     alerts = analyze_usage(usage, thresholds)
 
-    # 警戒がある場合は通知
+    # 使用履歴の保存（最大95世代）
+    rotate_history()
+    save_current_usage(usage)
+
+    # 通知処理
     if alerts:
+        print("⚠️ 警戒情報:")
+        for alert in alerts:
+            print(f"- {alert}")
+
         message = "⚠️ Komon 警戒情報:\n" + "\n".join(f"- {a}" for a in alerts)
         notification_cfg = config.get("notifications", {})
 
@@ -37,7 +48,7 @@ def main():
             email_cfg = notification_cfg["email"]
             send_email_alert(message, email_cfg)
     else:
-        print("✅ 閾値を超えるリソース使用はありません。")
+        print("✅ 警戒情報はありません。")
 
 
 if __name__ == "__main__":
