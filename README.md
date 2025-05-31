@@ -1,4 +1,3 @@
-
 # Komon（顧問）
 
 **Komon は、開発者のための軽量アドバイザー型SOAR風ツールです。**  
@@ -18,7 +17,7 @@
 | ✅ Slack通知／メール通知              | 実装済              | 通知ON/OFF、両方対応 |
 | ✅ 使用履歴の世代保存                 | 実装済              | 最大95世代まで自動ローテーション |
 | ✅ ログ傾向分析（ログ量の推移比較）   | 実装済              | 履歴ベースで急増を検知。Slack／メール通知対応 |
-| 🗰 CLI通知（`advise.py` = `komon advise`） | 初期実装済          | 今後は対話型通知を予定 |
+| 🗰 CLI通知（`advise.py` = `komon advise`） | 初期実装済          | 現状ではログ傾向・使用率傾向の簡易表示が可能 |
 | 💡 CLI操作強化（`komon advise`）       | 強化中              | 提案リスト表示やy/n対話対応済み |
 | 💡 pip / OS更新の提案                  | 構想済              | 対話形式通知。自動実行は行わない |
 | 💡 systemctl 再起動の提案              | 構想済              | サービス過負荷時に提案のみ行う |
@@ -43,7 +42,9 @@ thresholds:
   mem: 80
   disk: 80
 
-log_trend_threshold: 30  # ログ傾向の増加を警戒とみなす割合（%）
+log_analysis:
+  anomaly_threshold_percent: 30  # ログ傾向の増加を警戒とみなす割合（%）
+  baseline_learning_rate: 0.1    # ベースライン更新時の学習率（10%）
 
 notifications:
   slack:
@@ -67,11 +68,14 @@ log_monitor_targets:
   # /home/user/logs/myapp.log: true
 ```
 
+※ `settings.yml` に構文エラーなどがある場合、Slack等へ通知できないため  
+`log/komon_error.log` にエラー内容を出力します。
+
 ---
 
 ## 📊 保存と通知の仕組み
 
-- **リソース閣値超過時**は即時通知（Slack／メール）
+- **リソース閾値超過時**は即時通知（Slack／メール）
 - **ログ傾向の急増**も履歴と比較して通知対象に
 - **履歴ファイル（CSVやJSON）**は最大95件まで自動ローテーション保存
 - 通知方式は個別にON/OFF切り替え可能
@@ -117,6 +121,7 @@ Komon/
 - [ ] `komon advise` による対話型通知
 - [ ] pip / OS更新の提案（自動実行は行わない）
 - [ ] systemctlの再起動／任意コマンドの提案
+- [ ] komon_error.logの異常自動検知
 
 ---
 
