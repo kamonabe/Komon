@@ -94,7 +94,8 @@ Komon/
 │   ├── notification.py
 │   ├── log_watcher.py
 │   ├── log_analyzer.py
-│   └── log_trends.py
+│   ├── log_trends.py
+│   └── settings_validator.py
 ├── data/
 │   └── logstats/
 │       ├── var_log_messages.pkl
@@ -102,6 +103,8 @@ Komon/
 │       └── history/
 │           ├── var_log_messages.json
 │           └── systemd_journal.json
+├── log/
+│   └── komon_error.log
 └── README.md
 ```
 
