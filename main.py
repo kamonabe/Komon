@@ -1,5 +1,5 @@
 import yaml
-from komon.monitor import get_resource_usage
+from komon.monitor import collect_resource_usage as get_resource_usage
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.notification import send_slack_alert, send_email_alert
 from komon.history import rotate_history, save_current_usage
