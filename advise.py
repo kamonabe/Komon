@@ -1,6 +1,6 @@
 import yaml
 from komon.analyzer import analyze_usage, load_thresholds
-from komon.monitor import collect_resource_usage as get_resource_usa
+from komon.monitor import collect_resource_usage as get_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 
 def ask_yes_no(question: str) -> bool:
