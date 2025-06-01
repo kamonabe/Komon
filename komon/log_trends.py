@@ -43,3 +43,41 @@ def list_available_logs() -> list:
     if not HISTORY_DIR.exists():
         return []
     return [p.stem for p in HISTORY_DIR.glob("*.json")]
+
+def detect_repeated_spikes(log_name: str, threshold: int = 30, days: int = 3) -> bool:
+    """
+    指定ログについて、直近 `days` 日間にわたってログ行数が平均より `threshold`%以上
+    増加している日が連続しているかどうかを判定する。
+    """
+    history_path = HISTORY_DIR / f"{log_name}.json"
+    if not history_path.exists():
+        return False
+
+    try:
+        with open(history_path, "r", encoding="utf-8") as f:
+            history = json.load(f)
+    except json.JSONDecodeError:
+        return False
+
+    if len(history) < days + 1:
+        return False  # 平均＋比較対象分のデータが必要
+
+    recent_data = history[-(days + 1):]  # days+1日分を使用（平均と比較）
+    try:
+        base_avg = mean([entry["lines"] for entry in recent_data[:-1]])
+    except (KeyError, TypeError):
+        return False
+
+    count = 0
+    for i in range(1, days + 1):
+        try:
+            daily = recent_data[i]["lines"]
+            percent_increase = ((daily - base_avg) / base_avg) * 100
+            if percent_increase >= threshold:
+                count += 1
+            else:
+                break  # 連続ではない
+        except (KeyError, TypeError):
+            break
+
+    return count == days
