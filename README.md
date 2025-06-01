@@ -138,6 +138,33 @@ python main.py
 
 ---
 
+## 🕒 Cron による定期実行（例）
+
+Komon では以下のスクリプトを `cron` 登録して運用することを想定しています：
+
+| 対象スクリプト        | 推奨間隔   | 用途                     |
+|------------------------|------------|--------------------------|
+| `main.py`              | 5分おき    | リソース使用率の監視     |
+| `main_log_monitor.py`  | 5〜10分おき | ログ急増（行数）の検知   |
+| `main_log_trend.py`    | 1日1回     | ログ傾向の中長期比較     |
+
+例：5分おきにリソース監視＋ログ監視を実行
+
+```bash
+*/5 * * * * cd /home/youruser/Komon && /usr/bin/python3 main.py >> log/cron_main.log 2>&1
+*/5 * * * * cd /home/youruser/Komon && /usr/bin/python3 main_log_monitor.py >> log/cron_logmon.log 2>&1
+```
+
+例：毎日深夜3時にログ傾向分析を実行
+
+```bash
+0 3 * * * cd /home/youruser/Komon && /usr/bin/python3 main_log_trend.py >> log/cron_logtrend.log 2>&1
+```
+
+📌 `python3` のパスは `which python3` で確認できます。
+
+---
+
 ## 📄 ライセンス
 
 MIT License により、個人・商用利用、改変・再配布が自由に許可されています。
