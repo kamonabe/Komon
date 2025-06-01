@@ -40,14 +40,17 @@ def advise_high_disk(usage, thresholds):
             print("   - `journalctl --vacuum-time=7d` で古いログを削除")
             print("   - 不要なキャッシュやバックアップファイルの削除も検討")
 
-def advise_uptime():
+def advise_uptime(profile):
     try:
         with open("/proc/uptime") as f:
             uptime_sec = float(f.readline().split()[0])
             days = int(uptime_sec // 86400)
             if days >= 7:
                 if ask_yes_no(f"サーバが{days}日間連続稼働しています。再起動を検討しますか？"):
-                    print("→ 長期間の稼働は不安定化の要因になります。適度な再起動は有効です。")
+                    if profile.get("usage") == "production":
+                        print("→ 本番環境では安定性確保のため、定期再起動を検討しましょう。")
+                    else:
+                        print("→ 長期間の稼働は不安定化の要因になります。必要に応じて再起動を。")
     except:
         pass
 
@@ -110,7 +113,7 @@ def run_advise():
     advise_os_update()
     advise_high_memory(usage, thresholds)
     advise_high_disk(usage, thresholds)
-    advise_uptime()
+    advise_uptime(config.get("profile", {}))
     advise_email_disabled(config)
     advise_high_cpu(usage, thresholds)
     advise_komon_update()
