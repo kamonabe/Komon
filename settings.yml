@@ -1,5 +1,5 @@
 profile:
-  usage: "production"  # "production" または "dev"
+  usage: "dev"  # "production" または "dev"
 
 thresholds:  # リソース使用率の警告閾値（％）
   cpu: 85
