@@ -17,10 +17,9 @@
 | ✅ Slack通知／メール通知              | 実装済              | 通知ON/OFF、両方対応 |
 | ✅ 使用履歴の世代保存                 | 実装済              | 最大95世代まで自動ローテーション |
 | ✅ ログ傾向分析（ログ量の推移比較）   | 実装済              | 履歴ベースで急増を検知。Slack／メール通知対応 |
-| 🗰 CLI通知（`advise.py` = `komon advise`） | 初期実装済          | 現状ではログ傾向・使用率傾向の簡易表示が可能 |
-| 💡 CLI操作強化（`komon advise`）       | 強化中              | 提案リスト表示やy/n対話対応済み |
-| 💡 pip / OS更新の提案                  | 構想済              | 対話形式通知。自動実行は行わない |
-| 💡 systemctl 再起動の提案              | 構想済              | サービス過負荷時に提案のみ行う |
+| ✅ CLI通知（`advise.py` = `komon advise`） | 対話機能あり          | ログ傾向・使用率傾向・OS更新確認など複数の助言を表示 |
+| 💡 pip / OS更新の提案                  | 対話形式で助言済     | `sudo apt update` の提案など |
+| 💡 systemctl 再起動の提案              | 初期実装済（再起動検討の提案） | 本番・開発環境で文言を出し分け |
 
 ---
 
@@ -37,6 +36,9 @@
 ## ⚙️ 設定ファイル（`settings.yml`）
 
 ```yaml
+profile:
+  usage: "dev"  # "production" または "dev"
+
 thresholds:
   cpu: 85
   mem: 80
@@ -63,13 +65,8 @@ log_monitor_targets:
   /var/log/messages: true
   /var/log/syslog: false
   /var/log/nginx/error.log: true
-  systemd journal: true
-  # 任意追加ログ（絶対パス推奨）
-  # /home/user/logs/myapp.log: true
+  systemd journal: false
 ```
-
-※ `settings.yml` に構文エラーなどがある場合、Slack等へ通知できないため  
-`log/komon_error.log` にエラー内容を出力します。
 
 ---
 
@@ -91,6 +88,7 @@ Komon/
 ├── main_log_monitor.py
 ├── main_log_trend.py
 ├── settings.yml
+├── version.txt
 ├── komon/
 │   ├── analyzer.py
 │   ├── history.py
@@ -117,10 +115,10 @@ Komon/
 ## 💬 今後のロードマップ
 
 - [x] ログ急増検知（ベースライン比較）
-- [ ] 使用履歴からの異常傾向検出（スパイク通知）
-- [ ] `komon advise` による対話型通知
-- [ ] pip / OS更新の提案（自動実行は行わない）
-- [ ] systemctlの再起動／任意コマンドの提案
+- [x] 使用履歴からの異常傾向検出（スパイク通知）
+- [x] `komon advise` による対話型通知
+- [x] pip / OS更新の提案（自動実行は行わない）
+- [x] systemctlの再起動／任意コマンドの提案
 - [ ] komon_error.logの異常自動検知
 
 ---
