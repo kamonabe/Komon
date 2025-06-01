@@ -21,6 +21,7 @@
 | ✅ pip / OS更新の提案                  | 実装済              | `sudo apt update` の提案など |
 | ✅ systemctl 再起動の提案              | 実装済              | 本番・開発環境で文言を出し分け |
 | ✅ バージョン管理（`version.txt`）     | 実装済              | 手動更新で管理 |
+| ✅ CHANGELOGによる更新履歴記録        | 実装済              | `CHANGELOG.md` に追記形式で管理 |
 
 ---
 
@@ -90,6 +91,7 @@ Komon/
 ├── main_log_trend.py
 ├── settings.yml
 ├── version.txt
+├── CHANGELOG.md
 ├── komon/
 │   ├── analyzer.py
 │   ├── history.py
