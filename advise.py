@@ -48,14 +48,20 @@ def run_advise():
     threshold_mem = thresholds.get("mem", 80)
     if mem_percent >= threshold_mem:
         if ask_yes_no(f"MEM使用率が{mem_percent}%と高めです。多く使っているプロセスを調べますか？"):
-            print("→ `top` や `htop` を使ってみましょう。ChromeやDockerが原因のこともあります。")
+            print("→ 実メモリを多く使用しているプロセスを確認しましょう。")
+            print("   - `top` または `htop` でリアルタイムにメモリ消費プロセスを確認")
+            print("   - `ps aux --sort=-%mem | head` で上位プロセスを一覧表示")
+            print("   - Chrome, Docker, Python などが原因の場合があります")
 
     # 提案③：ディスク高負荷
     disk_percent = usage.get("disk", 0)
     threshold_disk = thresholds.get("disk", 80)
     if disk_percent >= threshold_disk:
         if ask_yes_no(f"ディスク使用率が{disk_percent}%と高めです。不要なファイルを整理しますか？"):
-            print("→ `du -sh *` や `journalctl --vacuum-time=7d` で容量削減できます。")
+            print("→ ディスクを圧迫しているファイル・ディレクトリを調査しましょう。")
+            print("   - `du -sh *` や `ncdu` でサイズの大きいフォルダを特定")
+            print("   - `journalctl --vacuum-time=7d` で古いログを削除")
+            print("   - 不要なキャッシュやバックアップファイルの削除も検討")
 
     # 提案④：長時間稼働（7日以上）
     try:
@@ -79,7 +85,10 @@ def run_advise():
     threshold_cpu = thresholds.get("cpu", 85)
     if cpu_percent >= threshold_cpu:
         if ask_yes_no(f"CPU使用率が{cpu_percent}%と高い状態です。負荷の高いプロセスを確認しますか？"):
-            print("→ `top` や `ps aux --sort=-%cpu` を使って原因プロセスを確認しましょう。")
+            print("→ 高負荷なプロセスを調査し、必要に応じて停止や調整を検討しましょう。")
+            print("   - `top` でCPU使用率の高いプロセスを確認")
+            print("   - `ps aux --sort=-%cpu | head` で上位プロセスを一覧表示")
+            print("   - 一時的なビルド処理やバックグラウンドジョブに注意")
 
     # 提案⑦：Komon自身の更新確認（ユーモア枠）
     if ask_yes_no("Komonのコードがしばらく更新されていない気がします。最新状態を確認しますか？"):
