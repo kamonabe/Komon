@@ -1,7 +1,7 @@
 import yaml
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.monitor import get_resource_usage
-from komon.log_trends import analyze_log_trend
+from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 
 def ask_yes_no(question: str) -> bool:
     """y/n 質問の簡易ユーティリティ"""
@@ -73,10 +73,19 @@ def advise_komon_update():
 
 def advise_log_trend(config):
     print("\n📈 ログ傾向分析")
+    suspicious_logs = []
     for log_id, enabled in config.get("log_monitor_targets", {}).items():
         if enabled:
             result = analyze_log_trend(log_id)
             print(result)
+            if detect_repeated_spikes(log_id):
+                suspicious_logs.append(log_id)
+
+    if suspicious_logs:
+        print("\n💡 最近、複数日にわたってログが急増しているものがあります。")
+        for log in suspicious_logs:
+            print(f"   - {log}")
+        print("→ `logrotate` の設定や、アプリのログ出力レベルの調整を検討しましょう。")
 
 def run_advise():
     try:
