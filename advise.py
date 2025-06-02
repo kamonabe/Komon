@@ -1,7 +1,13 @@
 import yaml
+import json
+import datetime
+import os
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.monitor import collect_resource_usage as get_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
+
+SKIP_FILE = "komon_data/skip_advices.json"
+
 
 def ask_yes_no(question: str) -> bool:
     """y/n 質問の簡易ユーティリティ"""
@@ -14,11 +20,51 @@ def ask_yes_no(question: str) -> bool:
         else:
             print("→ y または n で答えてください。")
 
+
+def should_skip(key: str, days: int = 7) -> bool:
+    if not os.path.exists(SKIP_FILE):
+        return False
+    try:
+        with open(SKIP_FILE, "r", encoding="utf-8") as f:
+            skip_data = json.load(f)
+        skipped_at = skip_data.get(key, {}).get("skipped_at")
+        if not skipped_at:
+            return False
+        skipped_time = datetime.datetime.fromisoformat(skipped_at)
+        return (datetime.datetime.now() - skipped_time).days < days
+    except Exception:
+        return False
+
+
+def record_skip(key: str):
+    try:
+        data = {}
+        if os.path.exists(SKIP_FILE):
+            with open(SKIP_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        data[key] = {"skipped_at": datetime.datetime.now().isoformat()}
+        os.makedirs(os.path.dirname(SKIP_FILE), exist_ok=True)
+        with open(SKIP_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"⚠ スキップ記録に失敗しました: {e}")
+
+
+def skippable_advice(key: str, question: str, action: callable):
+    if should_skip(key):
+        return
+    if ask_yes_no(question):
+        action()
+    else:
+        record_skip(key)
+
+
 def advise_os_update():
     if ask_yes_no("最近、OSやパッケージの更新は行いましたか？"):
         print("→ OKです。定期的な確認を続けていきましょう。")
     else:
         print("→ `sudo apt update && sudo apt upgrade` の実行をおすすめします。")
+
 
 def advise_high_memory(usage, thresholds):
     mem_percent = usage.get("mem", 0)
@@ -30,6 +76,7 @@ def advise_high_memory(usage, thresholds):
             print("   - `ps aux --sort=-%mem | head` で上位プロセスを一覧表示")
             print("   - Chrome, Docker, Python などが原因の場合があります")
 
+
 def advise_high_disk(usage, thresholds):
     disk_percent = usage.get("disk", 0)
     threshold_disk = thresholds.get("disk", 80)
@@ -39,6 +86,7 @@ def advise_high_disk(usage, thresholds):
             print("   - `du -sh *` や `ncdu` でサイズの大きいフォルダを特定")
             print("   - `journalctl --vacuum-time=7d` で古いログを削除")
             print("   - 不要なキャッシュやバックアップファイルの削除も検討")
+
 
 def advise_uptime(profile):
     try:
@@ -54,11 +102,14 @@ def advise_uptime(profile):
     except:
         pass
 
+
 def advise_email_disabled(config):
     notifications = config.get("notifications", {})
     if not notifications.get("email", {}).get("enabled", False):
-        if ask_yes_no("メール通知が無効になっています。Slack以外でも通知を受け取りたいですか？"):
+        def action():
             print("→ `settings.yml` の email.enabled を true にして設定してみましょう。")
+        skippable_advice("email_disabled", "メール通知が無効になっています。Slack以外でも通知を受け取りたいですか？", action)
+
 
 def advise_high_cpu(usage, thresholds):
     cpu_percent = usage.get("cpu", 0)
@@ -70,9 +121,12 @@ def advise_high_cpu(usage, thresholds):
             print("   - `ps aux --sort=-%cpu | head` で上位プロセスを一覧表示")
             print("   - 一時的なビルド処理やバックグラウンドジョブに注意")
 
+
 def advise_komon_update():
-    if ask_yes_no("Komonのコードがしばらく更新されていない気がします。最新状態を確認しますか？"):
+    def action():
         print("→ `git pull` でリポジトリを最新状態に保てます。Komonは静かに進化を続けています。")
+    skippable_advice("komon_update", "Komonのコードがしばらく更新されていない気がします。最新状態を確認しますか？", action)
+
 
 def advise_log_trend(config):
     print("\n📈 ログ傾向分析")
@@ -89,6 +143,7 @@ def advise_log_trend(config):
         for log in suspicious_logs:
             print(f"   - {log}")
         print("→ `logrotate` の設定や、アプリのログ出力レベルの調整を検討しましょう。")
+
 
 def run_advise():
     try:
@@ -119,5 +174,7 @@ def run_advise():
     advise_komon_update()
     advise_log_trend(config)
 
+
 if __name__ == "__main__":
     run_advise()
+

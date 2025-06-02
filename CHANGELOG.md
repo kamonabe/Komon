@@ -7,3 +7,9 @@
 - `komon advise` 対話型アドバイス機能
 - pip / OS更新提案、systemctl再起動の助言
 - `version.txt` による手動バージョン管理
+
+## [1.1.0] - 2025-06-01
+### Added
+- `komon advise` に「提案スキップ記録（skip_advices.json）」機能を追加。
+  同一提案について、`n` を選んだ場合は1週間再提案を控えるようになりました。
+
