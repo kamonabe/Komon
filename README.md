@@ -152,13 +152,13 @@ Komon では以下のスクリプトを `cron` 登録して運用することを
 
 ```bash
 */5 * * * * cd /home/youruser/Komon && /usr/bin/python3 main.py >> log/cron_main.log 2>&1
-*/5 * * * * cd /home/youruser/Komon && /usr/bin/python3 main_log_monitor.py >> log/cron_main.log 2>&1
+*/5 * * * * cd /home/youruser/Komon && /usr/bin/python3 main_log_monitor.py >> log/cron_main_monitor.log 2>&1
 ```
 
 例：毎日深夜3時にログ傾向分析を実行
 
 ```bash
-0 3 * * * cd /home/youruser/Komon && /usr/bin/python3 main_log_trend.py >> log/cron_main.log 2>&1
+0 3 * * * cd /home/youruser/Komon && /usr/bin/python3 main_log_trend.py >> log/cron_main_trend.log 2>&1
 ```
 
 📌 `python3` のパスは `which python3` で確認できます。
