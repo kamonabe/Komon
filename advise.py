@@ -2,6 +2,7 @@ import yaml
 import json
 import datetime
 import os
+import subprocess
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.monitor import collect_resource_usage as get_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
@@ -60,10 +61,52 @@ def skippable_advice(key: str, question: str, action: callable):
 
 
 def advise_os_update():
-    if ask_yes_no("最近、OSやパッケージの更新は行いましたか？"):
-        print("→ OKです。定期的な確認を続けていきましょう。")
-    else:
-        print("→ `sudo apt update && sudo apt upgrade` の実行をおすすめします。")
+    try:
+        # セキュリティパッチの確認
+        sec_result = subprocess.run(
+            ["dnf", "updateinfo", "list", "security"],
+            capture_output=True, text=True
+        )
+        sec_lines = sec_result.stdout.strip().splitlines()
+        sec_updates = [line for line in sec_lines if line and not line.startswith("RHSA")]
+
+        print("① セキュリティパッチの確認")
+        if sec_updates:
+            print(f"→ セキュリティ更新が {len(sec_updates)} 件あります。例：")
+            for line in sec_updates[:10]:
+                print(f"   - {line}")
+            if ask_yes_no("これらのセキュリティパッチを適用しますか？"):
+                subprocess.run(["sudo", "dnf", "upgrade", "--security", "-y"])
+                print("→ セキュリティアップデートを適用しました。再起動が必要な場合があります。")
+            else:
+                print("→ セキュリティアップデートは保留されました。")
+        else:
+            print("→ セキュリティ更新はありません。")
+
+        # 通常パッチの確認（セキュリティ以外）
+        print("\n② システムパッチ（セキュリティ以外）の確認")
+        result = subprocess.run(["dnf", "check-update"], capture_output=True, text=True)
+        if result.returncode == 100:
+            # パッケージ一覧を取得し、セキュリティパッチでなかったものだけに絞るのがベスト
+            all_lines = result.stdout.strip().splitlines()
+            normal_updates = []
+            for line in all_lines:
+                if line and not line.startswith("Last metadata expiration") and not line.startswith("Obsoleting"):
+                    # `updateinfo` にも現れていない（セキュリティ以外）ものを対象にできればベスト
+                    normal_updates.append(line)
+            if normal_updates:
+                print(f"→ セキュリティ以外の更新が {len(normal_updates)} 件あります。例：")
+                for line in normal_updates[:10]:
+                    print(f"   - {line}")
+            else:
+                print("→ セキュリティ以外の更新は見つかりませんでした。")
+        else:
+            print("→ パッケージは最新の状態です。")
+
+    except FileNotFoundError:
+        print("→ dnf が見つかりません。AlmaLinuxであることを確認してください。")
+    except Exception as e:
+        print(f"⚠ アップデート確認中にエラーが発生しました: {e}")
 
 
 def advise_high_memory(usage, thresholds):
