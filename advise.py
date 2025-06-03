@@ -2,6 +2,7 @@ import yaml
 import json
 import datetime
 import os
+import re
 import subprocess
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.monitor import collect_resource_usage as get_resource_usage
@@ -64,11 +65,16 @@ def advise_os_update():
     try:
         # セキュリティパッチの確認
         sec_result = subprocess.run(
-            ["dnf", "updateinfo", "list", "security"],
+            # ["dnf", "updateinfo", "list", "security"],
+            ["dnf", "updateinfo", "list", "security", "available"],
             capture_output=True, text=True
         )
         sec_lines = sec_result.stdout.strip().splitlines()
-        sec_updates = [line for line in sec_lines if line and not line.startswith("RHSA")]
+        # sec_updates = [line for line in sec_lines if line and not line.startswith("RHSA")]
+        sec_updates = [
+            line for line in sec_lines
+            if line.strip() and re.match(r"^RHSA-\d{4}:\d+", line)
+        ]
 
         print("① セキュリティパッチの確認")
         if sec_updates:
