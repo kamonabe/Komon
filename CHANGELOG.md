@@ -48,3 +48,9 @@
 ### Internal
 - `setup.py` に `console_scripts` を定義し、`komon` コマンドのインストール／実行を可能に。
 
+## [1.3.1] - 2025-06-04
+### Fixed
+- CLIのUsage表示 (`komon [advise|status]`) において、同じ文字列が複数箇所に分散していた問題を解消。
+  - `available_commands` リストでコマンド一覧を一元管理する構成に変更し、将来的なコマンド追加やUsage表示の更新漏れを防止。
+  - メンテナンス性・可読性が向上。
+
