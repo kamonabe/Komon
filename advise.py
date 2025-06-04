@@ -224,6 +224,10 @@ def run_advise():
     advise_log_trend(config)
 
 
+def run():
+    run_advise()
+
+
 if __name__ == "__main__":
     run_advise()
 
