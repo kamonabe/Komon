@@ -2,7 +2,7 @@ import sys
 import importlib.util
 import os
 
-available_commands = ["advise", "status"]
+available_commands = ["advise", "status", "initial"]
 
 def load_module(filename, modulename):
     base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -25,6 +25,10 @@ def main():
     elif command == "status":
         status = load_module("status.py", "status")
         status.show()
+    elif command == "initial":
+        initial = load_module("initial.py", "initial")
+        initial.main()
+
     else:
         print(f"Unknown command: {command}")
         print(f"Usage: komon [{'|'.join(available_commands)}]")
