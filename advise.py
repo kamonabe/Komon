@@ -5,7 +5,8 @@ import os
 import re
 import subprocess
 from komon.analyzer import analyze_usage, load_thresholds
-from komon.monitor import collect_resource_usage as get_resource_usage
+# from komon.monitor import collect_resource_usage as get_resource_usage
+from komon.monitor import collect_detailed_resource_usage as get_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 
 SKIP_FILE = "komon_data/skip_advices.json"
@@ -171,6 +172,22 @@ def advise_high_cpu(usage, thresholds):
             print("   - 一時的なビルド処理やバックグラウンドジョブに注意")
 
 
+def advise_cpu_by_process(usage: dict):
+    """
+    CPU使用率の内訳（プロセス別）を出力する補足助言。
+    警戒ではないため、常時表示でOK。
+    """
+    cpu_details = usage.get("cpu_by_process", [])
+    if not cpu_details:
+        return
+
+    print("\n📌 CPU使用率の内訳：")
+    for proc in cpu_details:
+        name = proc.get("name", "unknown")
+        cpu = proc.get("cpu", 0.0)
+        print(f"- {name}: {cpu}%")
+
+
 def advise_komon_update():
     def action():
         print("→ `git pull` でリポジトリを最新状態に保てます。Komonは静かに進化を続けています。")
@@ -222,6 +239,7 @@ def run_advise():
     advise_high_cpu(usage, thresholds)
     advise_komon_update()
     advise_log_trend(config)
+    advise_cpu_by_process(usage)
 
 
 def run():

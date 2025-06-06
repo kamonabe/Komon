@@ -67,3 +67,16 @@
 ### 🧼 内部整理
 - `init.sh` に `komon initial` 実行の案内を追記
 - `requirements.txt` にバージョン明記（例: `psutil>=5.9.0`）
+
+## [1.5.0] - 2025-06-06
+### 機能追加
+- プロセス単位でのCPU使用率（top N）を収集・保存する `collect_detailed_resource_usage()` を新実装
+- `main.py` の収集ロジックを `collect_detailed_resource_usage()` に変更し、JSON履歴へ `cpu_by_process` を出力する形式に拡張
+- `advise.py` にて、CPU使用率の内訳（プロセス別）を📌補足情報として常時出力する機能を追加
+
+### 改善
+- `usage_history.json` のフォーマット変更に対応した新しい改善アドバイスの追加（プロセス可視化）
+
+### 注意事項
+- `usage_history.json` に `cpu_by_process` が追加されます。旧バージョンとの互換性に注意してください
+

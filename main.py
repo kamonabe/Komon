@@ -1,5 +1,5 @@
 import yaml
-from komon.monitor import collect_resource_usage as get_resource_usage
+from komon.monitor import collect_detailed_resource_usage
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.notification import send_slack_alert, send_email_alert
 from komon.history import rotate_history, save_current_usage
@@ -21,7 +21,7 @@ def main():
         return
 
     # 使用状況の取得
-    usage = get_resource_usage()
+    usage = collect_detailed_resource_usage()
 
     # 閾値読み込みと解析
     thresholds = load_thresholds(config)
