@@ -145,13 +145,11 @@ Komon の導入はとてもシンプルです。以下のコマンドを順番�
 git clone https://github.com/kamonabe/Komon.git
 cd Komon
 bash init.sh
-komon initial または /usr/bin/python3 initial.py
-komon advise または /usr/bin/python3 advise.py
+komon initial # または /usr/bin/python3 initial.py
+komon advise # または /usr/bin/python3 advise.py
 ```
 
-これだけで初期設定とサンプル実行が完了し、
-Slack通知やログ監視などの基本動作を確認できます。
-
+これだけで初期設定とサンプル実行が完了し、Slack通知やログ監視などの基本動作を確認できます。
 通知・監視対象の詳細設定は settings.yml で変更可能です。
 
 ---
