@@ -105,6 +105,8 @@ def advise_os_update():
                 print(f"→ セキュリティ以外の更新が {len(normal_updates)} 件あります。例：")
                 for line in normal_updates[:10]:
                     print(f"   - {line}")
+                print("\n💡 以下のコマンドでこれらをまとめて適用できます：")
+                print("   sudo dnf upgrade -y")
             else:
                 print("→ セキュリティ以外の更新は見つかりませんでした。")
         else:
