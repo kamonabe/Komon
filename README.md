@@ -42,25 +42,40 @@
 ## ⚙️ 設定ファイル（`settings.yml`）
 
 ```yaml
-thresholds:
-  cpu: 85
-  memory: 80
-  disk: 80
-log_monitor_targets:
-  /var/log/messages: true
-  /var/log/syslog: false
-  /var/log/nginx/error.log: true
-  systemd journal: false
-notification:
+profile:
+  usage: "dev"  # "production" または "dev"。本番環境では一部の助言が変化します。
+
+thresholds:  # リソース使用率に対する警告の閾値（％）
+  cpu: 85    # CPU 使用率がこの値を超えると警告します
+  mem: 80    # メモリ使用率の閾値
+  disk: 80   # ディスク使用率の閾値
+
+notifications:
   slack:
     enabled: true
-    webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
+    webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"  # Slack の Webhook URL
+
   email:
-    enabled: false
-    smtp_server: "smtp.example.com"
+    enabled: false  # メール通知を有効にする場合は true にしてください
+    smtp_server: "smtp.example.com"  # SMTP サーバのホスト名
     smtp_port: 587
-    from_address: "komon@example.com"
-    to_address: "admin@example.com"
+    use_tls: true  # STARTTLS を使うかどうか
+    from: "komon@example.com"
+    to: "user@example.com"
+    username: "komon@example.com"
+    password: "env:KOMON_EMAIL_PASSWORD"  # パスワードは環境変数からの読み込みを推奨
+
+log_monitor_targets:  # 監視対象のログファイル（true: 監視する / false: 無視する）
+  /var/log/messages: true
+  /var/log/nginx/error.log: true
+  systemd journal: false  # systemd journal を監視する場合は true に
+
+  # 任意で追加のログも指定可能（絶対パス推奨）
+  # /home/user/logs/custom.log: true
+
+log_analysis:
+  anomaly_threshold_percent: 30     # 急増とみなす割合（前日比）
+  baseline_learning_rate: 0.1       # ベースライン更新の反映率（0〜1）
 ```
 
 ---
