@@ -1,11 +1,14 @@
-import yaml
-import json
 import datetime
+import json
 import os
 import re
 import subprocess
+import time
+
+import psutil
+import yaml
+
 from komon.analyzer import analyze_usage, load_thresholds
-# from komon.monitor import collect_resource_usage as get_resource_usage
 from komon.monitor import collect_detailed_resource_usage as get_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 
@@ -190,6 +193,38 @@ def advise_cpu_by_process(usage: dict):
         print(f"- {name}: {cpu}%")
 
 
+def advise_process_details(thresholds: dict):
+    """
+    高負荷なプロセスの詳細情報を表示する補助アドバイス（CPU >= 20%）。
+    """
+    print("\n🧐 高負荷プロセスの詳細情報（CPU使用率が高いもの）")
+
+    cpu_threshold = thresholds.get("proc_cpu", 20)  # デフォルト20%
+    found = False
+    for proc in psutil.process_iter(['pid', 'cpu_percent', 'memory_percent', 'create_time', 'username', 'ppid', 'cmdline']):
+        try:
+            cpu = proc.info['cpu_percent']
+            if cpu is None or cpu < cpu_threshold:
+                continue
+
+            found = True
+            mem = proc.info.get('memory_percent', 0.0)
+            uptime_sec = time.time() - proc.info['create_time']
+            uptime_str = str(datetime.timedelta(seconds=int(uptime_sec)))
+            cmdline = ' '.join(proc.info['cmdline']) if proc.info['cmdline'] else '(不明)'
+
+            print(f"- PID: {proc.info['pid']}, USER: {proc.info['username']}")
+            print(f"  CPU: {cpu:.1f}%, MEM: {mem:.1f}%")
+            print(f"  起動後: {uptime_str}, PPID: {proc.info['ppid']}")
+            print(f"  CMD: {cmdline}\n")
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+
+    if not found:
+        print("→ 現在、高負荷なプロセスは検出されていません。")
+
+
 def advise_komon_update():
     def action():
         print("→ `git pull` でリポジトリを最新状態に保てます。Komonは静かに進化を続けています。")
@@ -242,6 +277,7 @@ def run_advise():
     advise_komon_update()
     advise_log_trend(config)
     advise_cpu_by_process(usage)
+    advise_process_details(thresholds)
 
 
 def run():

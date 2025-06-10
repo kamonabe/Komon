@@ -8,6 +8,7 @@ thresholds:  # リソース使用率に対する警告の閾値（％）
   cpu: 85    # CPU 使用率がこの値を超えると警告します
   mem: 80    # メモリ使用率の閾値
   disk: 80   # ディスク使用率の閾値
+  proc_cpu: 20  # ← 各プロセスの高負荷判定に使う閾値
 
 notifications:
   slack:
