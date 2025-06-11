@@ -2,12 +2,12 @@
 
 echo "🛠 Komon 初期セットアップを開始します..."
 
-# 1. logsディレクトリ作成
-if [ ! -d "logs" ]; then
-  mkdir logs
-  echo "[✔] logs/ ディレクトリを作成しました。"
+# 1. logディレクトリ作成
+if [ ! -d "log" ]; then
+  mkdir log
+  echo "[✔] log/ ディレクトリを作成しました。"
 else
-  echo "[ℹ] logs/ ディレクトリは既に存在します。"
+  echo "[ℹ] log/ ディレクトリは既に存在します。"
 fi
 
 # 2. Python依存ライブラリのインストール
@@ -51,7 +51,7 @@ echo
 
 # 6. crontab登録案内
 echo "📅 推奨crontab設定（参考）:"
-echo "  * * * * * cd /your/path/to/Komon && python3 main.py >> logs/main.log 2>&1"
+echo "  * * * * * cd /your/path/to/Komon && python3 main.py >> log/main.log 2>&1"
 echo
 
 # 7. 初期設定の案内

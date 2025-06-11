@@ -37,7 +37,7 @@ def guide_3():
 def guide_4():
     print("\n🔹 cron登録の例\n")
     print("以下のように登録すると1分ごとに自動監視されます：\n")
-    print("  * * * * * cd /your/path/to/Komon && python3 main.py >> logs/main.log 2>&1")
+    print("  * * * * * cd /your/path/to/Komon && python3 main.py >> log/main.log 2>&1")
 
 
 def guide_5():
