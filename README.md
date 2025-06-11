@@ -154,6 +154,26 @@ Komon/
 0 3 * * * cd /your/path/to/Komon && /usr/bin/python3 main_log_trend.py >> log/cron_trend.log 2>&1
 ```
 
+## ⚙️ 動作環境と依存モジュール
+
+Komon は以下の環境での動作を想定しています：
+
+- **OS**：AlmaLinux 9（その他の Linux 環境でも動作実績あり）
+- **Python**：3.9以上（3.11で動作確認済）
+- **必要モジュール**：
+
+```txt
+psutil>=5.9.0
+PyYAML>=6.0
+requests>=2.31.0
+```
+
+インストールは以下で可能です：
+
+```bash
+pip install -r requirements.txt
+```
+
 ---
 
 ## 🚀 最初の5分でできる導入方法
