@@ -5,27 +5,22 @@ import re
 import subprocess
 import time
 
-import psutil
 import yaml
-
+import psutil
 from komon.analyzer import analyze_usage, load_thresholds
-from komon.monitor import collect_detailed_resource_usage as get_resource_usage
+from komon.monitor import collect_detailed_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 
 SKIP_FILE = "komon_data/skip_advices.json"
 
-
 def ask_yes_no(question: str) -> bool:
-    """y/n 質問の簡易ユーティリティ"""
     while True:
         ans = input(f"{question} [y/n] > ").strip().lower()
         if ans in ("y", "yes"):
             return True
         elif ans in ("n", "no"):
             return False
-        else:
-            print("→ y または n で答えてください。")
-
+        print("→ y または n で答えてください。")
 
 def should_skip(key: str, days: int = 7) -> bool:
     if not os.path.exists(SKIP_FILE):
@@ -41,7 +36,6 @@ def should_skip(key: str, days: int = 7) -> bool:
     except Exception:
         return False
 
-
 def record_skip(key: str):
     try:
         data = {}
@@ -55,7 +49,6 @@ def record_skip(key: str):
     except Exception as e:
         print(f"⚠ スキップ記録に失敗しました: {e}")
 
-
 def skippable_advice(key: str, question: str, action: callable):
     if should_skip(key):
         return
@@ -64,21 +57,13 @@ def skippable_advice(key: str, question: str, action: callable):
     else:
         record_skip(key)
 
-
 def advise_os_update():
     try:
-        # セキュリティパッチの確認
-        sec_result = subprocess.run(
-            # ["dnf", "updateinfo", "list", "security"],
-            ["dnf", "updateinfo", "list", "security", "available"],
-            capture_output=True, text=True
-        )
+        sec_result = subprocess.run([
+            "dnf", "updateinfo", "list", "security", "available"
+        ], capture_output=True, text=True)
         sec_lines = sec_result.stdout.strip().splitlines()
-        # sec_updates = [line for line in sec_lines if line and not line.startswith("RHSA")]
-        sec_updates = [
-            line for line in sec_lines
-            if line.strip() and re.match(r"^RHSA-\d{4}:\d+", line)
-        ]
+        sec_updates = [line for line in sec_lines if re.match(r"^RHSA-\\d{4}:", line)]
 
         print("① セキュリティパッチの確認")
         if sec_updates:
@@ -93,17 +78,14 @@ def advise_os_update():
         else:
             print("→ セキュリティ更新はありません。")
 
-        # 通常パッチの確認（セキュリティ以外）
         print("\n② システムパッチ（セキュリティ以外）の確認")
         result = subprocess.run(["dnf", "check-update"], capture_output=True, text=True)
         if result.returncode == 100:
-            # パッケージ一覧を取得し、セキュリティパッチでなかったものだけに絞るのがベスト
             all_lines = result.stdout.strip().splitlines()
-            normal_updates = []
-            for line in all_lines:
-                if line and not line.startswith("Last metadata expiration") and not line.startswith("Obsoleting"):
-                    # `updateinfo` にも現れていない（セキュリティ以外）ものを対象にできればベスト
-                    normal_updates.append(line)
+            normal_updates = [
+                line for line in all_lines
+                if line and not line.startswith(("Last metadata", "Obsoleting"))
+            ]
             if normal_updates:
                 print(f"→ セキュリティ以外の更新が {len(normal_updates)} 件あります。例：")
                 for line in normal_updates[:10]:
@@ -120,87 +102,57 @@ def advise_os_update():
     except Exception as e:
         print(f"⚠ アップデート確認中にエラーが発生しました: {e}")
 
+def advise_resource_usage(usage: dict, thresholds: dict):
+    if usage.get("mem", 0) >= thresholds.get("mem", 80):
+        if ask_yes_no(f"MEM使用率が{usage['mem']}%と高めです。多く使っているプロセスを調べますか？"):
+            print("→ `top` や `ps aux --sort=-%mem | head` で上位プロセスを確認しましょう。")
 
-def advise_high_memory(usage, thresholds):
-    mem_percent = usage.get("mem", 0)
-    threshold_mem = thresholds.get("mem", 80)
-    if mem_percent >= threshold_mem:
-        if ask_yes_no(f"MEM使用率が{mem_percent}%と高めです。多く使っているプロセスを調べますか？"):
-            print("→ 実メモリを多く使用しているプロセスを確認しましょう。")
-            print("   - `top` または `htop` でリアルタイムにメモリ消費プロセスを確認")
-            print("   - `ps aux --sort=-%mem | head` で上位プロセスを一覧表示")
-            print("   - Chrome, Docker, Python などが原因の場合があります")
+    if usage.get("disk", 0) >= thresholds.get("disk", 80):
+        if ask_yes_no(f"ディスク使用率が{usage['disk']}%と高めです。不要なファイルを整理しますか？"):
+            print("→ `du -sh *` や `journalctl --vacuum-time=7d` を活用しましょう。")
 
-
-def advise_high_disk(usage, thresholds):
-    disk_percent = usage.get("disk", 0)
-    threshold_disk = thresholds.get("disk", 80)
-    if disk_percent >= threshold_disk:
-        if ask_yes_no(f"ディスク使用率が{disk_percent}%と高めです。不要なファイルを整理しますか？"):
-            print("→ ディスクを圧迫しているファイル・ディレクトリを調査しましょう。")
-            print("   - `du -sh *` や `ncdu` でサイズの大きいフォルダを特定")
-            print("   - `journalctl --vacuum-time=7d` で古いログを削除")
-            print("   - 不要なキャッシュやバックアップファイルの削除も検討")
-
+    if usage.get("cpu", 0) >= thresholds.get("cpu", 85):
+        if ask_yes_no(f"CPU使用率が{usage['cpu']}%と高い状態です。負荷の高いプロセスを確認しますか？"):
+            print("→ `top` や `ps aux --sort=-%cpu | head` で高負荷プロセスを確認できます。")
 
 def advise_uptime(profile):
     try:
         with open("/proc/uptime") as f:
             uptime_sec = float(f.readline().split()[0])
             days = int(uptime_sec // 86400)
-            if days >= 7:
-                if ask_yes_no(f"サーバが{days}日間連続稼働しています。再起動を検討しますか？"):
-                    if profile.get("usage") == "production":
-                        print("→ 本番環境では安定性確保のため、定期再起動を検討しましょう。")
-                    else:
-                        print("→ 長期間の稼働は不安定化の要因になります。必要に応じて再起動を。")
+            if days >= 7 and ask_yes_no(f"サーバが{days}日間連続稼働しています。再起動を検討しますか？"):
+                if profile.get("usage") == "production":
+                    print("→ 本番環境では定期的な再起動も安定性向上につながります。")
+                else:
+                    print("→ 長期間の稼働は不安定化の要因になります。再起動を検討しましょう。")
     except:
         pass
 
-
 def advise_email_disabled(config):
-    notifications = config.get("notifications", {})
-    if not notifications.get("email", {}).get("enabled", False):
+    if not config.get("notifications", {}).get("email", {}).get("enabled", False):
         def action():
-            print("→ `settings.yml` の email.enabled を true にして設定してみましょう。")
-        skippable_advice("email_disabled", "メール通知が無効になっています。Slack以外でも通知を受け取りたいですか？", action)
+            print("→ `settings.yml` の email.enabled を true に設定しましょう。")
+        skippable_advice("email_disabled", "メール通知が無効です。Slack以外でも通知を受け取りたいですか？", action)
 
-
-def advise_high_cpu(usage, thresholds):
-    cpu_percent = usage.get("cpu", 0)
-    threshold_cpu = thresholds.get("cpu", 85)
-    if cpu_percent >= threshold_cpu:
-        if ask_yes_no(f"CPU使用率が{cpu_percent}%と高い状態です。負荷の高いプロセスを確認しますか？"):
-            print("→ 高負荷なプロセスを調査し、必要に応じて停止や調整を検討しましょう。")
-            print("   - `top` でCPU使用率の高いプロセスを確認")
-            print("   - `ps aux --sort=-%cpu | head` で上位プロセスを一覧表示")
-            print("   - 一時的なビルド処理やバックグラウンドジョブに注意")
-
-
-def advise_cpu_by_process(usage: dict):
-    """
-    CPU使用率の内訳（プロセス別）を出力する補足助言。
-    警戒ではないため、常時表示でOK。
-    """
+def advise_process_breakdown(usage: dict):
     cpu_details = usage.get("cpu_by_process", [])
-    if not cpu_details:
-        return
+    mem_details = usage.get("mem_by_process", [])
 
-    print("\n📌 CPU使用率の内訳：")
-    for proc in cpu_details:
-        name = proc.get("name", "unknown")
-        cpu = proc.get("cpu", 0.0)
-        print(f"- {name}: {cpu}%")
+    if cpu_details:
+        print("\n📌 CPU使用率の内訳：")
+        for proc in cpu_details:
+            print(f"- {proc['name']}: {proc['cpu']}%")
 
+    if mem_details:
+        print("\n📌 メモリ使用率の内訳：")
+        for proc in mem_details:
+            print(f"- {proc['name']}: {proc['mem']} MB")
 
 def advise_process_details(thresholds: dict):
-    """
-    高負荷なプロセスの詳細情報を表示する補助アドバイス（CPU >= 20%）。
-    """
     print("\n🧐 高負荷プロセスの詳細情報（CPU使用率が高いもの）")
-
-    cpu_threshold = thresholds.get("proc_cpu", 20)  # デフォルト20%
+    cpu_threshold = thresholds.get("proc_cpu", 20)
     found = False
+
     for proc in psutil.process_iter(['pid', 'cpu_percent', 'memory_percent', 'create_time', 'username', 'ppid', 'cmdline']):
         try:
             cpu = proc.info['cpu_percent']
@@ -224,12 +176,10 @@ def advise_process_details(thresholds: dict):
     if not found:
         print("→ 現在、高負荷なプロセスは検出されていません。")
 
-
 def advise_komon_update():
     def action():
-        print("→ `git pull` でリポジトリを最新状態に保てます。Komonは静かに進化を続けています。")
-    skippable_advice("komon_update", "Komonのコードがしばらく更新されていない気がします。最新状態を確認しますか？", action)
-
+        print("→ `git pull` でKomonを最新に保てます。改善が進んでいるかもしれません。")
+    skippable_advice("komon_update", "Komonのコードがしばらく更新されていません。最新状態を確認しますか？", action)
 
 def advise_log_trend(config):
     print("\n📈 ログ傾向分析")
@@ -242,11 +192,10 @@ def advise_log_trend(config):
                 suspicious_logs.append(log_id)
 
     if suspicious_logs:
-        print("\n💡 最近、複数日にわたってログが急増しているものがあります。")
+        print("\n💡 複数日にわたってログが急増しているものがあります。")
         for log in suspicious_logs:
             print(f"   - {log}")
-        print("→ `logrotate` の設定や、アプリのログ出力レベルの調整を検討しましょう。")
-
+        print("→ `logrotate` 設定や出力レベルの見直しを検討しましょう。")
 
 def run_advise():
     try:
@@ -256,7 +205,7 @@ def run_advise():
         print(f"❌ settings.yml の読み込みに失敗しました: {e}")
         return
 
-    usage = get_resource_usage()
+    usage = collect_detailed_resource_usage()
     thresholds = load_thresholds(config)
     alerts = analyze_usage(usage, thresholds)
 
@@ -269,21 +218,16 @@ def run_advise():
 
     print("\n💡 改善提案")
     advise_os_update()
-    advise_high_memory(usage, thresholds)
-    advise_high_disk(usage, thresholds)
+    advise_resource_usage(usage, thresholds)
     advise_uptime(config.get("profile", {}))
     advise_email_disabled(config)
-    advise_high_cpu(usage, thresholds)
     advise_komon_update()
     advise_log_trend(config)
-    advise_cpu_by_process(usage)
+    advise_process_breakdown(usage)
     advise_process_details(thresholds)
-
 
 def run():
     run_advise()
 
-
 if __name__ == "__main__":
     run_advise()
-
