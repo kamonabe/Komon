@@ -104,8 +104,24 @@ def advise_os_update():
 
 def advise_resource_usage(usage: dict, thresholds: dict):
     if usage.get("mem", 0) >= thresholds.get("mem", 80):
-        if ask_yes_no(f"MEM使用率が{usage['mem']}%と高めです。多く使っているプロセスを調べますか？"):
-            print("→ `top` や `ps aux --sort=-%mem | head` で上位プロセスを確認しましょう。")
+        if ask_yes_no(f"\nMEM使用率が{usage['mem']}%と高めです。多く使っているプロセスを調べますか？"):
+            print("→ 上位メモリ使用プロセスを表示します。\n")
+            try:
+                processes = []
+                for proc in psutil.process_iter(['pid', 'name', 'memory_percent', 'username', 'cmdline']):
+                    processes.append(proc.info)
+                processes.sort(key=lambda p: p['memory_percent'], reverse=True)
+                for proc in processes[:5]:
+                    mem = f"{proc['memory_percent']:.1f}%"
+                    name = proc.get('name', '(不明)')
+                    user = proc.get('username', '(不明)')
+                    pid = proc.get('pid', '-')
+                    cmd = ' '.join(proc.get('cmdline', [])) if proc.get('cmdline') else '(不明)'
+                    print(f"- PID: {pid}, USER: {user}")
+                    print(f"  MEM: {mem}, NAME: {name}")
+                    print(f"  CMD: {cmd}\n")
+            except Exception as e:
+                print(f"⚠ プロセス情報の取得中にエラーが発生しました: {e}")
 
     if usage.get("disk", 0) >= thresholds.get("disk", 80):
         if ask_yes_no(f"ディスク使用率が{usage['disk']}%と高めです。不要なファイルを整理しますか？"):
