@@ -6,6 +6,17 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.10.1] - 2025-11-22
+
+### Changed
+
+- **通知メッセージの改善**
+  - 機械的な警告表現から、やさしい相談口調に変更
+  - 「CPU使用率が高い状態です」→「CPUが頑張りすぎてるみたいです」
+  - 「メモリ使用率が高い状態です」→「メモリ使用量が結構増えてますね」
+  - 「ディスク使用率が高い状態です」→「ディスクの空きが少なくなってきました」
+  - Komonの「やさしく見守る顧問」という思想をより明確に
+
 ## [1.10.0] - 2025-11-21
 
 ### Changed
@@ -73,5 +84,6 @@ Komonの変更履歴を記録します。
 
 ## リンク
 
+- [1.10.1]: https://github.com/kamonabe/Komon/releases/tag/v1.10.1
 - [1.10.0]: https://github.com/kamonabe/Komon/releases/tag/v1.10.0
 - [1.9.0]: https://github.com/kamonabe/Komon/releases/tag/v1.9.0
