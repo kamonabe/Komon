@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 仮想環境
+venv/
+ENV/
+env/
+.venv
+.pyenv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.kiro/cache/
+
+# テスト・カバレッジ
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Komon固有 - 機密情報
+settings.yml
+
+# Komon固有 - 実行時データ
+data/
+log/
+komon_data/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+
+# Git
+*.orig
