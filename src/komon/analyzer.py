@@ -38,12 +38,24 @@ def analyze_usage(usage: dict, thresholds: dict) -> list:
     alerts = []
     
     if usage.get("cpu", 0) >= thresholds.get("cpu", 85):
-        alerts.append(f"CPU使用率が高い状態です: {usage['cpu']:.1f}% (閾値: {thresholds['cpu']}%)")
+        alerts.append(
+            f"💬 ちょっと気になることがあります\n\n"
+            f"CPUが頑張りすぎてるみたいです（{usage['cpu']:.1f}%）。\n"
+            f"何か重い処理走ってます？"
+        )
     
     if usage.get("mem", 0) >= thresholds.get("mem", 80):
-        alerts.append(f"メモリ使用率が高い状態です: {usage['mem']:.1f}% (閾値: {thresholds['mem']}%)")
+        alerts.append(
+            f"💬 ちょっと気になることがあります\n\n"
+            f"メモリ使用量が結構増えてますね（{usage['mem']:.1f}%）。\n"
+            f"使ってないプロセスとかありませんか？"
+        )
     
     if usage.get("disk", 0) >= thresholds.get("disk", 80):
-        alerts.append(f"ディスク使用率が高い状態です: {usage['disk']:.1f}% (閾値: {thresholds['disk']}%)")
+        alerts.append(
+            f"💬 ちょっと気になることがあります\n\n"
+            f"ディスクの空きが少なくなってきました（{usage['disk']:.1f}%）。\n"
+            f"古いログやキャッシュが溜まってるかもしれません。"
+        )
     
     return alerts
