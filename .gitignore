@@ -39,12 +39,18 @@ env/
 # テスト・カバレッジ
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
 .nox/
+test-results/
+test-report.html
 
 # Komon固有 - 機密情報
 settings.yml
+
+# ローカル開発環境メモ（個人用）
+.kiro/LOCAL_DEV_NOTES.md
 
 # Komon固有 - 実行時データ
 data/

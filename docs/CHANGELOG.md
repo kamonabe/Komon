@@ -21,12 +21,18 @@ Komonの変更履歴を記録します。
 - **テストコードの追加**
   - `test_analyzer.py`: 閾値判定とアラート生成のテスト（10個）
   - `test_log_analyzer.py`: ログ異常検知のテスト（6個）
-  - `pytest.ini`: テスト設定ファイル
+  - `test_monitor.py`: リソース監視のテスト（7個、例外処理含む）
+  - `test_history.py`: 履歴管理のテスト（9個）
+  - `test_settings_validator.py`: 設定検証のテスト（14個）
+  - `pytest.ini`: テスト設定ファイル（JUnit XMLレポート自動生成）
   - `requirements-dev.txt`: 開発用依存パッケージ
-  - 全16個のテストが実装され、全てPASS
+  - 全46個のテストが実装され、全てPASS
+  - テストカバレッジ: コアモジュール5/9（約56%）
 
 - **仕様駆動開発の基盤**
   - `.kiro/specs/komon-system.md`: 包括的なシステム仕様書
+  - `.kiro/specs/testing-strategy.md`: テスト戦略と方針の文書化
+  - `.kiro/specs/future-ideas.md`: 将来的な機能アイデア
   - リバースエンジニアリングにより既存コードから仕様を抽出
 
 - **ドキュメントの充実**
