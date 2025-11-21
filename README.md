@@ -190,6 +190,7 @@ MIT License - 個人・商用利用、改変・再配布が自由
 
 ## 👤 作者
 
+**かもなべ技術研究所 / Kamo-Tech Lab**  
 開発者: [@kamonabe](https://github.com/kamonabe)
 
 「自分が欲しいと思ったものを形にして公開してみる」がこのプロジェクトの原点です。
