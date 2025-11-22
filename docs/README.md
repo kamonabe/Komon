@@ -105,16 +105,7 @@ log_analysis:
 
 ```
 Komon/
-├── main.py
-├── advise.py
-├── initial.py
-├── komon_guide.py
-├── main_log_monitor.py
-├── main_log_trend.py
-├── settings.yml
-├── version.txt
-├── CHANGELOG.md
-├── komon/
+├── src/komon/              # コアモジュール
 │   ├── analyzer.py
 │   ├── history.py
 │   ├── monitor.py
@@ -124,15 +115,42 @@ Komon/
 │   ├── log_trends.py
 │   ├── settings_validator.py
 │   └── cli.py
-├── data/
+├── scripts/                # 実行スクリプト
+│   ├── main.py
+│   ├── advise.py
+│   ├── initial.py
+│   ├── komon_guide.py
+│   ├── main_log_monitor.py
+│   └── main_log_trend.py
+├── config/                 # 設定ファイルサンプル
+│   └── settings.yml.sample
+├── docs/                   # ドキュメント
+│   ├── README.md
+│   ├── CHANGELOG.md
+│   └── PROJECT_STRUCTURE.md
+├── tests/                  # テストコード
+│   ├── test_monitor.py
+│   ├── test_analyzer.py
+│   └── ...
+├── .kiro/                  # Kiro IDE設定
+│   ├── specs/              # 仕様書
+│   │   ├── komon-system.md
+│   │   ├── future-ideas.md
+│   │   └── testing-strategy.md
+│   └── tasks/              # タスク管理
+│       └── implementation-tasks.md
+├── data/                   # データ保存先（自動生成）
+│   ├── usage_history/
 │   └── logstats/
 │       ├── var_log_messages.pkl
 │       ├── systemd_journal.pkl
 │       └── history/
 │           ├── var_log_messages.json
 │           └── systemd_journal.json
-├── log/
+├── log/                    # ログファイル（自動生成）
 │   └── komon_error.log
+├── settings.yml            # 設定ファイル
+├── version.txt
 └── README.md
 ```
 

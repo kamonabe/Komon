@@ -42,8 +42,12 @@ Komon/
 │   ├── usage_history/      # リソース使用履歴
 │   └── logstats/           # ログ統計データ
 ├── .kiro/                  # Kiro IDE設定
-│   └── specs/              # 仕様書
-│       └── komon-system.md # システム仕様
+│   ├── specs/              # 仕様書
+│   │   ├── komon-system.md     # システム仕様
+│   │   ├── future-ideas.md     # 将来の改善案
+│   │   └── testing-strategy.md # テスト戦略
+│   └── tasks/              # タスク管理
+│       └── implementation-tasks.md # 実装タスクリスト
 ├── requirements.txt        # Python依存パッケージ
 ├── setup.py                # インストール設定
 ├── LICENSE                 # ライセンス

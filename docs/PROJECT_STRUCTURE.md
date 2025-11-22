@@ -110,9 +110,13 @@ Kiro IDE用の設定とspecファイルを格納します。
 
 ```
 .kiro/
-├── specs/
-│   └── komon-system.md     # システム仕様書
-└── steering/               # ステアリングルール（今後追加予定）
+├── specs/                      # 仕様書
+│   ├── komon-system.md         # システム仕様書
+│   ├── future-ideas.md         # 将来の改善案
+│   └── testing-strategy.md     # テスト戦略
+├── tasks/                      # タスク管理
+│   └── implementation-tasks.md # 実装タスクリスト
+└── steering/                   # ステアリングルール（今後追加予定）
 ```
 
 ## ファイル配置の原則

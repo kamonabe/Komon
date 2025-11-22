@@ -6,6 +6,14 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+### Documentation
+
+- **プロジェクト管理構造の追加**
+  - `.kiro/tasks/`フォルダを新設し、実装タスク管理を開始
+  - `implementation-tasks.md`: future-ideasから実装タスクを分解・管理
+  - README.md、PROJECT_STRUCTURE.md、docs/README.mdのディレクトリ構造を更新
+  - 仕様管理（specs）とタスク管理（tasks）を明確に分離
+
 ## [1.10.1] - 2025-11-22
 
 ### Changed
