@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-11-22T20:55:04",
+  "cpu": 7.8,
+  "mem": 6.8,
+  "disk": 24.8,
+  "cpu_by_process": [
+    {
+      "name": "python3",
+      "cpu": 17.0
+    },
+    {
+      "name": "cifsd",
+      "cpu": 1.7
+    },
+    {
+      "name": "kworker/0:0-events",
+      "cpu": 1.6
+    },
+    {
+      "name": "kworker/u20:0-events_unbound",
+      "cpu": 1.5
+    }
+  ],
+  "mem_by_process": [
+    {
+      "name": "firewalld",
+      "mem": 39.1
+    },
+    {
+      "name": "systemd",
+      "mem": 30.4
+    },
+    {
+      "name": "sshd",
+      "mem": 27.3
+    },
+    {
+      "name": "python3",
+      "mem": 26.2
+    },
+    {
+      "name": "polkitd",
+      "mem": 24.6
+    }
+  ]
+}

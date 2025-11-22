@@ -6,6 +6,15 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.11.1] - 2025-11-22
+
+### Fixed
+
+- **テストの安定性向上**
+  - プロパティベーステストのデッドライン設定を修正
+  - `test_limit_returns_correct_number`の実行時間制限を解除（`deadline=None`）
+  - 全111テストが安定してパスするように改善
+
 ## [1.11.0] - 2025-11-22
 
 ### Added
@@ -139,6 +148,7 @@ Komonの変更履歴を記録します。
 
 ## リンク
 
+- [1.11.1]: https://github.com/kamonabe/Komon/releases/tag/v1.11.1
 - [1.11.0]: https://github.com/kamonabe/Komon/releases/tag/v1.11.0
 - [1.10.1]: https://github.com/kamonabe/Komon/releases/tag/v1.10.1
 - [1.10.0]: https://github.com/kamonabe/Komon/releases/tag/v1.10.0

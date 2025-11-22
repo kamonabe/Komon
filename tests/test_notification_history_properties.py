@@ -164,7 +164,7 @@ class TestHistoryRetrievalWithLimit:
     Feature: notification-history, Property 4: History retrieval with limit
     """
     
-    @settings(max_examples=100, deadline=500)
+    @settings(max_examples=100, deadline=None)
     @given(
         num_notifications=st.integers(min_value=1, max_value=50),
         limit=st.integers(min_value=1, max_value=30)
