@@ -1,8 +1,9 @@
 ---
 title: Komon テスト戦略
 status: active
-version: 1.10.0
+version: 1.10.1
 created: 2025-11-21
+updated: 2025-11-22
 ---
 
 # Komon テスト戦略
@@ -27,30 +28,31 @@ Komonは**実用性と保守性**を重視したテスト戦略を採用して�
 
 ## テストカバレッジ目標
 
-### 現状（v1.10.0）
+### 現状（v1.10.1）
 
-- **総テスト数**: 46テスト
-- **カバー済みモジュール**: 5/9モジュール（約56%）
-- **品質スコア**: 85-90点（Linux環境特化）
+- **総テスト数**: 93テスト（+47テスト）
+- **カバー済みモジュール**: 9/9モジュール（100%）
+- **コードカバレッジ**: 95%（331行中17行のみ未テスト）
+- **品質スコア**: 95点（本番環境対応レベル）
 
 ### カバー済みモジュール
 
 | モジュール | テスト数 | カバレッジ | 備考 |
 |-----------|---------|-----------|------|
-| `analyzer.py` | 10 | 高 | 閾値判定、アラート生成 |
-| `log_analyzer.py` | 6 | 高 | ログ異常検知 |
-| `monitor.py` | 7 | 高 | リソース監視、例外処理 |
-| `history.py` | 9 | 高 | 履歴管理、ローテーション |
-| `settings_validator.py` | 14 | 高 | 設定検証（網羅的） |
+| `analyzer.py` | 10 | 100% | 閾値判定、アラート生成 |
+| `log_analyzer.py` | 6 | 100% | ログ異常検知 |
+| `monitor.py` | 7 | 100% | リソース監視、例外処理 |
+| `history.py` | 9 | 89% | 履歴管理、ローテーション |
+| `settings_validator.py` | 14 | 96% | 設定検証（網羅的） |
+| `notification.py` | 9 | 100% | Slack/メール通知（モック使用） |
+| `log_watcher.py` | 11 | 91% | ログファイル監視 |
+| `log_trends.py` | 17 | 93% | ログ傾向分析 |
+| `cli.py` | 10 | 96% | CLIエントリーポイント |
 
-### 未カバーモジュール（今後の課題）
+### 未カバー箇所（17行、5%）
 
-| モジュール | 優先度 | 理由 |
-|-----------|-------|------|
-| `notification.py` | 中 | 外部API依存（Slack/メール）、モック複雑 |
-| `log_watcher.py` | 中 | ファイルシステム依存 |
-| `log_trends.py` | 低 | log_analyzerで基本ロジックはカバー済み |
-| `cli.py` | 低 | エントリーポイント、統合テストで対応 |
+主にエラーハンドリングの例外パスや、実行頻度の低いエッジケースです。
+これらは実運用で発生する可能性が極めて低い箇所です。
 
 ## テストの種類
 
@@ -77,14 +79,17 @@ Komonは**実用性と保守性**を重視したテスト戦略を採用して�
 
 ```bash
 # 全テスト実行
-pytest
+python -m pytest tests/ -v
 
-# カバレッジ確認
-pytest --cov=komon --cov-report=html
+# カバレッジ確認（推奨）
+bash run_coverage.sh
 
 # 特定モジュールのみ
-pytest tests/test_monitor.py -v
+python -m pytest tests/test_monitor.py -v
 ```
+
+**注意**: CIFS/SMB共有環境では、`run_coverage.sh`を使用してください。
+SQLiteロック問題を回避するため、カバレッジデータをローカルディスクに保存します。
 
 ### CI/CD（今後導入予定）
 
@@ -163,7 +168,42 @@ Komonでは例外処理が重要なため、以下を重点的にテスト：
 - [pytest公式ドキュメント](https://docs.pytest.org/)
 - [pytest-cov](https://pytest-cov.readthedocs.io/)
 
+## カバレッジ測定の改善（v1.10.1）
+
+### 問題
+
+CIFS/SMB共有環境でカバレッジ測定時にSQLiteロックエラーが発生：
+```
+sqlite3.OperationalError: database is locked
+```
+
+### 原因
+
+- coverageツールは`.coverage`ファイルをSQLiteデータベースとして使用
+- CIFS/SMBではファイルロック機構が不安定
+- pytest-covとcoverage CLIの二重実行による競合
+
+### 解決策
+
+1. **カバレッジデータをローカルディスクに保存**
+   - `.coveragerc`で`data_file`を`/home/kamodev/.coverage_devproject101`に設定
+   - CIFS/SMBの不安定なロックを回避
+
+2. **pytest-covとcoverage CLIの役割を分離**
+   - `run_coverage.sh`でcoverage CLIのみを使用
+   - pytest実行時は`--no-cov`オプションで競合を回避
+
+3. **自動修正スクリプトの提供**
+   - `setup_coverage_fix.sh`: 設定を自動生成
+   - `check_coverage.py`: coverageツール不要の簡易チェック
+
 ## 更新履歴
+
+- 2025-11-22: v1.10.1更新
+  - テストカバレッジ95%達成（47% → 95%）
+  - 全9モジュールのテスト完了（93テスト）
+  - CIFS/SMB環境でのカバレッジ測定問題を解決
+  - カバレッジ測定ツール追加（run_coverage.sh等）
 
 - 2025-11-21: 初版作成（v1.10.0）
   - 46テスト実装完了

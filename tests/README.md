@@ -14,37 +14,56 @@ pip install -r requirements-dev.txt
 ### すべてのテストを実行
 
 ```bash
-pytest
+python -m pytest tests/ -v
 ```
 
 ### 特定のテストファイルを実行
 
 ```bash
-pytest tests/test_analyzer.py
+python -m pytest tests/test_analyzer.py -v
 ```
 
-### カバレッジ付きで実行
+### カバレッジ付きで実行（推奨）
 
 ```bash
-pytest --cov=komon --cov-report=html
+# カバレッジレポートを生成
+bash run_coverage.sh
+
+# HTMLレポートを確認
+# htmlcov/index.html をブラウザで開く
 ```
 
-カバレッジレポートは`htmlcov/index.html`で確認できます。
+**現在のカバレッジ: 95%** (93テスト、全てパス)
 
 ## テストの構成
 
-### 現在のテスト
+### 実装済みテスト（93テスト）
 
-- `test_analyzer.py` - 閾値判定とアラート生成のテスト
-- `test_log_analyzer.py` - ログ異常検知のテスト
+- `test_analyzer.py` - 閾値判定とアラート生成のテスト（10テスト）
+- `test_log_analyzer.py` - ログ異常検知のテスト（6テスト）
+- `test_monitor.py` - リソース監視機能のテスト（7テスト）
+- `test_history.py` - 履歴管理のテスト（9テスト）
+- `test_settings_validator.py` - 設定検証のテスト（14テスト）
+- `test_notification.py` - 通知機能のテスト（9テスト、モック使用）
+- `test_log_watcher.py` - ログ監視のテスト（11テスト）
+- `test_log_trends.py` - ログ傾向分析のテスト（17テスト）
+- `test_cli.py` - CLIエントリーポイントのテスト（10テスト）
 
-### 今後追加予定
+### カバレッジ
 
-- `test_monitor.py` - リソース監視機能のテスト
-- `test_notification.py` - 通知機能のテスト（モック使用）
-- `test_history.py` - 履歴管理のテスト
-- `test_log_watcher.py` - ログ監視のテスト
-- `test_log_trends.py` - ログ傾向分析のテスト
+| モジュール | カバレッジ |
+|-----------|----------|
+| `__init__.py` | 100% |
+| `analyzer.py` | 100% |
+| `log_analyzer.py` | 100% |
+| `monitor.py` | 100% |
+| `notification.py` | 100% |
+| `cli.py` | 96% |
+| `settings_validator.py` | 96% |
+| `log_trends.py` | 93% |
+| `log_watcher.py` | 91% |
+| `history.py` | 89% |
+| **全体** | **95%** |
 
 ## テストの種類
 
