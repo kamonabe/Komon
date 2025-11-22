@@ -93,6 +93,12 @@ python scripts/status.py
 
 # 対話型アドバイザー
 python scripts/advise.py
+
+# 通知履歴を表示
+python scripts/advise.py --history
+
+# 直近10件の通知履歴のみ表示
+python scripts/advise.py --history 10
 ```
 
 ---

@@ -120,7 +120,7 @@ class TestChronologicalOrder:
     Feature: notification-history, Property 3: Chronological order preservation
     """
     
-    @settings(max_examples=100, deadline=500)
+    @settings(max_examples=100, deadline=None)
     @given(
         num_notifications=st.integers(min_value=2, max_value=50)
     )

@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import json
 import os
@@ -10,6 +11,7 @@ import psutil
 from komon.analyzer import analyze_usage, load_thresholds
 from komon.monitor import collect_detailed_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
+from komon.notification_history import load_notification_history, format_notification
 
 SKIP_FILE = "komon_data/skip_advices.json"
 
@@ -213,7 +215,27 @@ def advise_log_trend(config):
             print(f"   - {log}")
         print("→ `logrotate` 設定や出力レベルの見直しを検討しましょう。")
 
-def run_advise():
+def advise_notification_history(limit: int = None):
+    """
+    通知履歴を表示します。
+    
+    Args:
+        limit: 表示する最大件数（Noneの場合は全件）
+    """
+    print("\n📜 通知履歴")
+    try:
+        history = load_notification_history(limit=limit)
+        if not history:
+            print("→ 通知履歴はありません。")
+            return
+        
+        for notification in history:
+            print(format_notification(notification))
+    except Exception as e:
+        print(f"⚠️ 通知履歴の読み込みに失敗: {e}")
+
+
+def run_advise(history_limit: int = None):
     try:
         with open("settings.yml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
@@ -241,9 +263,23 @@ def run_advise():
     advise_log_trend(config)
     advise_process_breakdown(usage)
     advise_process_details(thresholds)
+    
+    # 通知履歴を表示
+    advise_notification_history(limit=history_limit)
+
 
 def run():
-    run_advise()
+    parser = argparse.ArgumentParser(description="Komonの助言を表示します")
+    parser.add_argument(
+        "--history",
+        type=int,
+        metavar="N",
+        help="通知履歴を表示します。Nを指定すると直近N件のみ表示します。"
+    )
+    args = parser.parse_args()
+    
+    run_advise(history_limit=args.history)
+
 
 if __name__ == "__main__":
-    run_advise()
+    run()

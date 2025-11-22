@@ -6,6 +6,25 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.11.0] - 2025-11-22
+
+### Added
+
+- **通知履歴機能**
+  - ローカルファイルに通知履歴を自動保存（最大100件、自動ローテーション）
+  - `komon advise`コマンドで履歴を表示
+  - `komon advise --history N`で直近N件のみ表示
+  - Slack/メール通知が使えない環境でも検知情報を確認可能
+  - 通知履歴は`notifications/queue.json`に保存
+
+### Developer Improvements
+
+- **テストの追加**
+  - プロパティベーステスト（hypothesis）を導入
+  - 通知履歴機能のテスト18件を追加（プロパティテスト7件、統合テスト6件、ユニットテスト5件）
+  - 全111テストが成功
+  - 6つの正確性プロパティを検証
+
 ### Documentation
 
 - **プロジェクト管理構造の追加**
@@ -13,6 +32,9 @@ Komonの変更履歴を記録します。
   - `implementation-tasks.md`: future-ideasから実装タスクを分解・管理
   - README.md、PROJECT_STRUCTURE.md、docs/README.mdのディレクトリ構造を更新
   - 仕様管理（specs）とタスク管理（tasks）を明確に分離
+- **Spec駆動開発**
+  - `.kiro/specs/notification-history/`に要件定義、設計、タスクリストを作成
+  - EARS形式の要件定義、正確性プロパティを含む設計書を整備
 
 ## [1.10.1] - 2025-11-22
 
@@ -117,6 +139,7 @@ Komonの変更履歴を記録します。
 
 ## リンク
 
+- [1.11.0]: https://github.com/kamonabe/Komon/releases/tag/v1.11.0
 - [1.10.1]: https://github.com/kamonabe/Komon/releases/tag/v1.10.1
 - [1.10.0]: https://github.com/kamonabe/Komon/releases/tag/v1.10.0
 - [1.9.0]: https://github.com/kamonabe/Komon/releases/tag/v1.9.0
