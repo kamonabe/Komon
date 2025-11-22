@@ -45,6 +45,7 @@ htmlcov/
 .nox/
 test-results/
 test-report.html
+.hypothesis/
 
 # Komon固有 - 機密情報
 settings.yml
