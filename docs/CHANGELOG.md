@@ -6,6 +6,16 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.11.2] - 2025-11-22
+
+### Fixed
+
+- **ログ傾向分析のバグ修正**
+  - `log_trends.py`でデータ型エラーが発生していた問題を修正
+  - state_dataが辞書形式の場合に`last_line`を正しく取得するように改善
+  - `TypeError: unsupported operand type(s) for -: 'dict' and 'dict'` を解消
+  - 後方互換性を保ちつつ、数値形式にも対応
+
 ## [1.11.1] - 2025-11-22
 
 ### Fixed
@@ -148,6 +158,7 @@ Komonの変更履歴を記録します。
 
 ## リンク
 
+- [1.11.2]: https://github.com/kamonabe/Komon/releases/tag/v1.11.2
 - [1.11.1]: https://github.com/kamonabe/Komon/releases/tag/v1.11.1
 - [1.11.0]: https://github.com/kamonabe/Komon/releases/tag/v1.11.0
 - [1.10.1]: https://github.com/kamonabe/Komon/releases/tag/v1.10.1

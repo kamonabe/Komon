@@ -60,7 +60,12 @@ def analyze_log_trend(log_id: str, threshold_percent: int = 30) -> str:
     
     try:
         with open(state_file, "rb") as f:
-            current_lines = pickle.load(f)
+            state_data = pickle.load(f)
+            # 辞書形式の場合はlast_lineを取得、数値の場合はそのまま使用
+            if isinstance(state_data, dict):
+                current_lines = state_data.get("last_line", 0)
+            else:
+                current_lines = state_data
     except Exception:
         return f"📊 {log_id}: 状態ファイル読み込みエラー"
     
@@ -85,7 +90,13 @@ def analyze_log_trend(log_id: str, threshold_percent: int = 30) -> str:
         return f"📊 {log_id}: データ蓄積中（{len(history)}日分）"
     
     # 前日比
-    yesterday_lines = history[-2]["lines"]
+    yesterday_data = history[-2]["lines"]
+    # 辞書形式の場合はlast_lineを取得、数値の場合はそのまま使用
+    if isinstance(yesterday_data, dict):
+        yesterday_lines = yesterday_data.get("last_line", 0)
+    else:
+        yesterday_lines = yesterday_data
+    
     increase_rate = ((current_lines - yesterday_lines) / max(yesterday_lines, 1)) * 100
     
     if increase_rate > threshold_percent:
@@ -114,8 +125,20 @@ def detect_repeated_spikes(log_id: str, days: int = 3) -> bool:
     spike_count = 0
     for i in range(len(history) - days, len(history)):
         if i > 0:
-            prev_lines = history[i - 1]["lines"]
-            curr_lines = history[i]["lines"]
+            prev_data = history[i - 1]["lines"]
+            curr_data = history[i]["lines"]
+            
+            # 辞書形式の場合はlast_lineを取得、数値の場合はそのまま使用
+            if isinstance(prev_data, dict):
+                prev_lines = prev_data.get("last_line", 0)
+            else:
+                prev_lines = prev_data
+            
+            if isinstance(curr_data, dict):
+                curr_lines = curr_data.get("last_line", 0)
+            else:
+                curr_lines = curr_data
+            
             increase_rate = ((curr_lines - prev_lines) / max(prev_lines, 1)) * 100
             
             if increase_rate > 20:  # 20%以上の増加
