@@ -141,14 +141,22 @@ notifications:
 
 ```bash
 # リソース監視（5分おき）
-*/5 * * * * cd /path/to/Komon && python scripts/main.py >> log/main.log 2>&1
+*/5 * * * * cd /path/to/Komon && /usr/bin/python3 scripts/main.py >> log/main.log 2>&1
 
 # ログ監視（5分おき）
-*/5 * * * * cd /path/to/Komon && python scripts/main_log_monitor.py >> log/monitor.log 2>&1
+*/5 * * * * cd /path/to/Komon && /usr/bin/python3 scripts/main_log_monitor.py >> log/monitor.log 2>&1
 
 # ログ傾向分析（毎日3時）
-0 3 * * * cd /path/to/Komon && python scripts/main_log_trend.py >> log/trend.log 2>&1
+0 3 * * * cd /path/to/Komon && /usr/bin/python3 scripts/main_log_trend.py >> log/trend.log 2>&1
 ```
+
+**注意**: 環境によってPythonコマンドが異なる場合があります：
+- `/usr/bin/python3` (RHEL系、Ubuntu等)
+- `python3` (PATH設定済みの場合)
+- `python` (エイリアス設定済みの場合)
+- `venv/bin/python` (仮想環境を使用する場合)
+
+`which python3` コマンドで実際のパスを確認してください。
 
 ---
 

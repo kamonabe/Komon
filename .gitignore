@@ -56,6 +56,7 @@ settings.yml
 # Komon固有 - 実行時データ
 data/
 log/
+history/
 *.log
 
 # OS
