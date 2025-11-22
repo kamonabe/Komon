@@ -2,6 +2,110 @@
 
 このドキュメントでは、Komonの運用に関する情報を提供します。
 
+## 環境構築
+
+### Python環境の要件
+
+**推奨バージョン：**
+- Python 3.9以上（3.11で動作確認済み）
+- AlmaLinux 9 / RHEL系 / Ubuntu / Debian系
+
+### 仮想環境（venv）の使用
+
+システムPythonを汚さないため、仮想環境の使用を推奨します。
+
+#### 仮想環境の作成と有効化
+
+```bash
+# プロジェクトディレクトリに移動
+cd /path/to/komon
+
+# 仮想環境を作成
+python3 -m venv venv
+
+# 仮想環境を有効化
+source venv/bin/activate
+
+# 依存パッケージをインストール
+pip install -r requirements.txt
+
+# 開発用パッケージもインストールする場合
+pip install -r requirements-dev.txt
+```
+
+#### 仮想環境の確認
+
+```bash
+# 仮想環境が有効か確認
+which python
+# 出力例: /path/to/komon/venv/bin/python
+
+# Pythonバージョン確認
+python --version
+```
+
+#### 仮想環境の無効化
+
+```bash
+deactivate
+```
+
+### システムPythonを使う場合
+
+仮想環境を使わない場合は、システム全体にインストールします：
+
+```bash
+# システム全体にインストール
+sudo pip3 install -r requirements.txt
+
+# または、ユーザーローカルにインストール
+pip3 install --user -r requirements.txt
+```
+
+**注意：** システムPythonを使う場合、他のプロジェクトとの依存関係の競合に注意してください。
+
+### cron実行時の注意点
+
+仮想環境を使用している場合、cronから実行する際は仮想環境のPythonを明示的に指定します：
+
+```bash
+# 仮想環境のPythonを使用
+* * * * * cd /path/to/komon && /path/to/komon/venv/bin/python scripts/main.py >> log/main.log 2>&1
+
+# または、仮想環境を有効化してから実行
+* * * * * cd /path/to/komon && source venv/bin/activate && python scripts/main.py >> log/main.log 2>&1
+```
+
+システムPythonを使用している場合：
+
+```bash
+# システムPythonを使用
+* * * * * cd /path/to/komon && python3 scripts/main.py >> log/main.log 2>&1
+```
+
+### 依存パッケージの確認
+
+```bash
+# インストール済みパッケージの確認
+pip list
+
+# 必要なパッケージが揃っているか確認
+pip check
+
+# requirements.txtとの差分確認
+pip freeze | diff - requirements.txt
+```
+
+### パッケージの更新
+
+```bash
+# 依存パッケージを最新化
+pip install --upgrade -r requirements.txt
+
+# 特定のパッケージのみ更新
+pip install --upgrade psutil
+```
+
 ## ログ管理
 
 ### ログファイルの種類
