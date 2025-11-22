@@ -26,6 +26,7 @@ Komonのコアロジックを含むPythonパッケージです。
 - `monitor.py`: リソース監視機能
 - `analyzer.py`: データ分析・閾値判定
 - `notification.py`: 通知機能（Slack/メール）
+- `notification_history.py`: 通知履歴管理
 - `history.py`: 履歴管理
 - `log_watcher.py`: ログファイル監視
 - `log_analyzer.py`: ログ異常検知
@@ -65,15 +66,27 @@ Komonのコアロジックを含むPythonパッケージです。
 
 ### tests/
 
-テストコードを格納します（今後実装予定）。
+テストコードを格納します。
 
 ```
 tests/
-├── test_monitor.py
-├── test_analyzer.py
-├── test_notification.py
-└── ...
+├── conftest.py                              # pytest設定
+├── test_monitor.py                          # リソース監視テスト
+├── test_analyzer.py                         # 分析機能テスト
+├── test_notification.py                     # 通知機能テスト
+├── test_notification_history_properties.py  # 通知履歴プロパティテスト
+├── test_notification_integration.py         # 通知統合テスト
+├── test_history.py                          # 履歴管理テスト
+├── test_log_watcher.py                      # ログ監視テスト
+├── test_log_analyzer.py                     # ログ分析テスト
+├── test_log_trends.py                       # ログ傾向分析テスト
+├── test_settings_validator.py               # 設定検証テスト
+├── test_cli.py                              # CLIテスト
+├── test_advise_command.py                   # adviseコマンドテスト
+└── README.md                                # テストドキュメント
 ```
+
+**テストカバレッジ: 95%**（111テスト、全てパス）
 
 ### data/
 
@@ -113,10 +126,17 @@ Kiro IDE用の設定とspecファイルを格納します。
 ├── specs/                      # 仕様書
 │   ├── komon-system.md         # システム仕様書
 │   ├── future-ideas.md         # 将来の改善案
-│   └── testing-strategy.md     # テスト戦略
+│   ├── testing-strategy.md     # テスト戦略
+│   └── notification-history/   # 通知履歴機能spec
+│       ├── requirements.md
+│       ├── design.md
+│       └── tasks.md
 ├── tasks/                      # タスク管理
 │   └── implementation-tasks.md # 実装タスクリスト
-└── steering/                   # ステアリングルール（今後追加予定）
+└── steering/                   # ステアリングルール
+    ├── task-management.md
+    ├── development-workflow.md
+    └── environment-and-communication.md
 ```
 
 ## ファイル配置の原則

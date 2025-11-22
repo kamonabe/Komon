@@ -16,6 +16,7 @@ Komon/
 │   ├── monitor.py          # リソース監視
 │   ├── analyzer.py         # 閾値判定・分析
 │   ├── notification.py     # 通知機能
+│   ├── notification_history.py  # 通知履歴管理
 │   ├── history.py          # 履歴管理
 │   ├── log_watcher.py      # ログ監視
 │   ├── log_analyzer.py     # ログ分析
@@ -37,7 +38,7 @@ Komon/
 │   ├── README.md           # 詳細ドキュメント
 │   ├── CHANGELOG.md        # 変更履歴
 │   └── SECURITY.md         # セキュリティ情報
-├── tests/                  # テストコード（今後追加予定）
+├── tests/                  # テストコード（95%カバレッジ）
 ├── data/                   # データ保存先（自動生成）
 │   ├── usage_history/      # リソース使用履歴
 │   └── logstats/           # ログ統計データ
@@ -45,9 +46,14 @@ Komon/
 │   ├── specs/              # 仕様書
 │   │   ├── komon-system.md     # システム仕様
 │   │   ├── future-ideas.md     # 将来の改善案
-│   │   └── testing-strategy.md # テスト戦略
-│   └── tasks/              # タスク管理
-│       └── implementation-tasks.md # 実装タスクリスト
+│   │   ├── testing-strategy.md # テスト戦略
+│   │   └── notification-history/ # 通知履歴機能spec
+│   ├── tasks/              # タスク管理
+│   │   └── implementation-tasks.md # 実装タスクリスト
+│   └── steering/           # 開発ルール
+│       ├── task-management.md
+│       ├── development-workflow.md
+│       └── environment-and-communication.md
 ├── requirements.txt        # Python依存パッケージ
 ├── setup.py                # インストール設定
 ├── LICENSE                 # ライセンス
@@ -174,7 +180,7 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**テストカバレッジ: 95%** (93テスト、全てパス)
+**テストカバレッジ: 95%** (111テスト、全てパス)
 
 詳細は [tests/README.md](tests/README.md) を参照してください。
 
