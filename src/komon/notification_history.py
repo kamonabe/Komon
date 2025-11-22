@@ -11,7 +11,7 @@ from typing import Optional
 
 
 MAX_QUEUE_SIZE = 100
-DEFAULT_QUEUE_FILE = "notifications/queue.json"
+DEFAULT_QUEUE_FILE = "data/notifications/queue.json"
 
 
 def save_notification(

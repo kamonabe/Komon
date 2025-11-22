@@ -31,6 +31,8 @@ Komon/
 │   ├── initial.py          # 初期設定
 │   ├── status.py           # ステータス表示
 │   ├── komon_guide.py      # ガイドメニュー
+│   ├── check_coverage.py   # カバレッジ分析
+│   ├── setup_coverage_fix.sh # カバレッジ設定修正
 │   └── init.sh             # 初期化スクリプト
 ├── config/                 # 設定ファイル
 │   └── settings.yml.sample # 設定サンプル
@@ -41,6 +43,8 @@ Komon/
 ├── tests/                  # テストコード（95%カバレッジ）
 ├── data/                   # データ保存先（自動生成）
 │   ├── usage_history/      # リソース使用履歴
+│   ├── notifications/      # 通知履歴
+│   ├── komon_data/         # Komon内部データ
 │   └── logstats/           # ログ統計データ
 ├── .kiro/                  # Kiro IDE設定
 │   ├── specs/              # 仕様書

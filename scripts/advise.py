@@ -13,7 +13,7 @@ from komon.monitor import collect_detailed_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 from komon.notification_history import load_notification_history, format_notification
 
-SKIP_FILE = "komon_data/skip_advices.json"
+SKIP_FILE = "data/komon_data/skip_advices.json"
 
 def ask_yes_no(question: str) -> bool:
     while True:

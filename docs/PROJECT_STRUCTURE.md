@@ -45,6 +45,8 @@ Komonのコアロジックを含むPythonパッケージです。
 - `initial.py`: 初期設定ウィザード
 - `status.py`: ステータス表示
 - `komon_guide.py`: ガイドメニュー
+- `check_coverage.py`: カバレッジ分析ツール
+- `setup_coverage_fix.sh`: カバレッジ設定修正スクリプト
 - `init.sh`: 初期化シェルスクリプト
 
 ### config/
@@ -97,6 +99,10 @@ data/
 ├── usage_history/          # リソース使用履歴（CSV）
 │   ├── usage_20251121_120000.csv
 │   └── ...
+├── notifications/          # 通知履歴（JSON）
+│   └── queue.json
+├── komon_data/             # Komon内部データ
+│   └── skip_advices.json   # adviseコマンドのスキップ記録
 └── logstats/               # ログ統計データ
     ├── var_log_messages.pkl
     ├── systemd_journal.pkl
