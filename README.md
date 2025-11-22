@@ -83,12 +83,15 @@ Komon/
 │   ├── log_watcher.py      # ログ監視
 │   ├── log_analyzer.py     # ログ分析
 │   ├── log_trends.py       # ログ傾向分析
+│   ├── weekly_data.py      # 週次データ収集
+│   ├── report_formatter.py # レポートフォーマット
 │   ├── settings_validator.py  # 設定検証
 │   └── cli.py              # CLIエントリーポイント
 ├── scripts/                # 実行スクリプト
 │   ├── main.py             # リソース監視メイン
 │   ├── main_log_monitor.py # ログ急増監視
 │   ├── main_log_trend.py   # ログ傾向分析
+│   ├── weekly_report.py    # 週次健全性レポート
 │   ├── advise.py           # 対話型アドバイザー
 │   ├── initial.py          # 初期設定
 │   ├── status.py           # ステータス表示
@@ -171,6 +174,9 @@ python scripts/advise.py --history
 
 # 直近10件の通知履歴のみ表示
 python scripts/advise.py --history 10
+
+# 週次健全性レポート
+python scripts/weekly_report.py
 ```
 
 ---
@@ -210,6 +216,9 @@ notifications:
 
 # ログ傾向分析（毎日3時）
 0 3 * * * cd /path/to/Komon && /usr/bin/python3 scripts/main_log_trend.py >> log/trend.log 2>&1
+
+# 週次健全性レポート（毎週月曜9時）
+0 9 * * 1 cd /path/to/Komon && /usr/bin/python3 scripts/weekly_report.py >> log/weekly_report.log 2>&1
 ```
 
 **注意**: 環境によってPythonコマンドが異なる場合があります：

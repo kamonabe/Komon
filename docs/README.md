@@ -26,6 +26,7 @@
 | ✅ 使用履歴にプロセス別CPU情報を追加        | v1.5.0で追加         | 上位5件のプロセス名＋使用率を記録・表示 |
 | ✅ OSパッチ提案に具体コマンドを追加         | v1.6.0で改善         | `sudo dnf update` などの提案付きで実行方法が明確に |
 | ✅ 高負荷プロセスの詳細表示              | v1.7.0で追加         | `proc_cpu` 閾値に基づき、実行中プロセスの詳細を表示 |
+| ✅ 週次健全性レポート                    | v1.12.0で追加        | 毎週定期的にシステム状態をSlack/メールで送信 |
 
 ---
 
@@ -77,6 +78,15 @@ log_monitor_targets:  # 監視対象のログファイル（true: 監視する /
 log_analysis:
   anomaly_threshold_percent: 30     # 急増とみなす割合（前日比）
   baseline_learning_rate: 0.1       # ベースライン更新の反映率（0〜1）
+
+weekly_report:  # 週次健全性レポート設定（v1.12.0で追加）
+  enabled: true  # 週次レポートを有効にする場合は true
+  day_of_week: 1  # レポート送信曜日（0=日曜, 1=月曜, 2=火曜, ..., 6=土曜）
+  hour: 9         # レポート送信時刻（時）
+  minute: 0       # レポート送信時刻（分）
+  notifications:
+    slack: true   # Slack通知を有効化
+    email: false  # メール通知を無効化
 ```
 
 ---
@@ -163,14 +173,28 @@ Komon/
 | `main.py`              | 5分おき    | リソース使用率の監視     |
 | `main_log_monitor.py`  | 5〜10分おき | ログ急増（行数）の検知   |
 | `main_log_trend.py`    | 1日1回     | ログ傾向の中長期比較     |
+| `weekly_report.py`     | 週1回      | 週次健全性レポート送信（v1.12.0で追加） |
 
 例：
 
 ```bash
-*/5 * * * * cd /your/path/to/Komon && /usr/bin/python3 main.py >> log/cron_main.log 2>&1
-*/5 * * * * cd /your/path/to/Komon && /usr/bin/python3 main_log_monitor.py >> log/cron_monitor.log 2>&1
-0 3 * * * cd /your/path/to/Komon && /usr/bin/python3 main_log_trend.py >> log/cron_trend.log 2>&1
+# リソース監視（5分おき）
+*/5 * * * * cd /your/path/to/Komon && /usr/bin/python3 scripts/main.py >> log/cron_main.log 2>&1
+
+# ログ監視（5分おき）
+*/5 * * * * cd /your/path/to/Komon && /usr/bin/python3 scripts/main_log_monitor.py >> log/cron_monitor.log 2>&1
+
+# ログ傾向分析（毎日3時）
+0 3 * * * cd /your/path/to/Komon && /usr/bin/python3 scripts/main_log_trend.py >> log/cron_trend.log 2>&1
+
+# 週次健全性レポート（毎週月曜9時）
+0 9 * * 1 cd /your/path/to/Komon && /usr/bin/python3 scripts/weekly_report.py >> log/weekly_report.log 2>&1
 ```
+
+**注意**: 
+- パスは実際のKomonインストール先に合わせて変更してください
+- `scripts/`ディレクトリを含めたパスを指定してください
+- 曜日指定: `0`=日曜, `1`=月曜, `2`=火曜, ..., `6`=土曜
 
 ## ⚙️ 動作環境と依存モジュール
 

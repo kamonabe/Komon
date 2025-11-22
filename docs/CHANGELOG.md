@@ -6,6 +6,47 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.12.0] - 2025-11-22
+
+### Added
+
+- **週次健全性レポート機能**
+  - 毎週定期的にシステムの健全性レポートをSlack/メールで送信
+  - CPU/メモリ/ディスク使用率の現状と先週比を表示
+  - 過去7日間の警戒情報サマリーを含む
+  - トレンド分析（安定/増加傾向/減少傾向）を表示
+  - SSHログインせずにシステム状態を確認可能
+  - 年末年始などの長期休暇前の健全性確認に最適
+
+### New Modules
+
+- `src/komon/weekly_data.py` - 週次データ収集と分析
+- `src/komon/report_formatter.py` - レポートメッセージフォーマット
+- `scripts/weekly_report.py` - 週次レポート生成スクリプト
+
+### Configuration
+
+- `settings.yml`に`weekly_report`セクションを追加
+  - `enabled`: 週次レポートの有効/無効
+  - `day_of_week`: レポート送信曜日（0=日曜, 1=月曜, ...）
+  - `hour`, `minute`: レポート送信時刻
+  - `notifications`: Slack/メール通知の個別設定
+
+### Developer Improvements
+
+- **テストの追加**
+  - プロパティベーステスト6件（hypothesis）
+  - ユニットテスト26件
+  - 統合テスト6件
+  - 全150テストが成功
+  - カバレッジ92%を維持
+
+### Documentation
+
+- README.mdに週次レポートの使い方を追加
+- cron設定例を追加（毎週月曜9時）
+- プロジェクト構造に新モジュールを追加
+
 ## [1.11.2] - 2025-11-22
 
 ### Fixed
