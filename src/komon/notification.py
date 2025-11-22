@@ -12,13 +12,14 @@ from email.mime.multipart import MIMEMultipart
 import requests
 
 
-def send_slack_alert(message: str, webhook_url: str) -> bool:
+def send_slack_alert(message: str, webhook_url: str, metadata: dict = None) -> bool:
     """
-    Slackに通知を送信します。
+    Slackに通知を送信し、履歴に保存します。
     
     Args:
         message: 送信するメッセージ
         webhook_url: Slack Incoming Webhook URL
+        metadata: 通知メタデータ（metric_type, metric_value等）
         
     Returns:
         bool: 送信成功時True
@@ -29,22 +30,37 @@ def send_slack_alert(message: str, webhook_url: str) -> bool:
         
         if response.status_code == 200:
             print("✅ Slack通知を送信しました")
-            return True
+            success = True
         else:
             print(f"⚠️ Slack通知の送信に失敗しました: {response.status_code}")
-            return False
+            success = False
     except Exception as e:
         print(f"❌ Slack通知エラー: {e}")
-        return False
+        success = False
+    
+    # 履歴に保存（失敗しても通知は継続）
+    if metadata:
+        try:
+            from komon.notification_history import save_notification
+            save_notification(
+                metric_type=metadata.get("metric_type", "unknown"),
+                metric_value=metadata.get("metric_value", 0),
+                message=message
+            )
+        except Exception as e:
+            print(f"⚠️ 通知履歴の保存に失敗: {e}")
+    
+    return success
 
 
-def send_email_alert(message: str, email_config: dict) -> bool:
+def send_email_alert(message: str, email_config: dict, metadata: dict = None) -> bool:
     """
-    メールで通知を送信します。
+    メールで通知を送信し、履歴に保存します。
     
     Args:
         message: 送信するメッセージ
         email_config: メール設定（smtp_server, smtp_port, from, to, username, password等）
+        metadata: 通知メタデータ（metric_type, metric_value等）
         
     Returns:
         bool: 送信成功時True
@@ -78,8 +94,22 @@ def send_email_alert(message: str, email_config: dict) -> bool:
             server.send_message(msg)
         
         print("✅ メール通知を送信しました")
-        return True
+        success = True
         
     except Exception as e:
         print(f"❌ メール通知エラー: {e}")
-        return False
+        success = False
+    
+    # 履歴に保存（失敗しても通知は継続）
+    if metadata:
+        try:
+            from komon.notification_history import save_notification
+            save_notification(
+                metric_type=metadata.get("metric_type", "unknown"),
+                metric_value=metadata.get("metric_value", 0),
+                message=message
+            )
+        except Exception as e:
+            print(f"⚠️ 通知履歴の保存に失敗: {e}")
+    
+    return success

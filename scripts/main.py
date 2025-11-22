@@ -20,12 +20,13 @@ def load_config(path: str = "settings.yml") -> dict:
         print(f"❌ settings.yml の読み込みに失敗しました: {e}")
         return {}
 
-def handle_alerts(alerts: list, config: dict):
+def handle_alerts(alerts: list, config: dict, usage: dict):
     """
     警戒情報が存在する場合にSlackやメールで通知を送信する。
     Args:
         alerts (list): 警戒メッセージのリスト
         config (dict): 設定ファイルの内容
+        usage (dict): リソース使用率データ
     """
     print("⚠️ 警戒情報:")
     for alert in alerts:
@@ -33,12 +34,41 @@ def handle_alerts(alerts: list, config: dict):
 
     message = "⚠️ Komon 警戒情報:\n" + "\n".join(f"- {a}" for a in alerts)
     notification_cfg = config.get("notifications", {})
+    
+    # メタデータを作成（最も高い使用率のメトリクスを記録）
+    metadata = _extract_metadata_from_usage(usage)
 
     if notification_cfg.get("slack", {}).get("enabled"):
-        send_slack_alert(message, notification_cfg["slack"].get("webhook_url", ""))
+        send_slack_alert(message, notification_cfg["slack"].get("webhook_url", ""), metadata)
 
     if notification_cfg.get("email", {}).get("enabled"):
-        send_email_alert(message, notification_cfg["email"])
+        send_email_alert(message, notification_cfg["email"], metadata)
+
+
+def _extract_metadata_from_usage(usage: dict) -> dict:
+    """
+    使用率データから通知メタデータを抽出します。
+    最も使用率が高いメトリクスを選択します。
+    
+    Args:
+        usage: リソース使用率データ
+        
+    Returns:
+        dict: メタデータ（metric_type, metric_value）
+    """
+    metrics = [
+        ("cpu", usage.get("cpu", 0)),
+        ("mem", usage.get("mem", 0)),
+        ("disk", usage.get("disk", 0))
+    ]
+    
+    # 最も使用率が高いメトリクスを選択
+    metric_type, metric_value = max(metrics, key=lambda x: x[1])
+    
+    return {
+        "metric_type": metric_type,
+        "metric_value": metric_value
+    }
 
 def main():
     if not validate_settings("settings.yml"):
@@ -57,7 +87,7 @@ def main():
     save_current_usage(usage)
 
     if alerts:
-        handle_alerts(alerts, config)
+        handle_alerts(alerts, config, usage)
     else:
         print("✅ 警戒情報はありません。")
 

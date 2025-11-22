@@ -28,14 +28,21 @@ def main():
     if alerts:
         message = "⚠️ Komon ログ警戒情報:\n" + "\n".join(f"- {a}" for a in alerts)
         notification_cfg = config.get("notifications", {})
+        
+        # ログ監視のメタデータ
+        total_lines = sum(diff_results.values())
+        metadata = {
+            "metric_type": "log",
+            "metric_value": float(total_lines)
+        }
 
         if notification_cfg.get("slack", {}).get("enabled"):
             webhook_url = notification_cfg["slack"]["webhook_url"]
-            send_slack_alert(message, webhook_url)
+            send_slack_alert(message, webhook_url, metadata)
 
         if notification_cfg.get("email", {}).get("enabled"):
             email_cfg = notification_cfg["email"]
-            send_email_alert(message, email_cfg)
+            send_email_alert(message, email_cfg, metadata)
 
     else:
         print("✅ ログに異常はありません。")

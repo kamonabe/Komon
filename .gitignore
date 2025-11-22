@@ -58,6 +58,7 @@ data/
 log/
 history/
 komon_data/
+notifications/
 *.log
 
 # OS
