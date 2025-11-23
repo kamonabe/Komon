@@ -27,43 +27,79 @@ Komonを安全に運用するための推奨事項です。
 ### 1. 認証情報の管理
 
 #### Slack Webhook URL
-**❌ 避けるべき方法**:
-```yaml
-# settings.yml に直接記載（Gitにコミットされるリスク）
-notifications:
-  slack:
-    webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
-```
 
-**✅ 推奨方法**:
+Komonでは、Webhook URLの設定方法を2つから選べます：
+
+**方法A: 環境変数を使う（推奨）**
+
+`settings.yml`に`env:`で始まる値を書くと、環境変数から読み込みます：
+
 ```yaml
 # settings.yml
 notifications:
   slack:
-    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"  # ← env:で始まる
 ```
 
 ```bash
 # 環境変数で設定
 export KOMON_SLACK_WEBHOOK="https://hooks.slack.com/services/xxxx/yyyy/zzzz"
 
-# または .bashrc / .bash_profile に追加
+# または .bashrc / .bash_profile に追加して永続化
 echo 'export KOMON_SLACK_WEBHOOK="https://hooks.slack.com/services/xxxx/yyyy/zzzz"' >> ~/.bashrc
 ```
 
+**メリット**:
+- ✅ 設定ファイルに機密情報を書かない
+- ✅ Gitにコミットしても安全
+- ✅ 環境ごとに異なる値を使える（dev/staging/production）
+
+---
+
+**方法B: 直接記載する（シンプル）**
+
+`settings.yml`に直接URLを書くこともできます：
+
+```yaml
+# settings.yml
+notifications:
+  slack:
+    webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"  # ← 直接記載
+```
+
+**メリット**:
+- ✅ シンプルで分かりやすい
+- ✅ 環境変数の設定が不要
+
+**注意点**:
+- ⚠️ `.gitignore`に`settings.yml`を追加して、Gitにコミットしないようにする
+- ⚠️ 個人開発や、設定ファイルを共有しない環境向け
+
+---
+
+**どちらを選ぶべき？**
+
+- **チーム開発・本番環境**: 方法A（環境変数）を推奨
+- **個人開発・開発環境**: 方法B（直接記載）でもOK（ただし`.gitignore`で保護）
+
 #### メールパスワード
-**✅ 必ず環境変数を使用**:
+
+メールパスワードも同様に、環境変数または直接記載が選べます：
+
+**推奨: 環境変数を使用**
 ```yaml
 # settings.yml
 notifications:
   email:
-    password: "env:KOMON_EMAIL_PASSWORD"
+    password: "env:KOMON_EMAIL_PASSWORD"  # ← env:で始まる
 ```
 
 ```bash
 # 環境変数で設定
 export KOMON_EMAIL_PASSWORD="your_password_here"
 ```
+
+**仕組み**: `env:`で始まる値は、自動的に環境変数から読み込まれます。
 
 ### 2. ファイルパーミッション
 
