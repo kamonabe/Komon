@@ -5,9 +5,25 @@ profile:
   usage: "dev"  # "production" または "dev"。本番環境では一部の助言が変化します。
 
 thresholds:  # リソース使用率に対する警告の閾値（％）
-  cpu: 85    # CPU 使用率がこの値を超えると警告します
-  mem: 80    # メモリ使用率の閾値
-  disk: 80   # ディスク使用率の閾値
+  # 3段階閾値形式（推奨）
+  cpu:
+    warning: 70   # 💛 警告: そろそろ気にかけておいた方がいいかも
+    alert: 85     # 🧡 警戒: ちょっと気になる水準です
+    critical: 95  # ❤️ 緊急: かなり逼迫しています！
+  mem:
+    warning: 70
+    alert: 80
+    critical: 90
+  disk:
+    warning: 70
+    alert: 80
+    critical: 90
+  
+  # 従来の単一値形式も引き続きサポート（後方互換性）
+  # cpu: 85
+  # mem: 80
+  # disk: 80
+  
   proc_cpu: 20  # ← 各プロセスの高負荷判定に使う閾値
 
 notifications:

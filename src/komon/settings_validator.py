@@ -1,83 +1,180 @@
 """
-設定ファイル検証モジュール
+設定バリデータモジュール
 
-settings.ymlの妥当性をチェックします。
+閾値設定の検証と正規化を行います。
 """
 
-import os
-import yaml
+from enum import Enum
+from typing import Dict, Union
 
 
-def validate_settings(settings_path: str = "settings.yml") -> bool:
+class ThresholdLevel(Enum):
+    """閾値レベルの列挙型"""
+    NORMAL = "normal"      # 正常
+    WARNING = "warning"    # 警告（黄色）
+    ALERT = "alert"        # 警戒（オレンジ）
+    CRITICAL = "critical"  # 緊急（赤）
+
+
+class ValidationError(Exception):
+    """設定検証エラー"""
+    pass
+
+
+def validate_threshold_config(config: dict) -> dict:
     """
-    設定ファイルの妥当性を検証します。
+    閾値設定を検証し、正規化する。
+    
+    従来の単一値形式と新しい3段階形式の両方をサポート。
+    単一値の場合は、3段階形式に正規化する。
     
     Args:
-        settings_path: 設定ファイルのパス
+        config: 設定ファイルの内容
         
     Returns:
-        bool: 検証成功時True
+        dict: 正規化された3段階閾値設定
+        
+    Raises:
+        ValidationError: 設定が無効な場合
     """
-    if not os.path.exists(settings_path):
-        _log_error(f"設定ファイルが見つかりません: {settings_path}")
-        return False
+    thresholds = config.get("thresholds", {})
+    normalized = {}
     
-    try:
-        with open(settings_path, "r", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
-    except Exception as e:
-        _log_error(f"YAML読み込みエラー: {e}")
-        return False
+    for metric in ["cpu", "mem", "disk"]:
+        threshold_value = thresholds.get(metric)
+        
+        if threshold_value is None:
+            # デフォルト値を使用
+            normalized[metric] = _get_default_thresholds(metric)
+        elif isinstance(threshold_value, dict):
+            # 3段階形式
+            normalized[metric] = _validate_three_tier(metric, threshold_value)
+        elif isinstance(threshold_value, (int, float)):
+            # 従来の単一値形式 → 3段階に正規化
+            normalized[metric] = _normalize_single_threshold(threshold_value)
+        else:
+            raise ValidationError(
+                f"閾値 '{metric}' の形式が無効です。数値または辞書形式で指定してください。"
+            )
     
-    # 必須項目のチェック
-    if "thresholds" not in config:
-        _log_error("thresholds セクションが見つかりません")
-        return False
+    return normalized
+
+
+def _get_default_thresholds(metric: str) -> dict:
+    """
+    デフォルトの3段階閾値を返す。
     
-    thresholds = config["thresholds"]
-    for key in ["cpu", "mem", "disk"]:
+    Args:
+        metric: メトリクス名（cpu, mem, disk）
+        
+    Returns:
+        dict: デフォルトの3段階閾値
+    """
+    defaults = {
+        "cpu": {"warning": 70, "alert": 85, "critical": 95},
+        "mem": {"warning": 70, "alert": 80, "critical": 90},
+        "disk": {"warning": 70, "alert": 80, "critical": 90},
+    }
+    return defaults.get(metric, {"warning": 70, "alert": 80, "critical": 90})
+
+
+def _normalize_single_threshold(value: Union[int, float]) -> dict:
+    """
+    単一閾値を3段階形式に正規化する。
+    
+    従来の単一閾値Tを、以下のように変換：
+    - warning: T - 10
+    - alert: T
+    - critical: T + 10
+    
+    Args:
+        value: 単一閾値
+        
+    Returns:
+        dict: 3段階閾値
+    """
+    return {
+        "warning": max(0, value - 10),
+        "alert": value,
+        "critical": min(100, value + 10)
+    }
+
+
+def _validate_three_tier(metric: str, thresholds: dict) -> dict:
+    """
+    3段階閾値の妥当性を検証する。
+    
+    Args:
+        metric: メトリクス名
+        thresholds: 3段階閾値の辞書
+        
+    Returns:
+        dict: 検証済みの3段階閾値
+        
+    Raises:
+        ValidationError: 閾値が無効な場合
+    """
+    required_keys = ["warning", "alert", "critical"]
+    
+    # 必須キーの存在確認
+    for key in required_keys:
         if key not in thresholds:
-            _log_error(f"thresholds.{key} が設定されていません")
-            return False
-        
-        value = thresholds[key]
-        if not isinstance(value, (int, float)) or value < 0 or value > 100:
-            _log_error(f"thresholds.{key} の値が不正です: {value}")
-            return False
+            raise ValidationError(
+                f"閾値 '{metric}' に '{key}' が指定されていません。"
+            )
     
-    # 通知設定のチェック
-    if "notifications" in config:
-        notifications = config["notifications"]
-        
-        if "slack" in notifications:
-            slack = notifications["slack"]
-            if slack.get("enabled") and not slack.get("webhook_url"):
-                _log_error("Slack通知が有効ですが、webhook_urlが設定されていません")
-                return False
-        
-        if "email" in notifications:
-            email = notifications["email"]
-            if email.get("enabled"):
-                required_fields = ["smtp_server", "from", "to"]
-                for field in required_fields:
-                    if not email.get(field):
-                        _log_error(f"メール通知が有効ですが、{field}が設定されていません")
-                        return False
+    warning = thresholds["warning"]
+    alert = thresholds["alert"]
+    critical = thresholds["critical"]
     
-    return True
+    # 数値型の確認
+    for key, value in [("warning", warning), ("alert", alert), ("critical", critical)]:
+        if not isinstance(value, (int, float)):
+            raise ValidationError(
+                f"閾値 '{metric}.{key}' は数値で指定してください（現在: {type(value).__name__}）。"
+            )
+    
+    # 範囲の確認（0-200: CPUバーストを考慮）
+    for key, value in [("warning", warning), ("alert", alert), ("critical", critical)]:
+        if not (0 <= value <= 200):
+            raise ValidationError(
+                f"閾値 '{metric}.{key}' は 0-200 の範囲で指定してください（現在: {value}）。"
+            )
+    
+    # 順序の確認
+    if not (warning < alert < critical):
+        raise ValidationError(
+            f"閾値 '{metric}' の順序が無効です。warning < alert < critical である必要があります。\n"
+            f"現在: warning={warning}, alert={alert}, critical={critical}"
+        )
+    
+    return {
+        "warning": warning,
+        "alert": alert,
+        "critical": critical
+    }
 
 
-def _log_error(message: str):
-    """エラーログを記録"""
-    log_dir = "log"
-    os.makedirs(log_dir, exist_ok=True)
+def determine_threshold_level(value: float, thresholds: dict) -> ThresholdLevel:
+    """
+    値と3段階閾値に基づいて閾値レベルを判定する。
     
-    try:
-        with open(f"{log_dir}/komon_error.log", "a", encoding="utf-8") as f:
-            from datetime import datetime
-            timestamp = datetime.now().isoformat()
-            f.write(f"[{timestamp}] {message}\n")
-    except Exception:
-        pass
+    Args:
+        value: 判定対象の値
+        thresholds: 3段階閾値の辞書（warning, alert, critical）
+        
+    Returns:
+        ThresholdLevel: 判定されたレベル
+    """
+    if value < 0:
+        # 負の値は正常として扱う
+        return ThresholdLevel.NORMAL
     
-    print(f"❌ {message}")
+    if value >= thresholds["critical"]:
+        return ThresholdLevel.CRITICAL
+    elif value >= thresholds["alert"]:
+        return ThresholdLevel.ALERT
+    elif value >= thresholds["warning"]:
+        return ThresholdLevel.WARNING
+    else:
+        return ThresholdLevel.NORMAL

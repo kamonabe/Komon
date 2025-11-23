@@ -187,11 +187,24 @@ python scripts/weekly_report.py
 
 サンプルファイル: `config/settings.yml.sample`
 
+### 3段階閾値設定（推奨）
+
+v1.13.0から、リソース使用率の閾値を3段階（警告/警戒/緊急）で設定できるようになりました。
+
 ```yaml
 thresholds:
-  cpu: 85
-  mem: 80
-  disk: 80
+  cpu:
+    warning: 70   # 💛 警告: そろそろ気にかけておいた方がいいかも
+    alert: 85     # 🧡 警戒: ちょっと気になる水準です
+    critical: 95  # ❤️ 緊急: かなり逼迫しています！
+  mem:
+    warning: 70
+    alert: 80
+    critical: 90
+  disk:
+    warning: 70
+    alert: 80
+    critical: 90
 
 notifications:
   slack:
@@ -200,6 +213,28 @@ notifications:
   email:
     enabled: false
 ```
+
+### 従来の単一閾値設定（後方互換性あり）
+
+従来の単一値形式も引き続きサポートされています。
+
+```yaml
+thresholds:
+  cpu: 85
+  mem: 80
+  disk: 80
+```
+
+単一値を指定した場合、自動的に3段階形式に変換されます：
+- 警告: 閾値 - 10
+- 警戒: 閾値
+- 緊急: 閾値 + 10
+
+### 3段階閾値のメリット
+
+- **早期警戒**: 70%で警告、80%で警戒、90%で緊急と段階的に通知
+- **適切な対応**: レベルに応じて対応の緊急度を判断できる
+- **オオカミ少年化の防止**: 段階的な表現で通知疲れを軽減
 
 詳細は [docs/README.md](docs/README.md) を参照してください。
 
