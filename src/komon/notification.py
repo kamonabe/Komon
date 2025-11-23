@@ -18,13 +18,21 @@ def send_slack_alert(message: str, webhook_url: str, metadata: dict = None) -> b
     
     Args:
         message: 送信するメッセージ
-        webhook_url: Slack Incoming Webhook URL
+        webhook_url: Slack Incoming Webhook URL（env:で始まる場合は環境変数から読み込み）
         metadata: 通知メタデータ（metric_type, metric_value等）
         
     Returns:
         bool: 送信成功時True
     """
     try:
+        # 環境変数からWebhook URLを読み込む
+        if webhook_url.startswith("env:"):
+            env_var = webhook_url.split(":", 1)[1]
+            webhook_url = os.getenv(env_var, "")
+            if not webhook_url:
+                print(f"⚠️ 環境変数 {env_var} が設定されていません")
+                return False
+        
         payload = {"text": message}
         response = requests.post(webhook_url, json=payload, timeout=10)
         

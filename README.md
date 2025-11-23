@@ -209,10 +209,13 @@ thresholds:
 notifications:
   slack:
     enabled: true
-    webhook_url: "https://hooks.slack.com/services/..."
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"  # 環境変数推奨（セキュリティ向上）
   email:
     enabled: false
+    password: "env:KOMON_EMAIL_PASSWORD"  # 環境変数推奨
 ```
+
+**セキュリティ注意**: Webhook URLやパスワードは環境変数で管理することを推奨します。詳細は[セキュリティガイド](docs/SECURITY.md)を参照してください。
 
 ### 従来の単一閾値設定（後方互換性あり）
 
@@ -271,6 +274,7 @@ thresholds:
 - [詳細ドキュメント](docs/README.md)
 - [システム仕様書](.kiro/specs/komon-system.md)
 - [変更履歴](docs/CHANGELOG.md)
+- [セキュリティガイド](docs/SECURITY.md) - 認証情報の管理、ファイルパーミッション、セキュリティベストプラクティス
 
 ---
 

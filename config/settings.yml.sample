@@ -29,13 +29,16 @@ thresholds:  # リソース使用率に対する警告の閾値（％）
 notifications:
   slack:
     enabled: true
-    webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"  # Slack の Webhook URL
+    # Webhook URLは環境変数からの読み込みを推奨（セキュリティ向上）
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+    # または直接指定（Gitにコミットしないよう注意）
+    # webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
 
   email:
     enabled: false  # メール通知を有効にする場合は true にしてください
     smtp_server: "smtp.example.com"  # SMTP サーバのホスト名
     smtp_port: 587
-    use_tls: true  # STARTTLS を使うかどうか
+    use_tls: true  # STARTTLS を使うかどうか（セキュリティのため必ず有効化）
     from: "komon@example.com"
     to: "user@example.com"
     username: "komon@example.com"

@@ -68,6 +68,38 @@ class TestSendSlackAlert:
         )
         
         assert result is False
+    
+    @patch('komon.notification.requests.post')
+    @patch('komon.notification.os.getenv')
+    def test_send_slack_with_env_webhook(self, mock_getenv, mock_post):
+        """環境変数からWebhook URLを読み込む場合"""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        mock_getenv.return_value = "https://hooks.slack.com/services/REAL_WEBHOOK"
+        
+        result = send_slack_alert(
+            message="テストメッセージ",
+            webhook_url="env:KOMON_SLACK_WEBHOOK"
+        )
+        
+        assert result is True
+        mock_getenv.assert_called_once_with("KOMON_SLACK_WEBHOOK", "")
+        call_args = mock_post.call_args
+        assert call_args[0][0] == "https://hooks.slack.com/services/REAL_WEBHOOK"
+    
+    @patch('komon.notification.os.getenv')
+    def test_send_slack_with_missing_env_webhook(self, mock_getenv):
+        """環境変数が設定されていない場合"""
+        mock_getenv.return_value = ""
+        
+        result = send_slack_alert(
+            message="テストメッセージ",
+            webhook_url="env:KOMON_SLACK_WEBHOOK"
+        )
+        
+        assert result is False
+        mock_getenv.assert_called_once_with("KOMON_SLACK_WEBHOOK", "")
 
 
 class TestSendEmailAlert:
