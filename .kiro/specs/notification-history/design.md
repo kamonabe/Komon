@@ -1,6 +1,14 @@
-# Design Document
+---
+title: 通知履歴機能 - 設計書
+feature: notification-history
+status: implemented
+created: 2025-11-22
+updated: 2025-11-22
+---
 
-## Overview
+# 通知履歴機能 - 設計書
+
+## 概要
 
 通知履歴機能は、Komonが検知したシステムメトリクスの異常や警告をローカルファイルシステムに永続化し、後から確認できるようにする機能です。この機能により、Slack等の外部通知サービスが利用できない環境でも、重要な検知情報を見逃すことなく確認できます。
 
@@ -10,7 +18,7 @@
 - 最大100件の自動ローテーション
 - `komon advise`コマンドへの自然な統合
 
-## Architecture
+## アーキテクチャ
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -61,9 +69,9 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Components and Interfaces
+## コンポーネントとインターフェース
 
-### 1. Notification History Manager
+### 1. 通知履歴マネージャー
 
 新しいモジュール `src/komon/notification_history.py` を作成します。
 
@@ -117,7 +125,7 @@ def format_notification(notification: dict) -> str:
     pass
 ```
 
-### 2. Notification Module Integration
+### 2. 通知モジュールとの統合
 
 既存の `src/komon/notification.py` を拡張します。
 
@@ -152,7 +160,7 @@ def send_slack_alert(message: str, webhook_url: str, metadata: dict = None) -> b
     return success
 ```
 
-### 3. Advise Command Extension
+### 3. 助言コマンドの拡張
 
 `scripts/advise.py` に履歴表示機能を追加します。
 
@@ -179,9 +187,9 @@ def advise_notification_history(limit: int = None):
         print(f"⚠️ 通知履歴の読み込みに失敗: {e}")
 ```
 
-## Data Models
+## データモデル
 
-### Notification Entry
+### 通知エントリ
 
 ```json
 {
@@ -198,7 +206,7 @@ def advise_notification_history(limit: int = None):
 - `metric_value` (float): メトリクスの値
 - `message` (string): 通知メッセージ本文
 
-### Queue File Structure
+### キューファイル構造
 
 ```json
 [
@@ -222,37 +230,37 @@ def advise_notification_history(limit: int = None):
 - 順序: 新しい通知が先頭（index 0）
 - 最大件数: 100件
 
-## Correctness Properties
+## 正確性プロパティ
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system-essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+*プロパティとは、システムの全ての有効な実行において真であるべき特性や振る舞いのことです。本質的には、システムが何をすべきかについての形式的な記述です。プロパティは、人間が読める仕様と機械で検証可能な正確性保証との橋渡しをします。*
 
-### Property 1: Notification persistence
-*For any* notification with valid metric_type, metric_value, and message, calling save_notification should result in that notification being present in the queue file
-**Validates: Requirements 1.1, 1.2**
+### プロパティ1: 通知の永続化
+*任意の*有効なmetric_type、metric_value、messageを持つ通知について、save_notificationを呼び出すと、その通知がキューファイルに存在する結果となること
+**検証対象: 要件 AC-001.1, AC-001.2**
 
-### Property 2: Maximum queue size invariant
-*For any* sequence of save operations, the queue file should never contain more than 100 notifications
-**Validates: Requirements 1.4, 3.1**
+### プロパティ2: 最大キューサイズの不変条件
+*任意の*保存操作のシーケンスについて、キューファイルは100件を超える通知を含まないこと
+**検証対象: 要件 AC-001.4, AC-003.1**
 
-### Property 3: Chronological order preservation
-*For any* queue state, after adding a new notification, all remaining notifications should maintain their chronological order (newest first)
-**Validates: Requirements 3.2**
+### プロパティ3: 時系列順序の保持
+*任意の*キュー状態について、新しい通知を追加した後、残りの全ての通知は時系列順序（新しい順）を維持すること
+**検証対象: 要件 AC-003.2**
 
-### Property 4: History retrieval with limit
-*For any* queue with N notifications and limit value L, load_notification_history(limit=L) should return exactly min(N, L) most recent notifications
-**Validates: Requirements 2.2**
+### プロパティ4: 制限付き履歴取得
+*任意の*N件の通知を持つキューと制限値Lについて、load_notification_history(limit=L)はmin(N, L)件の最新通知を正確に返すこと
+**検証対象: 要件 AC-002.2**
 
-### Property 5: Format completeness
-*For any* valid notification, format_notification should produce a string containing the timestamp, metric_type, metric_value, and message
-**Validates: Requirements 2.3**
+### プロパティ5: フォーマットの完全性
+*任意の*有効な通知について、format_notificationはタイムスタンプ、metric_type、metric_value、messageを含む文字列を生成すること
+**検証対象: 要件 AC-002.3**
 
-### Property 6: Graceful error handling
-*For any* corrupted or invalid queue file, load_notification_history should not crash and should return an empty list or raise a handled exception
-**Validates: Requirements 2.5, 3.3**
+### プロパティ6: グレースフルなエラーハンドリング
+*任意の*破損または無効なキューファイルについて、load_notification_historyはクラッシュせず、空のリストを返すか処理された例外を発生させること
+**検証対象: 要件 AC-002.5, AC-003.3**
 
-## Error Handling
+## エラーハンドリング
 
-### File System Errors
+### ファイルシステムエラー
 
 1. **ディレクトリ作成失敗**
    - 原因: 権限不足、ディスク容量不足
@@ -266,7 +274,7 @@ def advise_notification_history(limit: int = None):
    - 原因: ファイルが存在しない、権限不足
    - 対応: 空の履歴として扱い、ユーザーに通知
 
-### Data Validation Errors
+### データ検証エラー
 
 1. **不正なJSON形式**
    - 原因: ファイル破損、手動編集ミス
@@ -280,7 +288,7 @@ def advise_notification_history(limit: int = None):
    - 原因: 手動編集ミス、バグ
    - 対応: 該当エントリをスキップし、警告を表示
 
-### Backward Compatibility
+### 後方互換性
 
 1. **既存通知機能への影響**
    - 履歴保存が失敗しても、Slack/メール通知は正常に動作
@@ -290,9 +298,9 @@ def advise_notification_history(limit: int = None):
    - 履歴表示は独立したセクションとして追加
    - 既存の助言機能は変更なし
 
-## Testing Strategy
+## テスト戦略
 
-### Unit Testing
+### ユニットテスト
 
 Pythonの標準`unittest`フレームワークを使用します。
 
@@ -304,7 +312,7 @@ Pythonの標準`unittest`フレームワークを使用します。
 
 **テストファイル:** `tests/test_notification_history.py`
 
-### Property-Based Testing
+### プロパティベーステスト
 
 Pythonの`hypothesis`ライブラリを使用します。
 
@@ -313,16 +321,16 @@ Pythonの`hypothesis`ライブラリを使用します。
 - タイムアウト: テストごとに30秒
 
 **テスト対象:**
-- Property 1: Notification persistence
-- Property 2: Maximum queue size invariant
-- Property 3: Chronological order preservation
-- Property 4: History retrieval with limit
-- Property 5: Format completeness
-- Property 6: Graceful error handling
+- プロパティ1: 通知の永続化
+- プロパティ2: 最大キューサイズの不変条件
+- プロパティ3: 時系列順序の保持
+- プロパティ4: 制限付き履歴取得
+- プロパティ5: フォーマットの完全性
+- プロパティ6: グレースフルなエラーハンドリング
 
 **テストファイル:** `tests/test_notification_history_properties.py`
 
-### Integration Testing
+### 統合テスト
 
 **テストシナリオ:**
 1. 通知送信から履歴保存までの一連の流れ
@@ -331,7 +339,7 @@ Pythonの`hypothesis`ライブラリを使用します。
 
 **テストファイル:** `tests/test_notification_integration.py`
 
-### Manual Testing
+### 手動テスト
 
 **確認項目:**
 1. 実際の通知発生時に履歴が保存されるか

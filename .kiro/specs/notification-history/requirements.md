@@ -1,60 +1,68 @@
-# Requirements Document
+---
+title: 通知履歴機能 - 要件定義
+feature: notification-history
+status: implemented
+created: 2025-11-22
+updated: 2025-11-22
+---
 
-## Introduction
+# 通知履歴機能 - 要件定義書
+
+## 概要
 
 この機能は、Komonが検知したシステムメトリクスの異常や警告をローカルファイルに記録し、後から確認できるようにする通知履歴機能です。Slack等の外部通知サービスが使えない環境でも、Komonの検知情報を見逃さずに確認できることを目的としています。
 
-## Glossary
+## 用語集
 
-- **Notification System**: Komonのシステムメトリクス監視結果を通知する機能
-- **Notification History**: 過去に発生した通知の記録
-- **Queue File**: 通知履歴を保存するJSONファイル（`notifications/queue.json`）
-- **Advise Command**: Komonの助言表示コマンド（`komon advise`）
-- **Metric Type**: 監視対象の種類（CPU使用率、メモリ使用率、ディスク使用率等）
+- **通知システム**: Komonのシステムメトリクス監視結果を通知する機能
+- **通知履歴**: 過去に発生した通知の記録
+- **キューファイル**: 通知履歴を保存するJSONファイル（`notifications/queue.json`）
+- **助言コマンド**: Komonの助言表示コマンド（`komon advise`）
+- **メトリクスタイプ**: 監視対象の種類（CPU使用率、メモリ使用率、ディスク使用率等）
 
-## Requirements
+## 受入基準
 
-### Requirement 1
+### [AC-001] 通知の自動保存
 
-**User Story:** システム管理者として、Komonが検知した通知を後から確認したいので、通知履歴がローカルに保存される機能が必要です。
+**ユーザーストーリー:** システム管理者として、Komonが検知した通知を後から確認したいので、通知履歴がローカルに保存される機能が必要です。
 
-#### Acceptance Criteria
+#### 受入条件
 
-1. WHEN the Notification System sends a notification THEN the Notification System SHALL save the notification data to the Queue File
-2. WHEN saving notification data THEN the Notification System SHALL include timestamp, metric type, metric value, and message text
-3. WHEN the Queue File does not exist THEN the Notification System SHALL create the Queue File and its parent directory
-4. WHEN the Queue File contains 100 or more notifications THEN the Notification System SHALL remove the oldest notification before adding a new one
-5. WHEN saving fails due to file system errors THEN the Notification System SHALL log the error and continue normal operation without crashing
+1. **WHEN** 通知システムが通知を送信するとき、**THEN** 通知システムは通知データをキューファイルに保存すること
+2. **WHEN** 通知データを保存するとき、**THEN** 通知システムはタイムスタンプ、メトリクスタイプ、メトリクス値、メッセージテキストを含めること
+3. **WHEN** キューファイルが存在しないとき、**THEN** 通知システムはキューファイルとその親ディレクトリを作成すること
+4. **WHEN** キューファイルに100件以上の通知が含まれているとき、**THEN** 通知システムは新しい通知を追加する前に最も古い通知を削除すること
+5. **WHEN** ファイルシステムエラーにより保存が失敗したとき、**THEN** 通知システムはエラーをログに記録し、クラッシュせずに通常の動作を継続すること
 
-### Requirement 2
+### [AC-002] 通知履歴の表示
 
-**User Story:** システム管理者として、保存された通知履歴を簡単に確認したいので、既存のコマンドで履歴を表示できる機能が必要です。
+**ユーザーストーリー:** システム管理者として、保存された通知履歴を簡単に確認したいので、既存のコマンドで履歴を表示できる機能が必要です。
 
-#### Acceptance Criteria
+#### 受入条件
 
-1. WHEN a user executes the Advise Command without options THEN the Advise Command SHALL display all notifications from the Notification History
-2. WHEN a user executes the Advise Command with `--history N` option THEN the Advise Command SHALL display the most recent N notifications
-3. WHEN displaying notifications THEN the Advise Command SHALL show timestamp, metric type, metric value, and message in a readable format
-4. WHEN the Queue File does not exist THEN the Advise Command SHALL display a message indicating no history is available
-5. WHEN the Queue File is corrupted or invalid JSON THEN the Advise Command SHALL display an error message and continue without crashing
+1. **WHEN** ユーザーがオプションなしで助言コマンドを実行するとき、**THEN** 助言コマンドは通知履歴から全ての通知を表示すること
+2. **WHEN** ユーザーが`--history N`オプション付きで助言コマンドを実行するとき、**THEN** 助言コマンドは最新のN件の通知を表示すること
+3. **WHEN** 通知を表示するとき、**THEN** 助言コマンドはタイムスタンプ、メトリクスタイプ、メトリクス値、メッセージを読みやすい形式で表示すること
+4. **WHEN** キューファイルが存在しないとき、**THEN** 助言コマンドは履歴が利用できないことを示すメッセージを表示すること
+5. **WHEN** キューファイルが破損しているか無効なJSONのとき、**THEN** 助言コマンドはエラーメッセージを表示し、クラッシュせずに継続すること
 
-### Requirement 3
+### [AC-003] 履歴件数の上限管理
 
-**User Story:** システム管理者として、通知履歴が無制限に増えてディスクを圧迫しないように、履歴の保存件数に上限が設定されている必要があります。
+**ユーザーストーリー:** システム管理者として、通知履歴が無制限に増えてディスクを圧迫しないように、履歴の保存件数に上限が設定されている必要があります。
 
-#### Acceptance Criteria
+#### 受入条件
 
-1. WHEN the Notification History reaches 100 notifications THEN the Notification System SHALL maintain exactly 100 notifications by removing the oldest
-2. WHEN removing old notifications THEN the Notification System SHALL preserve the chronological order of remaining notifications
-3. WHEN the Queue File is read THEN the Notification System SHALL validate the data structure and handle invalid entries gracefully
+1. **WHEN** 通知履歴が100件に達したとき、**THEN** 通知システムは最も古い通知を削除することで正確に100件を維持すること
+2. **WHEN** 古い通知を削除するとき、**THEN** 通知システムは残りの通知の時系列順序を保持すること
+3. **WHEN** キューファイルを読み込むとき、**THEN** 通知システムはデータ構造を検証し、無効なエントリを適切に処理すること
 
-### Requirement 4
+### [AC-004] 既存機能との統合
 
-**User Story:** 開発者として、既存のKomon機能に影響を与えずに通知履歴機能を追加したいので、既存コードとの統合が適切に行われる必要があります。
+**ユーザーストーリー:** 開発者として、既存のKomon機能に影響を与えずに通知履歴機能を追加したいので、既存コードとの統合が適切に行われる必要があります。
 
-#### Acceptance Criteria
+#### 受入条件
 
-1. WHEN the notification history feature is enabled THEN the existing notification functionality SHALL continue to work without modification
-2. WHEN notification saving fails THEN the Notification System SHALL still send notifications through configured channels (Slack, etc.)
-3. WHEN the Advise Command displays history THEN the existing advise functionality SHALL remain accessible
-4. WHEN running existing tests THEN all tests SHALL pass without modification
+1. **WHEN** 通知履歴機能が有効になっているとき、**THEN** 既存の通知機能は変更なしで動作し続けること
+2. **WHEN** 通知の保存が失敗したとき、**THEN** 通知システムは設定されたチャネル（Slack等）を通じて通知を送信し続けること
+3. **WHEN** 助言コマンドが履歴を表示するとき、**THEN** 既存の助言機能はアクセス可能なままであること
+4. **WHEN** 既存のテストを実行するとき、**THEN** 全てのテストは変更なしでパスすること
