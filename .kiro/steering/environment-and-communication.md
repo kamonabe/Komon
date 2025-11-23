@@ -103,23 +103,23 @@ Kiro: "The notification history feature has been implemented.
 - **コミットメッセージ**: 日本語推奨
 - **ドキュメント**: 日本語（README.md, CHANGELOG.md等）
 - **コメント**: 日本語推奨
+- **Spec文書**: 日本語（requirements.md, design.md, tasks.md）
+  - 利用者は日本語話者なので、全て日本語で統一
 
 #### 英語で記述するもの
 
 - **コード**: 変数名、関数名、クラス名は英語
 - **テストケース名**: 英語でもOK（ただし日本語でも可）
-- **Spec文書**: 英語（requirements.md, design.md, tasks.md）
-  - ただし、ユーザーへの説明は日本語で行う
 
 ### Specモードでの注意
 
-Specモード（仕様駆動開発）では、以下のように使い分けます：
+Specモード（仕様駆動開発）では、**全て日本語**で記述します：
 
 ```
-1. Spec文書作成（英語）
-   - requirements.md: EARS形式の要件定義（英語）
-   - design.md: 設計書（英語）
-   - tasks.md: タスクリスト（英語）
+1. Spec文書作成（日本語）
+   - requirements.md: 要件定義（日本語）
+   - design.md: 設計書（日本語）
+   - tasks.md: タスクリスト（日本語）
 
 2. ユーザーへの報告（日本語）
    Kiro: 「requirements.mdを作成しました。
@@ -132,6 +132,8 @@ Specモード（仕様駆動開発）では、以下のように使い分けま�
 4. 完了報告（日本語）
    Kiro: 「実装が完了しました。テストは全てパスしています。」
 ```
+
+**重要**: Spec文書は利用者（日本語話者）が読むものなので、英語で書かないこと。
 
 ### コマンド提示時のフォーマット
 

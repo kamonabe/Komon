@@ -52,6 +52,7 @@ settings.yml
 
 # ローカル開発環境メモ（個人用）
 .kiro/LOCAL_DEV_NOTES.md
+.kiro/RELEASE_NOTES.md
 
 # Komon固有 - 実行時データ
 data/

@@ -28,10 +28,10 @@ Komonプロジェクトは**仕様駆動開発（Spec-Driven Development）**を
 ### 3. Spec作成
 **フォルダ**: `.kiro/specs/{feature-name}/`
 
-以下の3ファイルを作成：
-- `requirements.md`: EARS形式の要件定義
-- `design.md`: 設計書（正確性プロパティを含む）
-- `tasks.md`: 実装タスクリスト
+以下の3ファイルを**日本語で**作成：
+- `requirements.md`: 要件定義（日本語）
+- `design.md`: 設計書（正確性プロパティを含む、日本語）
+- `tasks.md`: 実装タスクリスト（日本語）
 
 ### 4. 開発ブランチの作成
 
@@ -77,15 +77,40 @@ git tag v1.X.X
 git push origin main --tags
 ```
 
+### 7. GitHub Releases用の情報を準備
+
+**重要**: バージョンタグを作成した後、GitHub Releases登録用の情報を`.kiro/RELEASE_NOTES.md`に追記します。
+
+Kiroが以下を自動的に追記：
+- **Release Title**: `v1.X.X - 機能名`
+- **Release Notes**: CHANGELOG.mdから該当バージョンの内容を抽出
+
+```markdown
+### v1.X.X - 機能名
+**作成日**: YYYY-MM-DD
+
+**Title**:
+v1.X.X - 機能名
+
+**Notes**:
+（CHANGELOG.mdから抽出した内容）
+
+---
+```
+
+ユーザーはこの情報をコピーしてGitHub Releasesに登録します。
+登録完了後は「登録済みリリース（アーカイブ）」セクションに移動してください。
+
 ## 重要なルール
 
 ### ✅ Kiroが自律的に進めて良いこと
 
-- requirements.md, design.md, tasks.md の作成
+- requirements.md, design.md, tasks.md の作成（日本語で）
 - コード実装
 - テスト作成（しっかりした品質を維持）
 - ドキュメント更新（README, CHANGELOG）
 - タスクファイルの更新
+- GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
 
 ### ⚠️ ユーザー確認が必要なこと
 
@@ -258,6 +283,7 @@ refactor/{module-name}              # リファクタリング
 1. テスト全パス確認
 2. バージョン番号を提案
 3. ユーザーにmainへのマージを依頼
+4. バージョンタグ作成後、GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
 
 ## まとめ
 
