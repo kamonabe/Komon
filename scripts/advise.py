@@ -105,7 +105,12 @@ def advise_os_update():
         print(f"⚠ アップデート確認中にエラーが発生しました: {e}")
 
 def advise_resource_usage(usage: dict, thresholds: dict):
-    if usage.get("mem", 0) >= thresholds.get("mem", 80):
+    # 3段階閾値形式に対応（warning値を使用）
+    mem_threshold = thresholds.get("mem", {}).get("warning", 80) if isinstance(thresholds.get("mem"), dict) else thresholds.get("mem", 80)
+    disk_threshold = thresholds.get("disk", {}).get("warning", 80) if isinstance(thresholds.get("disk"), dict) else thresholds.get("disk", 80)
+    cpu_threshold = thresholds.get("cpu", {}).get("warning", 85) if isinstance(thresholds.get("cpu"), dict) else thresholds.get("cpu", 85)
+    
+    if usage.get("mem", 0) >= mem_threshold:
         if ask_yes_no(f"\nMEM使用率が{usage['mem']}%と高めです。多く使っているプロセスを調べますか？"):
             print("→ 上位メモリ使用プロセスを表示します。\n")
             try:
@@ -125,11 +130,11 @@ def advise_resource_usage(usage: dict, thresholds: dict):
             except Exception as e:
                 print(f"⚠ プロセス情報の取得中にエラーが発生しました: {e}")
 
-    if usage.get("disk", 0) >= thresholds.get("disk", 80):
+    if usage.get("disk", 0) >= disk_threshold:
         if ask_yes_no(f"ディスク使用率が{usage['disk']}%と高めです。不要なファイルを整理しますか？"):
             print("→ `du -sh *` や `journalctl --vacuum-time=7d` を活用しましょう。")
 
-    if usage.get("cpu", 0) >= thresholds.get("cpu", 85):
+    if usage.get("cpu", 0) >= cpu_threshold:
         if ask_yes_no(f"CPU使用率が{usage['cpu']}%と高い状態です。負荷の高いプロセスを確認しますか？"):
             print("→ `top` や `ps aux --sort=-%cpu | head` で高負荷プロセスを確認できます。")
 
