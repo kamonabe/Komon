@@ -64,3 +64,8 @@ weekly_report:  # 週次健全性レポート設定
   notifications:
     slack: true   # Slack通知を有効化
     email: false  # メール通知を無効化
+
+throttle:  # 通知頻度制御設定
+  enabled: true  # 通知頻度制御を有効にする場合は true
+  interval_minutes: 60  # 同一アラートの通知間隔（分）デフォルト: 60分
+  escalation_minutes: 180  # 長時間継続する問題の再通知間隔（分）デフォルト: 180分（3時間）

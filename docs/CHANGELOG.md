@@ -6,6 +6,41 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.15.0] - 2025-11-24
+
+### Added
+
+- **通知頻度制御機能（同一アラートの抑制）**
+  - 同一メトリクスの通知を設定間隔で抑制（デフォルト: 60分）
+  - 閾値レベルが上昇した場合は即座に通知（警告→警戒、警戒→緊急）
+  - 長時間継続する問題の再通知（エスカレーション、デフォルト: 180分）
+  - 通知履歴を`data/notifications/throttle.json`に保存
+  - `settings.yml`で有効/無効、通知間隔、再通知間隔を設定可能
+
+### Changed
+
+- `src/komon/notification.py` - NotificationThrottleクラスを追加
+- `src/komon/analyzer.py` - analyze_usage_with_levels()関数を追加（閾値レベル情報を返す）
+- `scripts/main.py` - 通知頻度制御を統合
+- `settings.yml` - throttle設定セクションを追加
+- `config/settings.yml.sample` - throttle設定の説明を追加
+- `README.md` - 通知頻度制御の説明を追加
+
+### Developer Improvements
+
+- **テストの追加**
+  - プロパティベーステスト4件（hypothesis使用）
+  - ユニットテスト15件
+  - 統合テスト8件
+  - 全189テストが成功
+  - カバレッジ維持
+
+### Benefits
+
+- **通知疲れの防止**: 同じ内容の通知が繰り返されることを防ぐ
+- **重要な通知を見逃さない**: 状況が悪化した場合は即座に通知
+- **長期問題の可視化**: 3時間継続する問題は再通知で注意喚起
+
 ## [1.14.0] - 2025-11-23
 
 ### Added

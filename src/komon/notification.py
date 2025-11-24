@@ -121,3 +121,227 @@ def send_email_alert(message: str, email_config: dict, metadata: dict = None) ->
             print(f"⚠️ 通知履歴の保存に失敗: {e}")
     
     return success
+
+
+import json
+import logging
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Tuple, Dict, Optional
+
+logger = logging.getLogger(__name__)
+
+
+class NotificationThrottle:
+    """通知頻度制御を管理するクラス"""
+    
+    # 閾値レベルの順序定義
+    LEVEL_ORDER = {
+        'warning': 1,
+        'alert': 2,
+        'critical': 3
+    }
+    
+    def __init__(self, config: dict, history_file: Optional[Path] = None):
+        """
+        Args:
+            config: settings.ymlのthrottle設定
+            history_file: 履歴ファイルのパス（テスト用）
+        """
+        self.enabled = config.get('enabled', True)
+        self.interval_minutes = config.get('interval_minutes', 60)
+        self.escalation_minutes = config.get('escalation_minutes', 180)
+        
+        # 履歴ファイルのパス
+        if history_file:
+            self.history_file = history_file
+        else:
+            self.history_file = Path("data/notifications/throttle.json")
+        
+        # ディレクトリが存在しない場合は作成
+        self.history_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    def should_send_notification(
+        self,
+        metric_type: str,
+        threshold_level: str,
+        current_value: float
+    ) -> Tuple[bool, str]:
+        """
+        通知を送信すべきかを判定する
+        
+        Args:
+            metric_type: メトリクスタイプ（'cpu', 'memory', 'disk'）
+            threshold_level: 閾値レベル（'warning', 'alert', 'critical'）
+            current_value: 現在の値
+            
+        Returns:
+            (送信すべきか, 理由)
+            理由: "first", "level_up", "escalation", "normal", "throttled"
+        """
+        # 頻度制御が無効の場合は常に送信
+        if not self.enabled:
+            return True, "disabled"
+        
+        # 履歴を読み込み
+        history = self._load_history()
+        
+        # 該当メトリクスの履歴がない場合は初回通知
+        if metric_type not in history:
+            return True, "first"
+        
+        metric_history = history[metric_type]
+        previous_level = metric_history.get('threshold_level')
+        last_notification_time_str = metric_history.get('last_notification_time')
+        first_occurrence_time_str = metric_history.get('first_occurrence_time')
+        
+        # 閾値レベルが上昇した場合は即座に通知
+        if self._is_level_escalated(previous_level, threshold_level):
+            return True, "level_up"
+        
+        # 前回通知からの経過時間を計算
+        try:
+            last_notification_time = datetime.fromisoformat(last_notification_time_str)
+            elapsed_minutes = (datetime.now() - last_notification_time).total_seconds() / 60
+        except (ValueError, TypeError):
+            # パースエラーの場合は通知を送信
+            return True, "parse_error"
+        
+        # 通知間隔未満の場合は抑制
+        if elapsed_minutes < self.interval_minutes:
+            return False, "throttled"
+        
+        # エスカレーション判定
+        try:
+            first_occurrence_time = datetime.fromisoformat(first_occurrence_time_str)
+            total_elapsed_minutes = (datetime.now() - first_occurrence_time).total_seconds() / 60
+            
+            if total_elapsed_minutes >= self.escalation_minutes:
+                return True, "escalation"
+        except (ValueError, TypeError):
+            pass
+        
+        # 通常の通知
+        return True, "normal"
+    
+    def record_notification(
+        self,
+        metric_type: str,
+        threshold_level: str,
+        current_value: float
+    ) -> None:
+        """
+        通知を記録する
+        
+        Args:
+            metric_type: メトリクスタイプ（'cpu', 'memory', 'disk'）
+            threshold_level: 閾値レベル（'warning', 'alert', 'critical'）
+            current_value: 現在の値
+        """
+        history = self._load_history()
+        
+        now = datetime.now().isoformat()
+        
+        # 既存の履歴がある場合
+        if metric_type in history:
+            previous_level = history[metric_type].get('threshold_level')
+            first_occurrence_time = history[metric_type].get('first_occurrence_time')
+            
+            # 閾値レベルが変わった場合は初回発生時刻をリセット
+            if previous_level != threshold_level:
+                first_occurrence_time = now
+        else:
+            # 新規の場合
+            first_occurrence_time = now
+        
+        # 履歴を更新
+        history[metric_type] = {
+            'last_notification_time': now,
+            'threshold_level': threshold_level,
+            'value': current_value,
+            'first_occurrence_time': first_occurrence_time
+        }
+        
+        self._save_history(history)
+    
+    def get_duration_message(self, metric_type: str) -> Optional[str]:
+        """
+        継続時間のメッセージを取得する
+        
+        Args:
+            metric_type: メトリクスタイプ
+            
+        Returns:
+            継続時間のメッセージ（例: "3時間"）、履歴がない場合はNone
+        """
+        history = self._load_history()
+        
+        if metric_type not in history:
+            return None
+        
+        first_occurrence_time_str = history[metric_type].get('first_occurrence_time')
+        
+        try:
+            first_occurrence_time = datetime.fromisoformat(first_occurrence_time_str)
+            elapsed = datetime.now() - first_occurrence_time
+            
+            hours = int(elapsed.total_seconds() / 3600)
+            if hours >= 1:
+                return f"{hours}時間"
+            else:
+                minutes = int(elapsed.total_seconds() / 60)
+                return f"{minutes}分"
+        except (ValueError, TypeError):
+            return None
+    
+    def _load_history(self) -> Dict:
+        """履歴ファイルを読み込む"""
+        try:
+            if self.history_file.exists():
+                with open(self.history_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except (json.JSONDecodeError, IOError, IsADirectoryError) as e:
+            logger.warning(f"履歴ファイルの読み込みに失敗: {e}")
+            # 破損している場合は削除して新規作成
+            if self.history_file.exists():
+                try:
+                    if self.history_file.is_dir():
+                        self.history_file.rmdir()
+                    else:
+                        self.history_file.unlink()
+                except (OSError, PermissionError):
+                    # 削除に失敗しても継続
+                    pass
+        
+        return {}
+    
+    def _save_history(self, history: Dict) -> None:
+        """履歴ファイルに保存する"""
+        try:
+            with open(self.history_file, 'w', encoding='utf-8') as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+        except IOError as e:
+            logger.error(f"履歴ファイルの保存に失敗: {e}")
+    
+    def _is_level_escalated(
+        self,
+        previous_level: Optional[str],
+        current_level: str
+    ) -> bool:
+        """
+        閾値レベルが上昇したかを判定する
+        
+        Args:
+            previous_level: 前回の閾値レベル
+            current_level: 現在の閾値レベル
+            
+        Returns:
+            上昇した場合True
+        """
+        if previous_level is None:
+            return False
+        
+        prev_order = self.LEVEL_ORDER.get(previous_level, 0)
+        curr_order = self.LEVEL_ORDER.get(current_level, 0)
+        
+        return curr_order > prev_order

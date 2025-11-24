@@ -92,6 +92,51 @@ def analyze_usage(usage: dict, thresholds: dict) -> list:
     return alerts
 
 
+def analyze_usage_with_levels(usage: dict, thresholds: dict) -> tuple:
+    """
+    リソース使用率を分析し、アラートと閾値レベル情報を返します。
+    
+    Args:
+        usage: リソース使用率データ
+        thresholds: 閾値設定（3段階形式）
+        
+    Returns:
+        tuple: (アラートメッセージのリスト, レベル情報の辞書)
+        レベル情報: {"cpu": ("warning", 75.0), "mem": ("alert", 85.0), ...}
+    """
+    alerts = []
+    levels = {}
+    
+    # CPU使用率のチェック
+    cpu_value = usage.get("cpu", 0)
+    cpu_thresholds = thresholds.get("cpu", {})
+    if isinstance(cpu_thresholds, dict):
+        cpu_level = determine_threshold_level(cpu_value, cpu_thresholds)
+        if cpu_level != ThresholdLevel.NORMAL:
+            alerts.append(_generate_message("CPU", cpu_value, cpu_level))
+            levels["cpu"] = (cpu_level.value, cpu_value)
+    
+    # メモリ使用率のチェック
+    mem_value = usage.get("mem", 0)
+    mem_thresholds = thresholds.get("mem", {})
+    if isinstance(mem_thresholds, dict):
+        mem_level = determine_threshold_level(mem_value, mem_thresholds)
+        if mem_level != ThresholdLevel.NORMAL:
+            alerts.append(_generate_message("メモリ", mem_value, mem_level))
+            levels["memory"] = (mem_level.value, mem_value)
+    
+    # ディスク使用率のチェック
+    disk_value = usage.get("disk", 0)
+    disk_thresholds = thresholds.get("disk", {})
+    if isinstance(disk_thresholds, dict):
+        disk_level = determine_threshold_level(disk_value, disk_thresholds)
+        if disk_level != ThresholdLevel.NORMAL:
+            alerts.append(_generate_message("ディスク", disk_value, disk_level))
+            levels["disk"] = (disk_level.value, disk_value)
+    
+    return alerts, levels
+
+
 def _generate_message(metric_name: str, value: float, level: ThresholdLevel) -> str:
     """
     レベルに応じたアラートメッセージを生成する。
