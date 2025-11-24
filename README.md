@@ -1,10 +1,32 @@
 # Komon（顧問）
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](htmlcov/index.html)
+[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
+
 **Komon は、開発者のための軽量アドバイザー型SOAR風ツールです。**
 
 開発環境で発生するリソースの過剰使用、ログの急増、更新忘れなどを静かに見守り、必要なときだけやさしく通知・提案してくれます。
 
 🛠 Komon は内部構造がシンプルなため、通知手段の追加や監視項目の拡張が容易です。
+
+---
+
+## 📖 目次
+
+- [このような結果が得られます](#-このような結果が得られます)
+- [なぜKomonなのか？](#-なぜkomonなのか)
+- [プロジェクト構造](#-プロジェクト構造)
+- [クイックスタート](#-クイックスタート)
+- [設定](#️-設定)
+- [定期実行](#-定期実行cron)
+- [ドキュメント](#-ドキュメント)
+- [開発](#-開発)
+- [対応プラットフォーム](#-対応プラットフォーム)
+- [FAQ](#-faq)
+- [コントリビューション](#-コントリビューション)
+- [ライセンス](#-ライセンス)
 
 ---
 
@@ -67,6 +89,20 @@ CPUが頑張りすぎてるみたいです（92.3%）。
 ```
 
 これらの通知は、Slackやメールで受け取ることも可能です。また、通知履歴として自動的に保存され、後から `komon advise --history` で確認できます。
+
+---
+
+## 🤔 なぜKomonなのか？
+
+既存の監視ツール（Prometheus、Zabbix、Nagios等）と比較して：
+
+- **軽量**: 依存関係が少なく、すぐに導入できる
+- **開発者フレンドリー**: 開発環境での使用を想定した設計
+- **やさしい通知**: 技術的すぎない、人間らしい表現
+- **拡張しやすい**: Pythonで書かれており、カスタマイズが容易
+- **段階的な警告**: 3段階閾値で通知疲れを防止
+
+Komonは、大規模な監視システムではなく、**個人開発者や小規模チーム向けの軽量アドバイザー**です。
 
 ---
 
@@ -338,6 +374,51 @@ Komonは**Linux環境での動作を前提**として開発されています。
 
 もし移植版を作成された場合は、ぜひお知らせください。
 READMEにリンクを掲載させていただきます。
+
+---
+
+## ❓ FAQ
+
+<details>
+<summary><strong>Q: Windowsで動きますか？</strong></summary>
+
+現時点ではLinux専用です。Windows版の移植は歓迎しますが、作者自身は開発予定がありません。
+</details>
+
+<details>
+<summary><strong>Q: 通知が届きません</strong></summary>
+
+1. `settings.yml`の設定を確認してください
+2. Slack Webhook URLが正しいか確認してください
+3. `python scripts/status.py`でステータスを確認してください
+</details>
+
+<details>
+<summary><strong>Q: どのくらいのリソースを消費しますか？</strong></summary>
+
+Komon自体は非常に軽量です（メモリ使用量: 約30MB）。5分おきの実行でも、システムへの影響はほとんどありません。
+</details>
+
+---
+
+## 🤝 コントリビューション
+
+バグ報告、機能提案、プルリクエストを歓迎します！
+
+- **バグ報告**: [Issues](https://github.com/kamonabe/Komon/issues)で報告してください
+- **機能提案**: [Discussions](https://github.com/kamonabe/Komon/discussions)で議論しましょう
+- **プルリクエスト**: [CONTRIBUTING.md](docs/CONTRIBUTING.md)を参照してください
+
+### 移植版の募集
+
+Windows版やmacOS版を作成された方は、ぜひお知らせください！
+READMEにリンクを掲載させていただきます。
+
+---
+
+## ⭐ このプロジェクトが役に立ったら
+
+GitHubで⭐スターをつけていただけると、開発の励みになります！
 
 ---
 
