@@ -33,21 +33,28 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**現在のカバレッジ: 95%** (93テスト、全てパス)
+**現在のカバレッジ: 94%** (208テスト、全てパス)
 
 ## テストの構成
 
-### 実装済みテスト（93テスト）
+### 実装済みテスト（208テスト）
 
-- `test_analyzer.py` - 閾値判定とアラート生成のテスト（10テスト）
-- `test_log_analyzer.py` - ログ異常検知のテスト（6テスト）
-- `test_monitor.py` - リソース監視機能のテスト（7テスト）
-- `test_history.py` - 履歴管理のテスト（9テスト）
-- `test_settings_validator.py` - 設定検証のテスト（14テスト）
-- `test_notification.py` - 通知機能のテスト（9テスト、モック使用）
-- `test_log_watcher.py` - ログ監視のテスト（11テスト）
-- `test_log_trends.py` - ログ傾向分析のテスト（17テスト）
-- `test_cli.py` - CLIエントリーポイントのテスト（10テスト）
+- `test_analyzer.py` - 閾値判定とアラート生成のテスト
+- `test_analyzer_with_levels.py` - 3段階閾値のテスト
+- `test_log_analyzer.py` - ログ異常検知のテスト
+- `test_monitor.py` - リソース監視機能のテスト
+- `test_history.py` - 履歴管理のテスト
+- `test_settings_validator.py` - 設定検証のテスト
+- `test_notification.py` - 通知機能のテスト（モック使用）
+- `test_notification_history_*.py` - 通知履歴機能のテスト（プロパティテスト含む）
+- `test_notification_throttle*.py` - 通知頻度制御のテスト（プロパティテスト含む）
+- `test_log_watcher.py` - ログ監視のテスト
+- `test_log_trends.py` - ログ傾向分析のテスト
+- `test_cli.py` - CLIエントリーポイントのテスト
+- `test_advise_command.py` - adviseコマンドのテスト
+- `test_integration_threshold.py` - 3段階閾値の統合テスト
+- `test_weekly_*.py` - 週次レポート機能のテスト（プロパティテスト含む）
+- `test_report_formatter.py` - レポートフォーマットのテスト
 
 ### カバレッジ
 
@@ -57,13 +64,16 @@ bash run_coverage.sh
 | `analyzer.py` | 100% |
 | `log_analyzer.py` | 100% |
 | `monitor.py` | 100% |
-| `notification.py` | 100% |
-| `cli.py` | 96% |
-| `settings_validator.py` | 96% |
-| `log_trends.py` | 93% |
+| `report_formatter.py` | 100% |
+| `settings_validator.py` | 98% |
+| `notification.py` | 94% |
+| `weekly_data.py` | 92% |
+| `notification_history.py` | 91% |
 | `log_watcher.py` | 91% |
+| `log_trends.py` | 89% |
 | `history.py` | 89% |
-| **全体** | **95%** |
+| `cli.py` | 96% |
+| **全体** | **94%** |
 
 ## テストの種類
 

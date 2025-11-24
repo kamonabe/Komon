@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](htmlcov/index.html)
+[![Test Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](htmlcov/index.html)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
 
 **Komon は、開発者のための軽量アドバイザー型SOAR風ツールです。**
@@ -141,7 +141,7 @@ Komon/
 │   ├── README.md           # 詳細ドキュメント
 │   ├── CHANGELOG.md        # 変更履歴
 │   └── SECURITY.md         # セキュリティ情報
-├── tests/                  # テストコード（95%カバレッジ）
+├── tests/                  # テストコード（94%カバレッジ）
 ├── data/                   # データ保存先（自動生成）
 │   ├── usage_history/      # リソース使用履歴
 │   ├── notifications/      # 通知履歴
@@ -354,7 +354,7 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**テストカバレッジ: 95%** (111テスト、全てパス)
+**テストカバレッジ: 94%** (208テスト、全てパス)
 
 詳細は [tests/README.md](tests/README.md) を参照してください。
 
