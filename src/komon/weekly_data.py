@@ -66,13 +66,38 @@ def collect_weekly_data() -> dict:
             'trend': trend
         }
     
+    # ディスク使用量の予測を追加
+    disk_prediction = None
+    try:
+        from komon.disk_predictor import (
+            load_disk_history,
+            calculate_daily_average,
+            predict_disk_trend,
+            detect_rapid_change
+        )
+        
+        history = load_disk_history(days=7)
+        if len(history) >= 2:
+            daily_data = calculate_daily_average(history)
+            prediction = predict_disk_trend(daily_data)
+            rapid_change = detect_rapid_change(daily_data)
+            
+            disk_prediction = {
+                'prediction': prediction,
+                'rapid_change': rapid_change
+            }
+    except Exception:
+        # エラーが発生しても週次レポート全体は継続
+        disk_prediction = None
+    
     return {
         'period': {
             'start': start_date.strftime('%Y-%m-%d'),
             'end': end_date.strftime('%Y-%m-%d')
         },
         'resources': resources,
-        'alerts': alerts
+        'alerts': alerts,
+        'disk_prediction': disk_prediction
     }
 
 

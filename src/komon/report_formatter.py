@@ -63,6 +63,14 @@ def format_weekly_report(data: dict) -> str:
             trend_indicator = format_trend_indicator(trend)
             lines.append(f"{trend_indicator} {resource_name}: {get_trend_text(trend)}")
     
+    # ディスク使用量の予測
+    disk_prediction = data.get('disk_prediction')
+    if disk_prediction:
+        prediction_section = format_disk_prediction(disk_prediction)
+        if prediction_section:
+            lines.append("")
+            lines.append(prediction_section)
+    
     # フッター
     lines.append("")
     lines.append("異常がなくても、定期的に確認しておくと安心ですね 👀")
@@ -161,3 +169,36 @@ def format_alert_summary(alerts: list) -> str:
         lines.append(f"- ...他 {len(alerts) - 5} 件")
     
     return "\n".join(lines)
+
+
+
+def format_disk_prediction(disk_prediction: dict) -> str:
+    """
+    ディスク使用量の予測をフォーマットします。
+    
+    Args:
+        disk_prediction: {
+            'prediction': {...},
+            'rapid_change': {...}
+        }
+        
+    Returns:
+        str: フォーマット済み予測セクション
+    """
+    if not disk_prediction:
+        return ""
+    
+    from komon.disk_predictor import format_prediction_message
+    
+    prediction = disk_prediction.get('prediction', {})
+    rapid_change = disk_prediction.get('rapid_change', {})
+    
+    # 予測メッセージを生成
+    message = format_prediction_message(prediction, rapid_change)
+    
+    # 警告がある場合は目立つ形式で表示
+    if rapid_change.get('is_rapid') or prediction.get('days_to_90') is not None:
+        return f"【⚠️ ディスク使用量の予測】\n{message}"
+    else:
+        # 安全な場合は簡潔な形式
+        return f"【📊 ディスク使用量の予測】\n{message}"

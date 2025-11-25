@@ -220,6 +220,41 @@ def advise_log_trend(config):
             print(f"   - {log}")
         print("→ `logrotate` 設定や出力レベルの見直しを検討しましょう。")
 
+def advise_disk_prediction():
+    """
+    ディスク使用量の予測結果を表示します。
+    """
+    print("\n📊 ディスク使用量の予測")
+    try:
+        from komon.disk_predictor import (
+            load_disk_history,
+            calculate_daily_average,
+            predict_disk_trend,
+            detect_rapid_change,
+            format_prediction_message
+        )
+        
+        # データ読み込み
+        history = load_disk_history(days=7)
+        if len(history) < 2:
+            print("→ データが不足しています。7日分のデータが必要です。")
+            return
+        
+        # 日次平均を計算
+        daily_data = calculate_daily_average(history)
+        
+        # 予測計算
+        prediction = predict_disk_trend(daily_data)
+        rapid_change = detect_rapid_change(daily_data)
+        
+        # メッセージ生成と表示
+        message = format_prediction_message(prediction, rapid_change)
+        print(message)
+        
+    except Exception as e:
+        print(f"⚠️ 予測計算中にエラーが発生しました: {e}")
+
+
 def advise_notification_history(limit: int = None):
     """
     通知履歴を表示します。
@@ -266,6 +301,7 @@ def run_advise(history_limit: int = None):
     advise_email_disabled(config)
     advise_komon_update()
     advise_log_trend(config)
+    advise_disk_prediction()  # ディスク使用量の予測を追加
     advise_process_breakdown(usage)
     advise_process_details(thresholds)
     
