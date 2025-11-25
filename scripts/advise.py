@@ -315,11 +315,14 @@ def run():
         "--history",
         type=int,
         metavar="N",
-        help="通知履歴を表示します。Nを指定すると直近N件のみ表示します。"
+        default=10,
+        help="通知履歴の表示件数（デフォルト: 10件、0で全件表示）"
     )
     args = parser.parse_args()
     
-    run_advise(history_limit=args.history)
+    # 0が指定された場合は全件表示（Noneを渡す）
+    history_limit = None if args.history == 0 else args.history
+    run_advise(history_limit=history_limit)
 
 
 if __name__ == "__main__":
