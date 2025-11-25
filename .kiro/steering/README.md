@@ -9,25 +9,30 @@
 ## ディレクトリ構造
 
 ```
-.kiro/steering/
-├── README.md                          # このファイル
-├── project-config.yml                 # プロジェクト固有の設定
-├── _templates/                        # ルールテンプレート（汎用）
-│   ├── versioning-rules.template.md
-│   ├── development-workflow.template.md
-│   ├── task-management.template.md
-│   ├── spec-quality-assurance.template.md
-│   ├── error-handling-and-logging.template.md
-│   ├── environment-and-communication.template.md
-│   └── commit-message-rules.template.md
-└── [生成されたルール]                  # テンプレートから生成
-    ├── versioning-rules.md
-    ├── development-workflow.md
-    ├── task-management.md
-    ├── spec-quality-assurance.md
-    ├── error-handling-and-logging.md
-    ├── environment-and-communication.md
-    └── commit-message-rules.md
+.kiro/
+├── steering/                          # ステアリングルール
+│   ├── README.md                      # このファイル
+│   ├── project-config.yml             # プロジェクト固有の設定
+│   ├── _templates/                    # ルールテンプレート（汎用）
+│   │   ├── versioning-rules.template.md
+│   │   ├── development-workflow.template.md
+│   │   ├── task-management.template.md
+│   │   ├── spec-quality-assurance.template.md
+│   │   ├── error-handling-and-logging.template.md
+│   │   ├── environment-and-communication.template.md
+│   │   └── commit-message-rules.template.md
+│   └── [生成されたルール]              # テンプレートから生成
+│       ├── versioning-rules.md
+│       ├── development-workflow.md
+│       ├── task-management.md
+│       ├── spec-quality-assurance.md
+│       ├── error-handling-and-logging.md
+│       ├── environment-and-communication.md
+│       └── commit-message-rules.md
+└── tasks/                             # タスク管理
+    ├── _templates/                    # タスクテンプレート（汎用）
+    │   └── implementation-tasks.template.md
+    └── implementation-tasks.md        # 実際のタスクリスト
 ```
 
 ## 使い方
@@ -60,6 +65,37 @@ git add .kiro/steering/
 git commit -m "docs: ステアリングルールを更新"
 ```
 
+### 1-2. タスクテンプレートを更新する場合
+
+#### ステップ1: テンプレートを編集
+
+```bash
+vim .kiro/tasks/_templates/implementation-tasks.template.md
+```
+
+#### ステップ2: テンプレートを再生成（新規プロジェクト用）
+
+⚠️ **注意**: このコマンドは既存の`implementation-tasks.md`を上書きします！
+
+```bash
+python scripts/generate_task_template.py
+```
+
+**既存プロジェクトの場合**: テンプレートは参考用として、実際のタスクは手動で管理してください。
+
+#### ステップ3: 差分を確認
+
+```bash
+git diff .kiro/steering/*.md
+```
+
+#### ステップ4: コミット
+
+```bash
+git add .kiro/steering/
+git commit -m "docs: ステアリングルールを更新"
+```
+
 ### 2. 他のプロジェクトでKomonのルールを使う場合
 
 #### ステップ1: テンプレートとスクリプトをコピー
@@ -67,7 +103,9 @@ git commit -m "docs: ステアリングルールを更新"
 ```bash
 # Komonプロジェクトから
 cp -r /path/to/komon/.kiro/steering/_templates /path/to/myproject/.kiro/steering/
+cp -r /path/to/komon/.kiro/tasks/_templates /path/to/myproject/.kiro/tasks/
 cp /path/to/komon/scripts/generate_steering_rules.py /path/to/myproject/scripts/
+cp /path/to/komon/scripts/generate_task_template.py /path/to/myproject/scripts/
 ```
 
 #### ステップ2: プロジェクト設定を作成
@@ -149,21 +187,32 @@ versioning_boundary_cases:
 pip install jinja2 pyyaml
 ```
 
-#### ステップ4: ルールを生成
+#### ステップ4: ステアリングルールを生成
 
 ```bash
 python scripts/generate_steering_rules.py
 ```
 
-#### ステップ5: 生成されたルールを確認
+#### ステップ5: タスクテンプレートを生成
+
+```bash
+python scripts/generate_task_template.py
+```
+
+#### ステップ6: 生成されたファイルを確認
 
 ```bash
 ls -la .kiro/steering/*.md
+ls -la .kiro/tasks/implementation-tasks.md
 ```
 
-#### ステップ6: Kiroで使用開始
+#### ステップ7: Kiroで使用開始
 
 生成されたルールは自動的にKiroに読み込まれます。
+
+**タスク管理の開始**:
+- `implementation-tasks.md`に実際のタスク（TASK-001, TASK-002...）を追加
+- `future-ideas.md`でアイデアを管理
 
 ### 3. プロジェクト設定のカスタマイズ
 
