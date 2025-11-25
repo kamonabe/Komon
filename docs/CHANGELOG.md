@@ -6,6 +6,20 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.16.2] - 2025-11-25
+
+### Changed
+
+- **エラーメッセージの改善**
+  - settings.yml不在時に具体的な対処法を表示
+  - YAML形式エラー時に分かりやすいメッセージ
+  - 4つのスクリプト（main.py, advise.py, weekly_report.py, main_log_monitor.py）を修正
+
+- **ドキュメントの正直化**
+  - クイックスタートの所要時間を「5分」→「10分」に修正
+  - 前提条件を明記（Linux、Python 3.10+、Git）
+  - Slack設定をオプション扱いに変更
+
 ### 開発者向け改善
 
 - **Specテンプレートの追加**
