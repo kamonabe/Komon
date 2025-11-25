@@ -25,7 +25,7 @@ Komonプロジェクトは**仕様駆動開発（Spec-Driven Development）**を
 - 優先度、見積もり、背景を記載
 - タスク分解を行う
 
-### 3. Spec作成
+### 3. Spec作成（mainブランチ）
 **フォルダ**: `.kiro/specs/{feature-name}/`
 
 以下の3ファイルを**日本語で**作成：
@@ -33,10 +33,25 @@ Komonプロジェクトは**仕様駆動開発（Spec-Driven Development）**を
 - `design.md`: 設計書（正確性プロパティを含む、日本語）
 - `tasks.md`: 実装タスクリスト（日本語）
 
-### 4. 開発ブランチの作成
+**この時点ではまだmainブランチでOK**
 
-**重要**: コード実装を開始する前に、mainから開発ブランチを作成します。
+### 4. 🚨 実装開始前の必須チェック 🚨
 
+**Kiroは実装を開始する前に、必ず以下を実行します：**
+
+1. **現在のブランチを確認**
+   ```bash
+   git branch
+   ```
+
+2. **mainブランチにいる場合は停止**
+   - ユーザーに「開発ブランチを作成してください」と依頼
+   - ブランチ名を提案: `feature/task-XXX-{feature-name}`
+   - ユーザーがブランチを作成するまで**実装を開始しない**
+
+3. **開発ブランチにいることを確認してから実装開始**
+
+**ブランチ作成コマンド（ユーザーが実行）**:
 ```bash
 git checkout main
 git checkout -b feature/task-XXX-{feature-name}
@@ -200,22 +215,32 @@ Komonでは**しっかりしたテスト**を維持します：
    - design.md: 設計書
    - tasks.md: タスクリスト
    ↓
-4. 開発ブランチを作成
+4. ユーザー「TASK-001の実装を開始しよう」
+   ↓
+5. Kiro「Specモードで進めます。まず現在のブランチを確認します」
+   git branch  # → mainブランチにいることを確認
+   ↓
+6. Kiro「開発ブランチを作成してください：
+         git checkout -b feature/task-001-progressive-notification」
+   ↓
+7. ユーザーがブランチを作成
    git checkout -b feature/task-001-progressive-notification
    ↓
-5. Kiroが実装（Specモード）
+8. ユーザー「ブランチ作成したよ」
+   ↓
+9. Kiroが実装開始（Specモード）
    - src/komon/analyzer.py を修正
    - テスト追加
    - ドキュメント更新
    ↓
-6. Kiroが完了報告「v1.12.0を提案します」
-   ↓
-7. ユーザーが確認「OK、v1.12.0でリリース」
-   ↓
-8. mainにマージしてタグ作成
-   git checkout main
-   git merge feature/task-001-progressive-notification
-   git tag v1.12.0
+10. Kiroが完了報告「v1.12.0を提案します」
+    ↓
+11. ユーザーが確認「OK、v1.12.0でリリース」
+    ↓
+12. mainにマージしてタグ作成
+    git checkout main
+    git merge feature/task-001-progressive-notification
+    git tag v1.12.0
 ```
 
 ### 例2: 既存機能の大幅変更「analyzer.pyのリファクタリング」
@@ -272,18 +297,45 @@ refactor/{module-name}              # リファクタリング
 - refactor/analyzer-module
 ```
 
-### Kiroへの指示
+### 🚨 Kiroへの厳格な指示 🚨
 
-**実装開始前に必ず確認**:
-1. 現在のブランチを確認（`git branch`）
-2. mainブランチにいる場合は、開発ブランチ作成を提案
-3. ユーザーがブランチを作成してから実装を開始
+#### 実装開始前の必須手順（絶対に守る）
 
-**実装完了後**:
+**TASK-XXXの実装を開始する際、Kiroは以下を必ず実行：**
+
+1. **「Specモードで進めます」と宣言**
+2. **現在のブランチを確認**
+   ```bash
+   git branch
+   ```
+3. **mainブランチにいる場合**:
+   - ❌ **絶対にコード実装を開始しない**
+   - ✅ ユーザーに以下を依頼:
+     ```
+     実装を開始する前に、開発ブランチを作成してください：
+     
+     git checkout -b feature/task-XXX-{feature-name}
+     
+     ブランチ作成後、実装を開始します。
+     ```
+   - ⏸️ ユーザーの返答を待つ
+
+4. **開発ブランチにいることを確認してから実装開始**
+
+#### 実装完了後の手順
+
 1. テスト全パス確認
 2. バージョン番号を提案
 3. ユーザーにmainへのマージを依頼
 4. バージョンタグ作成後、GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
+
+#### チェックリスト
+
+実装開始前に確認：
+- [ ] `git branch` でブランチを確認した
+- [ ] mainブランチの場合、ユーザーにブランチ作成を依頼した
+- [ ] 開発ブランチにいることを確認した
+- [ ] 上記が全て完了してから実装を開始した
 
 ## まとめ
 
