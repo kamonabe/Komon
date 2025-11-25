@@ -13,12 +13,28 @@ def load_config(path: str = "settings.yml") -> dict:
     Returns:
         dict: 読み込まれた設定内容
     """
+    import sys
+    
     try:
         with open(path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"❌ {path} が見つかりません")
+        print("")
+        print("初回セットアップを実行してください：")
+        print("  python scripts/initial.py")
+        print("")
+        print("または、サンプルファイルをコピー：")
+        print("  cp config/settings.yml.sample settings.yml")
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"❌ {path} の形式が不正です: {e}")
+        print("")
+        print("config/settings.yml.sampleを参考に修正してください")
+        sys.exit(1)
     except Exception as e:
-        print(f"❌ settings.yml の読み込みに失敗しました: {e}")
-        return {}
+        print(f"❌ 予期しないエラー: {e}")
+        sys.exit(1)
 
 def handle_alerts(alerts: list, levels: dict, config: dict, usage: dict):
     """

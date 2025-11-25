@@ -203,23 +203,28 @@ Komon/
 
 ---
 
-## 🚀 クイックスタート
+## 🚀 クイックスタート（所要時間: 約10分）
+
+### 前提条件
+- Linux環境（AlmaLinux 9推奨）
+- Python 3.10以上
+- Git
 
 ### 1. インストール
 
 ```bash
-# リポジトリをクローン
+# リポジトリをクローン（1分）
 git clone https://github.com/kamonabe/Komon.git
 cd Komon
 
-# 依存パッケージをインストール
+# 依存パッケージをインストール（2分）
 pip install -r requirements.txt
 
 # または開発モードでインストール
 pip install -e .
 ```
 
-### 2. 初期設定
+### 2. 初期設定（5分）
 
 ```bash
 # 初期設定ウィザードを実行
@@ -229,7 +234,7 @@ python scripts/initial.py
 komon initial
 ```
 
-### 3. 実行
+### 3. 動作確認（1分）
 
 ```bash
 # リソース監視
@@ -250,6 +255,16 @@ python scripts/advise.py --history 10
 # 週次健全性レポート
 python scripts/weekly_report.py
 ```
+
+### Slack通知の設定（オプション）
+
+Slack通知を使う場合は、Webhook URLを取得してください：
+
+1. [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks)にアクセス
+2. "Create New App" → "Incoming Webhooks"を選択
+3. URLをコピーして`settings.yml`の`notifications.slack.webhook_url`に設定
+
+**注意**: Slack通知は必須ではありません。通知なしでも`komon advise`コマンドで状態確認できます。
 
 ### 主な機能
 

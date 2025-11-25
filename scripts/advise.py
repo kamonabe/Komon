@@ -276,12 +276,28 @@ def advise_notification_history(limit: int = None):
 
 
 def run_advise(history_limit: int = None):
+    import sys
+    
     try:
         with open("settings.yml", "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
+    except FileNotFoundError:
+        print("❌ settings.yml が見つかりません")
+        print("")
+        print("初回セットアップを実行してください：")
+        print("  python scripts/initial.py")
+        print("")
+        print("または、サンプルファイルをコピー：")
+        print("  cp config/settings.yml.sample settings.yml")
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"❌ settings.yml の形式が不正です: {e}")
+        print("")
+        print("config/settings.yml.sampleを参考に修正してください")
+        sys.exit(1)
     except Exception as e:
-        print(f"❌ settings.yml の読み込みに失敗しました: {e}")
-        return
+        print(f"❌ 予期しないエラー: {e}")
+        sys.exit(1)
 
     usage = collect_detailed_resource_usage()
     thresholds = load_thresholds(config)

@@ -256,20 +256,43 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 最初の5分でできる導入方法
+## 🚀 導入方法（所要時間: 約10分）
 
-Komon の導入はとてもシンプルです。以下のコマンドを順番に実行してください：
+### 前提条件
+- Linux環境（AlmaLinux 9推奨）
+- Python 3.10以上
+- Git
+
+### インストール手順
+
+Komon の導入はシンプルです。以下のコマンドを順番に実行してください：
 
 ```bash
+# 1. クローン（1分）
 git clone https://github.com/kamonabe/Komon.git
 cd Komon
-bash init.sh
-komon initial # または /usr/bin/python3 initial.py
-komon advise # または /usr/bin/python3 advise.py
+
+# 2. 依存パッケージ（2分）
+pip install -r requirements.txt
+
+# 3. 初期設定（5分）
+python scripts/initial.py
+# または
+komon initial
+
+# 4. 動作確認（1分）
+python scripts/advise.py
+# または
+komon advise
 ```
 
-これだけで初期設定とサンプル実行が完了し、Slack通知やログ監視などの基本動作を確認できます。
-通知・監視対象の詳細設定は settings.yml で変更可能です。
+これで初期設定とサンプル実行が完了し、基本動作を確認できます。
+
+### Slack通知の設定（オプション）
+
+Slack通知を使う場合は、[Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks)でWebhook URLを取得し、`settings.yml`に設定してください。
+
+**注意**: Slack通知は必須ではありません。通知なしでも`komon advise`コマンドで状態確認できます。
 
 ---
 
