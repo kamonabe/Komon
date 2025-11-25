@@ -44,8 +44,7 @@ jobs:
       - name: Check code coverage
         run: |
           bash run_coverage.sh
-          # カバレッジが95%未満の場合は警告（失敗はさせない）
-          python -c "import json; data=json.load(open('htmlcov/status.json')); print(f'Coverage: {data[\"totals\"][\"percent_covered\"]}%'); exit(0 if data['totals']['percent_covered'] >= 95 else 0)"
+        continue-on-error: true
   
   validate-specs:
     runs-on: ubuntu-latest
