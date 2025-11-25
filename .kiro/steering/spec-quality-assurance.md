@@ -9,7 +9,6 @@ Komonはシンプル軽量なツールであり、検証スクリプトも軽量
 ## 検証スクリプト
 
 ### 1. `scripts/validate_specs.py`（構造検証）
-
 **チェック項目**:
 - ✅ **エラー**: Front Matterの必須フィールド（title, feature, status, created, updated）
 - ✅ **エラー**: 日付フォーマット（YYYY-MM-DD）
@@ -213,7 +212,7 @@ python scripts/check_spec_consistency.py
 
 **A**: 以下を確認してください：
 ```bash
-# Pythonバージョン確認（3.10以上）
+# Pythonバージョン確認（3.10+以上）
 python --version
 
 # 依存パッケージインストール

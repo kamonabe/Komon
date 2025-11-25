@@ -1,8 +1,3 @@
----
-title: Komon開発ワークフロー
-inclusion: always
----
-
 # Komon仕様駆動開発ワークフロー
 
 ## 開発の基本方針
@@ -29,10 +24,7 @@ Komonプロジェクトは**仕様駆動開発（Spec-Driven Development）**を
 **フォルダ**: `.kiro/specs/{feature-name}/`
 
 以下の3ファイルを**日本語で**作成：
-- `requirements.md`: 要件定義（日本語）
-- `design.md`: 設計書（正確性プロパティを含む、日本語）
-- `tasks.md`: 実装タスクリスト（日本語）
-
+- `requirements.md`: 要件定義- `design.md`: 設計書（正確性プロパティを含む）- `tasks.md`: 実装タスクリスト
 **この時点ではまだmainブランチでOK**
 
 ### 4. 🚨 実装開始前の必須チェック 🚨
@@ -67,8 +59,7 @@ git checkout -b feature/task-XXX-{feature-name}
 Kiroは以下を**連続して自律的に**実行します：
 
 1. コード実装
-2. テスト作成（プロパティテスト + 統合テスト + ユニットテスト）
-3. ドキュメント更新（README.md, CHANGELOG.md）
+2. テスト作成（プロパティテスト + 統合テスト + ユニットテスト）3. ドキュメント更新（README.md, CHANGELOG.md）
 4. タスクファイルの更新
 
 **ユーザーの介入は不要**です。実装完了後に報告します。
@@ -131,7 +122,7 @@ v1.X.X - 機能名
 
 - **大きな既存コードの変更**
   - 既存機能に影響がある場合
-  - analyzer.py など主要モジュールの大幅変更
+  - 主要モジュールの大幅変更
   - → **Specモードを停止**し、**Vibeモード**で仕様を詰め直す
   
 - **バージョン番号の決定**
@@ -229,7 +220,7 @@ Komonでは**しっかりしたテスト**を維持します：
 8. ユーザー「ブランチ作成したよ」
    ↓
 9. Kiroが実装開始（Specモード）
-   - src/komon/analyzer.py を修正
+   - コード実装
    - テスト追加
    - ドキュメント更新
    ↓
@@ -243,10 +234,10 @@ Komonでは**しっかりしたテスト**を維持します：
     git tag v1.12.0
 ```
 
-### 例2: 既存機能の大幅変更「analyzer.pyのリファクタリング」
+### 例2: 既存機能の大幅変更
 
 ```
-1. ユーザー「analyzer.pyを大きく変更したい」
+1. ユーザー「主要モジュールを大きく変更したい」
    ↓
 2. Kiro「既存機能への影響が大きいので、Vibeモードで進めましょう」
    ↓
@@ -287,8 +278,8 @@ Komonでは**しっかりしたテスト**を維持します：
 
 ```
 feature/task-XXX-{feature-name}     # 新機能
-bugfix/{issue-description}          # バグ修正
-refactor/{module-name}              # リファクタリング
+bugfix/{issue-description}     # バグ修正
+refactor/{module-name}         # リファクタリング
 
 例:
 - feature/task-001-progressive-notification

@@ -28,6 +28,7 @@ print("⚠️ 環境変数 KOMON_SLACK_WEBHOOK が設定されていません")
 print("❌ メール通知エラー: SMTP接続に失敗しました")
 ```
 
+
 ### `logging`を使う場面（開発者向け記録）
 
 **用途**:
@@ -62,6 +63,7 @@ except Exception as e:
     print(f"❌ 通知の送信に失敗しました: {e}")
     logger.error("Notification failed: %s", e, exc_info=True)
 ```
+
 
 ## ログレベルの使い分け
 
@@ -144,6 +146,7 @@ logger.error("Log file not readable: %s", log_path)
       sys.exit(1)
   ```
 
+
 - **設定ファイルの形式が完全に不正**
   ```python
   try:
@@ -154,6 +157,7 @@ logger.error("Log file not readable: %s", log_path)
       sys.exit(1)
   ```
 
+
 - **必須の環境変数が未設定（実行不可能）**
   ```python
   webhook_url = os.getenv("KOMON_SLACK_WEBHOOK")
@@ -162,6 +166,7 @@ logger.error("Log file not readable: %s", log_path)
       print("   通知機能を使用するには環境変数を設定してください。")
       sys.exit(1)
   ```
+
 
 ### 処理を継続するエラー（非致命的）
 
@@ -177,6 +182,7 @@ logger.error("Log file not readable: %s", log_path)
       history = []
   ```
 
+
 - **通知の送信失敗** → ログに記録して継続
   ```python
   try:
@@ -186,6 +192,7 @@ logger.error("Log file not readable: %s", log_path)
       logger.error("Slack notification failed: %s", e, exc_info=True)
       # 処理は継続
   ```
+
 
 - **一部のログファイルが読めない** → 他のファイルを処理
   ```python
@@ -197,6 +204,7 @@ logger.error("Log file not readable: %s", log_path)
           logger.error("Failed to analyze log: %s", log_path, exc_info=True)
           continue  # 次のファイルへ
   ```
+
 
 ### カスタム例外を作る場合
 
@@ -225,6 +233,7 @@ def validate_threshold_config(config: dict) -> dict:
     # 検証処理...
 ```
 
+
 ### 例外メッセージの言語
 
 - **ユーザー向け（`print()`）**: 日本語、原因と対処法
@@ -232,6 +241,7 @@ def validate_threshold_config(config: dict) -> dict:
   print("❌ 設定ファイルが見つかりません: settings.yml")
   print("   config/settings.yml.sample をコピーして作成してください。")
   ```
+
 
 - **開発者向け（`logging`、例外メッセージ）**: 英語、詳細情報
   ```python
@@ -252,6 +262,7 @@ except Exception as e:
     # 処理は継続
 ```
 
+
 ### パターン2: 致命的エラー（処理停止）
 
 ```python
@@ -264,6 +275,7 @@ except FileNotFoundError:
     sys.exit(1)
 ```
 
+
 ### パターン3: カスタム例外
 
 ```python
@@ -274,6 +286,7 @@ except ValidationError as e:
     logger.error("Configuration validation failed: %s", e)
     sys.exit(1)
 ```
+
 
 ### パターン4: リトライ処理
 
@@ -312,6 +325,7 @@ except Exception as e:
     logger.error("Failed to read file: %s", e, exc_info=True)
     data = {}
 ```
+
 
 ## ロギング設定
 
@@ -356,65 +370,12 @@ KOMON_LOG_LEVEL=ERROR python scripts/main.py
 
 ### コード実装時のチェックリスト
 
-- [ ] ユーザー向けメッセージは`print()`で日本語、絵文字付き
-- [ ] 開発者向けログは`logging`で英語、詳細情報
+- [ ] ユーザー向けメッセージは`print()`で日本語、絵文字付き- [ ] 開発者向けログは`logging`で英語、詳細情報
 - [ ] 致命的エラーは`sys.exit(1)`で終了
 - [ ] 非致命的エラーは処理を継続
 - [ ] 例外メッセージは英語で記述
 - [ ] `exc_info=True`でスタックトレースを記録
 - [ ] ログレベルを適切に使い分け
-
-### 実装例
-
-```python
-import logging
-import sys
-
-logger = logging.getLogger(__name__)
-
-def send_notification(message: str, webhook_url: str) -> bool:
-    """
-    通知を送信します。
-    
-    Args:
-        message: 送信するメッセージ
-        webhook_url: Webhook URL
-        
-    Returns:
-        bool: 送信成功時True
-    """
-    try:
-        # 環境変数から読み込み
-        if webhook_url.startswith("env:"):
-            env_var = webhook_url.split(":", 1)[1]
-            webhook_url = os.getenv(env_var, "")
-            if not webhook_url:
-                print(f"⚠️ 環境変数 {env_var} が設定されていません")
-                logger.warning("Environment variable not set: %s", env_var)
-                return False
-        
-        # 通知送信
-        response = requests.post(webhook_url, json={"text": message}, timeout=10)
-        
-        if response.status_code == 200:
-            print("✅ 通知を送信しました")
-            logger.info("Notification sent successfully")
-            return True
-        else:
-            print(f"⚠️ 通知の送信に失敗しました: {response.status_code}")
-            logger.error("Notification failed with status: %d", response.status_code)
-            return False
-            
-    except requests.exceptions.Timeout:
-        print("❌ 通知エラー: タイムアウトしました")
-        logger.error("Notification timeout")
-        return False
-        
-    except Exception as e:
-        print(f"❌ 通知エラー: {e}")
-        logger.error("Notification error: %s", e, exc_info=True)
-        return False
-```
 
 ## トラブルシューティング
 
@@ -440,8 +401,7 @@ def send_notification(message: str, webhook_url: str) -> bool:
 
 ## まとめ
 
-- **`print()`**: ユーザー向け、日本語、絵文字付き
-- **`logging`**: 開発者向け、英語、詳細情報
+- **`print()`**: ユーザー向け、日本語、絵文字付き- **`logging`**: 開発者向け、英語、詳細情報
 - **致命的エラー**: `sys.exit(1)`で停止
 - **非致命的エラー**: 処理を継続、警告を表示
 - **例外メッセージ**: 英語で記述

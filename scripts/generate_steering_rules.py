@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""
+ステアリングルール生成スクリプト
+
+テンプレートとproject-config.ymlから、プロジェクト固有のステアリングルールを生成します。
+"""
+
+import yaml
+from pathlib import Path
+from jinja2 import Environment, FileSystemLoader
+import sys
+
+
+def load_project_config(config_path: str = ".kiro/steering/project-config.yml") -> dict:
+    """プロジェクト設定を読み込む"""
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"❌ 設定ファイルが見つかりません: {config_path}")
+        sys.exit(1)
+    except yaml.YAMLError as e:
+        print(f"❌ YAML解析エラー: {e}")
+        sys.exit(1)
+
+
+def generate_steering_rules(config: dict, output_dir: str = ".kiro/steering"):
+    """テンプレートからステアリングルールを生成"""
+    
+    template_dir = Path(".kiro/steering/_templates")
+    if not template_dir.exists():
+        print(f"❌ テンプレートディレクトリが見つかりません: {template_dir}")
+        sys.exit(1)
+    
+    # Jinja2環境の設定
+    env = Environment(
+        loader=FileSystemLoader(str(template_dir)),
+        trim_blocks=True,
+        lstrip_blocks=True
+    )
+    
+    # カスタムフィルターを追加
+    def basename_filter(path):
+        """パスからファイル名を取得"""
+        return Path(path).name
+    
+    env.filters['basename'] = basename_filter
+    
+    # テンプレートファイルを取得
+    templates = list(template_dir.glob("*.template.md"))
+    
+    if not templates:
+        print(f"⚠️ テンプレートファイルが見つかりません: {template_dir}")
+        return
+    
+    print(f"📝 {len(templates)}個のテンプレートを処理します...\n")
+    
+    # 各テンプレートを処理
+    for template_path in sorted(templates):
+        template_name = template_path.name
+        
+        try:
+            # テンプレートを読み込み
+            template = env.get_template(template_name)
+            
+            # レンダリング
+            output = template.render(**config)
+            
+            # 出力ファイル名（.template を削除）
+            output_name = template_name.replace('.template', '')
+            output_path = Path(output_dir) / output_name
+            
+            # ファイルに書き込み
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(output)
+            
+            print(f"✅ Generated: {output_name}")
+            
+        except Exception as e:
+            print(f"❌ Error processing {template_name}: {e}")
+            sys.exit(1)
+    
+    print(f"\n🎉 全てのステアリングルールを生成しました！")
+    print(f"   出力先: {output_dir}/")
+
+
+def main():
+    """メイン処理"""
+    print("=" * 60)
+    print("Komon Steering Rules Generator")
+    print("=" * 60)
+    print()
+    
+    # プロジェクト設定を読み込み
+    print("📖 プロジェクト設定を読み込んでいます...")
+    config = load_project_config()
+    print(f"   プロジェクト: {config['project']['name']}")
+    print(f"   タイプ: {config['project']['type']}")
+    print(f"   言語: {config['project']['language']}")
+    print()
+    
+    # ステアリングルールを生成
+    generate_steering_rules(config)
+
+
+if __name__ == '__main__':
+    main()

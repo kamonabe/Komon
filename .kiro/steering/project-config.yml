@@ -1,0 +1,100 @@
+# Komonプロジェクト設定
+# このファイルはステアリングルールのテンプレート生成に使用されます
+
+project:
+  name: "Komon"
+  type: "cli-tool"
+  language: "python"
+  description: "軽量なシステム監視・アドバイザーツール"
+
+environment:
+  platform: "AlmaLinux 9"
+  platform_type: "RHEL"
+  shell: "bash"
+  package_manager: "dnf/yum"
+  python_version: "3.10+"
+
+communication:
+  language: "ja"
+  language_name: "日本語"
+  use_emoji: true
+
+versioning:
+  scheme: "semver"
+  initial_version: "1.0.0"
+  current_version: "1.16.1"
+
+testing:
+  framework: "pytest"
+  coverage_target: 95
+  property_testing: true
+  property_framework: "hypothesis"
+
+git:
+  main_branch: "main"
+  branch_prefix:
+    feature: "feature/task-"
+    bugfix: "bugfix/"
+    refactor: "refactor/"
+
+spec:
+  location: ".kiro/specs/"
+  required_files:
+    - "requirements.md"
+    - "design.md"
+    - "tasks.md"
+  validation_scripts:
+    - "scripts/validate_specs.py"
+    - "scripts/check_spec_consistency.py"
+
+changelog:
+  location: "docs/CHANGELOG.md"
+  format: "keep-a-changelog"
+
+# プロジェクト固有の境界線ケース（バージョニング）
+versioning_boundary_cases:
+  - change: "表示件数のデフォルト変更"
+    version: "PATCH"
+    reason: "ユーザー体験の小改善、オプションで従来の動作も可能"
+  - change: "新しいオプション追加（`--history N`）"
+    version: "MINOR"
+    reason: "機能拡張（既存動作は変わらない）"
+  - change: "既存オプションの削除"
+    version: "MAJOR"
+    reason: "破壊的変更"
+  - change: "既存オプションの非推奨化（deprecation）"
+    version: "MINOR"
+    reason: "まだ動作する、警告を表示"
+  - change: "内部リファクタリング"
+    version: "PATCH"
+    reason: "ユーザーには見えない"
+  - change: "テストの追加のみ"
+    version: "なし"
+    reason: "開発者向け改善"
+  - change: "CI/CDの導入"
+    version: "なし"
+    reason: "開発者向け改善"
+  - change: "Specテンプレートの追加"
+    version: "なし"
+    reason: "開発者向け改善"
+  - change: "README.mdの大幅な改善"
+    version: "PATCH"
+    reason: "ドキュメント修正"
+  - change: "新しいドキュメントの追加（SECURITY.md等）"
+    version: "PATCH"
+    reason: "ドキュメント追加"
+  - change: "エラーメッセージの改善"
+    version: "PATCH"
+    reason: "ユーザー体験の改善"
+  - change: "ログ出力の追加"
+    version: "PATCH"
+    reason: "デバッグ改善"
+  - change: "パフォーマンス改善（2倍高速化）"
+    version: "PATCH"
+    reason: "機能追加ではない"
+  - change: "新しい依存パッケージの追加"
+    version: "MINOR"
+    reason: "環境への影響がある"
+  - change: "依存パッケージの削除"
+    version: "MAJOR"
+    reason: "破壊的変更の可能性"

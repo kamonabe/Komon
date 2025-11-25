@@ -1,20 +1,14 @@
----
-title: 環境とコミュニケーションルール
-inclusion: always
----
-
 # Komon開発環境とコミュニケーションルール
 
 ## 開発環境
 
 ### ターゲットプラットフォーム
 **AlmaLinux 9**（RHEL系Linux）
-
 Komonは**Linux環境専用**として開発されています。
 
 ### 動作確認コマンド
 
-Kiroが提示するコマンドは、**必ずAlmaLinuxで実行可能**なものにしてください。
+Kiroが提示するコマンドは、**必ずAlmaLinux 9で実行可能**なものにしてください。
 
 #### ✅ 使用可能なコマンド
 
@@ -27,6 +21,7 @@ git status, git branch, git checkout, git merge, git tag
 
 # Python実行
 python, python -m pytest, pip
+
 
 # プロセス確認
 ps aux, top, htop
@@ -50,11 +45,12 @@ pbcopy, pbpaste, open
 # 他のLinuxディストリビューション専用
 apt, apt-get (Debian/Ubuntu)
 pacman (Arch Linux)
+
 ```
 
 #### パッケージ管理
 
-AlmaLinuxでは**dnf**または**yum**を使用：
+AlmaLinux 9では**dnf**または**yum**を使用：
 
 ```bash
 # パッケージインストール
@@ -64,6 +60,8 @@ sudo yum install <package>
 # パッケージ検索
 dnf search <package>
 ```
+
+
 
 ### シェル環境
 
@@ -94,6 +92,7 @@ Kiro: "The notification history feature has been implemented.
 
 ユーザー: 「ありがとう！v1.11.0でリリースします」
 ```
+
 
 ### 日本語使用の範囲
 
@@ -135,6 +134,7 @@ Specモード（仕様駆動開発）では、**全て日本語**で記述しま
 
 **重要**: Spec文書は利用者（日本語話者）が読むものなので、英語で書かないこと。
 
+
 ### コマンド提示時のフォーマット
 
 動作確認コマンドを提示する際は、以下の形式で：
@@ -151,10 +151,9 @@ python -m pytest tests/ -v
 # カバレッジ確認
 bash run_coverage.sh
 
-# 通知履歴の表示
-python scripts/advise.py --history 10
 \`\`\`
 ```
+
 
 ### エラーメッセージの説明
 
@@ -175,6 +174,7 @@ python scripts/advise.py --history 10
   pip install -r requirements-dev.txt
 ```
 
+
 ## Kiroへの指示
 
 ### 必ず守ること
@@ -183,7 +183,7 @@ python scripts/advise.py --history 10
    - Specモードでも、ユーザーへの報告は日本語
    - 英語で返答してしまった場合は、即座に日本語で言い直す
 
-2. **コマンドはAlmaLinux対応**
+2. **コマンドはAlmaLinux 9対応**
    - `findstr`などWindowsコマンドは使わない
    - `grep`, `awk`, `sed`などLinux標準コマンドを使う
 
@@ -195,18 +195,17 @@ python scripts/advise.py --history 10
 
 コマンドを提示する前に確認：
 
-- [ ] AlmaLinuxで実行可能か？
+- [ ] AlmaLinux 9で実行可能か？
 - [ ] Windowsコマンドを使っていないか？
 - [ ] ユーザーへの説明は日本語か？
 - [ ] エラーメッセージの説明は日本語か？
 
 ## まとめ
 
-- **開発環境**: AlmaLinux 9（RHEL系）
-- **コマンド**: Linux標準コマンドのみ使用
+- **開発環境**: AlmaLinux 9（RHEL系）- **コマンド**: Linux標準コマンドのみ使用
 - **パッケージ管理**: dnf/yum
 - **コミュニケーション**: 必ず日本語
-- **Spec文書**: 英語でOK（ただし説明は日本語）
+- **Spec文書**: 日本語で統一
 
 このルールにより、ユーザーとKiroのコミュニケーションが円滑になり、
 環境に適したコマンドが提示されます。
