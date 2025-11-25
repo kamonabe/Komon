@@ -14,7 +14,7 @@ Komonの変更履歴を記録します。
   - 品質チェックリストを各テンプレートに含める
 
 - **GitHub Actions CI/CDの導入**
-  - `tests.yml`: コード変更時に全テスト実行（Python 3.9/3.10/3.11）
+  - `tests.yml`: コード変更時に全テスト実行（Python 3.10/3.11/3.12）
   - `spec-validation.yml`: Spec/ドキュメント更新時に自動検証
   - リンティング（black, isort, flake8）を統合
 

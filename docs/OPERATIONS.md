@@ -7,7 +7,7 @@
 ### Python環境の要件
 
 **推奨バージョン：**
-- Python 3.9以上（3.11で動作確認済み）
+- Python 3.10以上（3.11で動作確認済み）
 - AlmaLinux 9 / RHEL系 / Ubuntu / Debian系
 
 ### 仮想環境（venv）の使用

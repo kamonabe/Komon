@@ -12,7 +12,7 @@
 - `main`ブランチへのPull Request
 
 **実行内容**:
-- **test**: Python 3.9, 3.10, 3.11でのユニットテスト、プロパティテスト
+- **test**: Python 3.10, 3.11, 3.12でのユニットテスト、プロパティテスト
 - **validate-specs**: Spec構造と一貫性の検証
 - **lint**: コードフォーマットとリンティング（black, isort, flake8）
 
