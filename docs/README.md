@@ -8,6 +8,27 @@
 
 ---
 
+## 📚 ドキュメント構成
+
+### 👥 利用者向け
+- [README.md](../README.md) - 基本的な使い方とクイックスタート
+- [EXAMPLES.md](EXAMPLES.md) - 実際の出力例とユースケース
+- [OPERATIONS.md](OPERATIONS.md) - 運用ガイドとトラブルシューティング
+- [SECURITY.md](SECURITY.md) - セキュリティガイドとベストプラクティス
+
+### 🔧 開発者向け
+- [CONTRIBUTING.md](CONTRIBUTING.md) - 開発への参加方法
+- [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - プロジェクト構造の詳細
+- [CHANGELOG.md](CHANGELOG.md) - 変更履歴
+- [.kiro/steering/README.md](../.kiro/steering/README.md) - 開発ルールとステアリング
+
+### 📋 仕様書
+- [.kiro/specs/komon-system.md](../.kiro/specs/komon-system.md) - システム仕様書
+- [.kiro/specs/future-ideas.md](../.kiro/specs/future-ideas.md) - 将来の改善案
+- [.kiro/specs/testing-strategy.md](../.kiro/specs/testing-strategy.md) - テスト戦略
+
+---
+
 ## 📖 目次
 
 - [特徴（機能ステータス）](#-特徴機能ステータス)

@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://github.com/kamonabe/Komon/workflows/Tests/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/tests.yml)
+[![Spec Validation](https://github.com/kamonabe/Komon/workflows/Spec%20and%20Documentation%20Validation/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/spec-validation.yml)
 [![Test Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](htmlcov/index.html)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
 
