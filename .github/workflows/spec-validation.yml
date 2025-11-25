@@ -1,0 +1,78 @@
+name: Spec and Documentation Validation
+
+on:
+  push:
+    paths:
+      - '.kiro/specs/**/*.md'
+      - 'docs/**/*.md'
+      - 'README.md'
+      - '.github/workflows/spec-validation.yml'
+  pull_request:
+    paths:
+      - '.kiro/specs/**/*.md'
+      - 'docs/**/*.md'
+      - 'README.md'
+
+jobs:
+  validate-specs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Validate Spec Structure
+        run: |
+          python scripts/validate_specs.py
+      
+      - name: Check Spec Consistency
+        run: |
+          python scripts/check_spec_consistency.py
+  
+  validate-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for broken links in docs
+        run: |
+          # Markdownファイル内のリンク切れをチェック
+          find docs/ README.md -name "*.md" -type f | while read file; do
+            echo "Checking $file..."
+            # 相対パスのリンクが存在するかチェック（簡易版）
+            grep -oP '\[.*?\]\(\K[^)]+' "$file" | grep -v "^http" | while read link; do
+              if [[ ! -f "$(dirname "$file")/$link" ]] && [[ ! -f "$link" ]]; then
+                echo "⚠️  Warning: Broken link in $file: $link"
+              fi
+            done
+          done
+      
+      - name: Check documentation completeness
+        run: |
+          # 必須ドキュメントの存在確認
+          required_docs=(
+            "README.md"
+            "docs/CHANGELOG.md"
+            "docs/CONTRIBUTING.md"
+            "docs/PROJECT_STRUCTURE.md"
+          )
+          
+          for doc in "${required_docs[@]}"; do
+            if [[ ! -f "$doc" ]]; then
+              echo "❌ Missing required document: $doc"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All required documents exist"

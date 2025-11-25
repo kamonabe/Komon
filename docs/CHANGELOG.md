@@ -6,6 +6,27 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+### 開発者向け改善
+
+- **Specテンプレートの追加**
+  - 要件定義（requirements.md）、設計書（design.md）、実装タスク（tasks.md）のテンプレートを作成
+  - テンプレート使用ガイド（`.kiro/specs/_templates/README.md`）を追加
+  - 品質チェックリストを各テンプレートに含める
+
+- **GitHub Actions CI/CDの導入**
+  - `tests.yml`: コード変更時に全テスト実行（Python 3.9/3.10/3.11）
+  - `spec-validation.yml`: Spec/ドキュメント更新時に自動検証
+  - リンティング（black, isort, flake8）を統合
+
+- **Spec検証スクリプトの追加**
+  - `scripts/validate_specs.py`: Spec構造の検証（Front Matter、必須セクション、フォーマット）
+  - `scripts/check_spec_consistency.py`: Spec間の一貫性チェック（要件とタスクのトレーサビリティ）
+  - CI/CDで自動実行され、品質を保証
+
+- **既存Specのテンプレート準拠**
+  - disk-trend-prediction, notification-throttle, progressive-threshold, weekly-health-reportの4件を修正
+  - Front Matterの追加、必須セクションの補完、正確性プロパティの形式統一
+
 ## [1.16.1] - 2025-11-25
 
 ### Changed
