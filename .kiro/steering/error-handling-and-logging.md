@@ -1,0 +1,450 @@
+# エラーハンドリングとログ出力の標準
+
+## 基本方針
+
+Komonは**軽量アドバイザー型ツール**であり、エラーが発生しても可能な限り処理を継続します。
+
+ユーザー向けには分かりやすい日本語メッセージを表示し、開発者向けには詳細なログを記録します。
+
+## `print()`と`logging`の使い分け
+
+### `print()`を使う場面（ユーザー向け即時フィードバック）
+
+**用途**:
+- CLIコマンドの実行結果（`komon advise`, `komon monitor`）
+- 成功/警告/エラーの即時表示
+- 進捗状況の表示
+- 対話的な確認メッセージ
+
+**特徴**:
+- 日本語メッセージ
+- 絵文字付き（✅ ⚠️ ❌）
+- 原因と対処法を記載
+
+**例**:
+```python
+print("✅ Slack通知を送信しました")
+print("⚠️ 環境変数 KOMON_SLACK_WEBHOOK が設定されていません")
+print("❌ メール通知エラー: SMTP接続に失敗しました")
+```
+
+### `logging`を使う場面（開発者向け記録）
+
+**用途**:
+- cron実行時のバックグラウンドログ
+- デバッグ情報
+- 詳細なエラートレース
+- パフォーマンス計測
+
+**特徴**:
+- 英語メッセージ
+- 詳細な技術情報
+- スタックトレース付き
+
+**例**:
+```python
+logger.info("Notification sent successfully")
+logger.warning("History file not found, using empty data")
+logger.error("Failed to save notification history: %s", e, exc_info=True)
+```
+
+### 両方使う場面
+
+**重要なエラー**:
+- `print()`でユーザーに即座に通知
+- `logging.error()`で詳細を記録
+
+**例**:
+```python
+try:
+    send_notification(message)
+except Exception as e:
+    print(f"❌ 通知の送信に失敗しました: {e}")
+    logger.error("Notification failed: %s", e, exc_info=True)
+```
+
+## ログレベルの使い分け
+
+### DEBUG（開発時のデバッグ情報）
+
+**用途**:
+- 変数の値
+- 処理の詳細な流れ
+- ファイルパスやデータ構造
+
+**例**:
+```python
+logger.debug("Loading history file: %s", file_path)
+logger.debug("Parsed %d records from CSV", len(records))
+logger.debug("Threshold values: warning=%d, alert=%d, critical=%d", w, a, c)
+```
+
+### INFO（正常な処理の記録）
+
+**用途**:
+- 処理の開始/完了
+- 重要な処理の成功
+- 定期実行の記録
+
+**例**:
+```python
+logger.info("Notification sent successfully")
+logger.info("Weekly report generated: %s", report_path)
+logger.info("Monitoring started with interval: %d seconds", interval)
+```
+
+### WARNING（問題ではないが注意すべき状況）
+
+**用途**:
+- ファイルが見つからない（デフォルト値を使用）
+- データが不完全（一部をスキップ）
+- 非推奨の設定を使用
+
+**例**:
+```python
+logger.warning("History file not found, using empty data")
+logger.warning("Throttle history file corrupted, recreating")
+logger.warning("Using deprecated single threshold format")
+```
+
+### ERROR（エラーが発生したが処理は継続）
+
+**用途**:
+- 通知の送信失敗
+- 履歴ファイルの保存失敗
+- 一部のログファイルが読めない
+
+**例**:
+```python
+logger.error("Failed to save notification history: %s", e)
+logger.error("SMTP connection failed: %s", e)
+logger.error("Log file not readable: %s", log_path)
+```
+
+### CRITICAL（使わない）
+
+**理由**: Komonは軽量ツールなので、致命的エラーは想定しない。
+
+致命的なエラー（設定ファイルが存在しない等）は`sys.exit(1)`で終了する。
+
+## エラーハンドリングの方針
+
+### 処理を停止するエラー（致命的）
+
+以下のエラーは処理を停止し、`sys.exit(1)`で終了します：
+
+- **設定ファイルが存在しない**
+  ```python
+  try:
+      config = load_config("settings.yml")
+  except FileNotFoundError:
+      print("❌ 設定ファイルが見つかりません: settings.yml")
+      print("   config/settings.yml.sample をコピーして作成してください。")
+      logger.critical("Configuration file not found")
+      sys.exit(1)
+  ```
+
+- **設定ファイルの形式が完全に不正**
+  ```python
+  try:
+      thresholds = validate_threshold_config(config)
+  except ValidationError as e:
+      print(f"❌ 設定エラー: {e}")
+      logger.error("Configuration validation failed: %s", e)
+      sys.exit(1)
+  ```
+
+- **必須の環境変数が未設定（実行不可能）**
+  ```python
+  webhook_url = os.getenv("KOMON_SLACK_WEBHOOK")
+  if not webhook_url:
+      print("❌ 環境変数 KOMON_SLACK_WEBHOOK が設定されていません")
+      print("   通知機能を使用するには環境変数を設定してください。")
+      sys.exit(1)
+  ```
+
+### 処理を継続するエラー（非致命的）
+
+以下のエラーは処理を継続します：
+
+- **履歴ファイルの読み込み失敗** → 空データで継続
+  ```python
+  try:
+      history = load_history(file_path)
+  except Exception as e:
+      print(f"⚠️ 履歴ファイルの読み込みに失敗: {e}")
+      logger.warning("Failed to load history, using empty data: %s", e)
+      history = []
+  ```
+
+- **通知の送信失敗** → ログに記録して継続
+  ```python
+  try:
+      send_slack_alert(message, webhook_url)
+  except Exception as e:
+      print(f"❌ Slack通知エラー: {e}")
+      logger.error("Slack notification failed: %s", e, exc_info=True)
+      # 処理は継続
+  ```
+
+- **一部のログファイルが読めない** → 他のファイルを処理
+  ```python
+  for log_path in log_paths:
+      try:
+          analyze_log(log_path)
+      except Exception as e:
+          print(f"⚠️ ログファイルの解析に失敗: {log_path}")
+          logger.error("Failed to analyze log: %s", log_path, exc_info=True)
+          continue  # 次のファイルへ
+  ```
+
+### カスタム例外を作る場合
+
+**ドメイン固有のエラー**:
+- `ValidationError`: 設定検証エラー
+- `ThresholdError`: 閾値設定エラー
+- `NotificationError`: 通知送信エラー
+
+**例**:
+```python
+class ValidationError(Exception):
+    """設定検証エラー"""
+    pass
+
+class ThresholdError(Exception):
+    """閾値設定エラー"""
+    pass
+```
+
+**使い方**:
+```python
+def validate_threshold_config(config: dict) -> dict:
+    if "thresholds" not in config:
+        raise ValidationError("閾値設定が見つかりません")
+    
+    # 検証処理...
+```
+
+### 例外メッセージの言語
+
+- **ユーザー向け（`print()`）**: 日本語、原因と対処法
+  ```python
+  print("❌ 設定ファイルが見つかりません: settings.yml")
+  print("   config/settings.yml.sample をコピーして作成してください。")
+  ```
+
+- **開発者向け（`logging`、例外メッセージ）**: 英語、詳細情報
+  ```python
+  raise ValidationError("Threshold configuration is invalid: warning >= alert")
+  logger.error("Failed to parse configuration file: %s", e)
+  ```
+
+## 標準的なエラーハンドリングパターン
+
+### パターン1: 非致命的エラー（処理継続）
+
+```python
+try:
+    save_notification_history(data)
+except Exception as e:
+    print(f"⚠️ 通知履歴の保存に失敗: {e}")
+    logger.error("Failed to save notification history: %s", e, exc_info=True)
+    # 処理は継続
+```
+
+### パターン2: 致命的エラー（処理停止）
+
+```python
+try:
+    config = load_config("settings.yml")
+except FileNotFoundError:
+    print("❌ 設定ファイルが見つかりません: settings.yml")
+    print("   config/settings.yml.sample をコピーして作成してください。")
+    logger.critical("Configuration file not found")
+    sys.exit(1)
+```
+
+### パターン3: カスタム例外
+
+```python
+try:
+    thresholds = validate_threshold_config(config)
+except ValidationError as e:
+    print(f"❌ 設定エラー: {e}")
+    logger.error("Configuration validation failed: %s", e)
+    sys.exit(1)
+```
+
+### パターン4: リトライ処理
+
+```python
+max_retries = 3
+for attempt in range(max_retries):
+    try:
+        send_notification(message)
+        break
+    except Exception as e:
+        if attempt < max_retries - 1:
+            logger.warning("Notification failed (attempt %d/%d): %s", 
+                          attempt + 1, max_retries, e)
+            time.sleep(2 ** attempt)  # 指数バックオフ
+        else:
+            print(f"❌ 通知の送信に失敗しました（{max_retries}回試行）")
+            logger.error("Notification failed after %d attempts: %s", 
+                        max_retries, e, exc_info=True)
+```
+
+### パターン5: ファイル操作のエラーハンドリング
+
+```python
+try:
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+except FileNotFoundError:
+    logger.warning("File not found, using default: %s", file_path)
+    data = {}
+except json.JSONDecodeError as e:
+    print(f"⚠️ ファイルの形式が不正です: {file_path}")
+    logger.error("JSON decode error: %s", e)
+    data = {}
+except Exception as e:
+    print(f"⚠️ ファイルの読み込みに失敗: {file_path}")
+    logger.error("Failed to read file: %s", e, exc_info=True)
+    data = {}
+```
+
+## ロギング設定
+
+### 基本設定
+
+```python
+import logging
+
+# ロガーの取得
+logger = logging.getLogger(__name__)
+
+# 設定（モジュールの初期化時に1回だけ）
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('log/komon.log'),
+        logging.StreamHandler()  # コンソールにも出力
+    ]
+)
+```
+
+### 環境変数でログレベルを制御
+
+```python
+import os
+
+log_level = os.getenv('KOMON_LOG_LEVEL', 'INFO')
+logging.basicConfig(level=getattr(logging, log_level))
+```
+
+**使い方**:
+```bash
+# デバッグモードで実行
+KOMON_LOG_LEVEL=DEBUG python scripts/advise.py
+
+# 本番環境（エラーのみ）
+KOMON_LOG_LEVEL=ERROR python scripts/main.py
+```
+
+## Kiroへの指示
+
+### コード実装時のチェックリスト
+
+- [ ] ユーザー向けメッセージは`print()`で日本語、絵文字付き
+- [ ] 開発者向けログは`logging`で英語、詳細情報
+- [ ] 致命的エラーは`sys.exit(1)`で終了
+- [ ] 非致命的エラーは処理を継続
+- [ ] 例外メッセージは英語で記述
+- [ ] `exc_info=True`でスタックトレースを記録
+- [ ] ログレベルを適切に使い分け
+
+### 実装例
+
+```python
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
+
+def send_notification(message: str, webhook_url: str) -> bool:
+    """
+    通知を送信します。
+    
+    Args:
+        message: 送信するメッセージ
+        webhook_url: Webhook URL
+        
+    Returns:
+        bool: 送信成功時True
+    """
+    try:
+        # 環境変数から読み込み
+        if webhook_url.startswith("env:"):
+            env_var = webhook_url.split(":", 1)[1]
+            webhook_url = os.getenv(env_var, "")
+            if not webhook_url:
+                print(f"⚠️ 環境変数 {env_var} が設定されていません")
+                logger.warning("Environment variable not set: %s", env_var)
+                return False
+        
+        # 通知送信
+        response = requests.post(webhook_url, json={"text": message}, timeout=10)
+        
+        if response.status_code == 200:
+            print("✅ 通知を送信しました")
+            logger.info("Notification sent successfully")
+            return True
+        else:
+            print(f"⚠️ 通知の送信に失敗しました: {response.status_code}")
+            logger.error("Notification failed with status: %d", response.status_code)
+            return False
+            
+    except requests.exceptions.Timeout:
+        print("❌ 通知エラー: タイムアウトしました")
+        logger.error("Notification timeout")
+        return False
+        
+    except Exception as e:
+        print(f"❌ 通知エラー: {e}")
+        logger.error("Notification error: %s", e, exc_info=True)
+        return False
+```
+
+## トラブルシューティング
+
+### Q: `print()`と`logging`のどちらを使うか迷う
+
+**A**: 以下の基準で判断してください：
+- ユーザーが即座に見る必要がある → `print()`
+- 後で確認するログ → `logging`
+- 重要なエラー → 両方
+
+### Q: エラーメッセージは日本語？英語？
+
+**A**:
+- `print()`のメッセージ: 日本語（ユーザー向け）
+- `logging`のメッセージ: 英語（開発者向け）
+- 例外メッセージ: 英語（コード内で使用）
+
+### Q: 処理を継続すべきか停止すべきか迷う
+
+**A**: 以下の基準で判断してください：
+- ユーザーが手動で修正する必要がある → 停止（`sys.exit(1)`）
+- 自動的にリカバリー可能 → 継続（警告を表示）
+
+## まとめ
+
+- **`print()`**: ユーザー向け、日本語、絵文字付き
+- **`logging`**: 開発者向け、英語、詳細情報
+- **致命的エラー**: `sys.exit(1)`で停止
+- **非致命的エラー**: 処理を継続、警告を表示
+- **例外メッセージ**: 英語で記述
+- **ログレベル**: DEBUG < INFO < WARNING < ERROR
+
+このルールにより、ユーザーにも開発者にも分かりやすいエラーハンドリングが実現されます。
