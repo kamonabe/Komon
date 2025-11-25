@@ -316,17 +316,32 @@ refactor/{module-name}         # リファクタリング
 #### 実装完了後の手順
 
 1. テスト全パス確認
-2. バージョン番号を提案
-3. ユーザーにmainへのマージを依頼
-4. バージョンタグ作成後、GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
+2. **カバレッジ確認とREADME.mdバッジ更新**
+   ```bash
+   bash run_coverage.sh
+   # htmlcov/index.html で実際のカバレッジを確認
+   # カバレッジが変わっている場合は、README.mdのバッジを更新：
+   # [![Test Coverage](https://img.shields.io/badge/coverage-XX%25-brightgreen)](htmlcov/index.html)
+   # の XX% 部分を新しい値に変更
+   ```
+3. バージョン番号を提案
+4. ユーザーにmainへのマージを依頼
+5. バージョンタグ作成後、GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
 
-#### チェックリスト
+#### チェックリスト（実装開始前）
 
-実装開始前に確認：
 - [ ] `git branch` でブランチを確認した
 - [ ] mainブランチの場合、ユーザーにブランチ作成を依頼した
 - [ ] 開発ブランチにいることを確認した
 - [ ] 上記が全て完了してから実装を開始した
+
+#### チェックリスト（実装完了後）
+
+- [ ] テストが全てパスした
+- [ ] カバレッジを確認した（`bash run_coverage.sh`）
+- [ ] カバレッジが変わっている場合、README.mdのバッジを更新した
+- [ ] バージョン番号を提案した
+- [ ] GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記した
 
 ## まとめ
 
