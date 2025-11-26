@@ -6,6 +6,25 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+### Fixed
+
+- **scripts/main.pyのImportError修正**
+  - `validate_settings`関数が存在しないエラーを修正
+  - 正しい関数名`validate_threshold_config`を使用
+  - cronジョブでの大量エラー発生を解消
+
+### Developer Improvements
+
+- **スクリプトファイルのインポートテスト追加**
+  - `tests/test_scripts_import.py`を追加
+  - scripts/配下の全実行スクリプトのインポートを検証
+  - 実行時まで発覚しないImportErrorを防止
+
+- **ステアリングルールの拡充**
+  - `development-workflow.md`にスクリプトテストのセクションを追加
+  - テンプレートから生成される汎用的なルールとして記載
+  - 全273テストがパス、カバレッジ93%を維持
+
 ## [1.17.0] - 2025-11-26
 
 ### Added

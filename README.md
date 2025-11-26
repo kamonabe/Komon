@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/kamonabe/Komon/workflows/Tests/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/tests.yml)
 [![Spec Validation](https://github.com/kamonabe/Komon/workflows/Spec%20and%20Documentation%20Validation/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/spec-validation.yml)
-[![Test Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](htmlcov/index.html)
+[![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](htmlcov/index.html)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
 
 **Komon は、開発者のための軽量アドバイザー型SOAR風ツールです。**
@@ -187,7 +187,7 @@ Komon/
 │   ├── README.md           # 詳細ドキュメント
 │   ├── CHANGELOG.md        # 変更履歴
 │   └── SECURITY.md         # セキュリティ情報
-├── tests/                  # テストコード（94%カバレッジ、238テスト）
+├── tests/                  # テストコード（93%カバレッジ、273テスト）
 ├── data/                   # データ保存先（自動生成）
 │   ├── usage_history/      # リソース使用履歴
 │   ├── notifications/      # 通知履歴
@@ -493,7 +493,7 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**テストカバレッジ: 94%** (238テスト、全てパス)
+**テストカバレッジ: 93%** (273テスト、全てパス)
 
 詳細は [tests/README.md](tests/README.md) を参照してください。
 

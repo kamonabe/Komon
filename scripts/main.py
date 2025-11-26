@@ -3,7 +3,7 @@ from komon.monitor import collect_detailed_resource_usage
 from komon.analyzer import analyze_usage_with_levels, load_thresholds
 from komon.notification import send_slack_alert, send_email_alert, NotificationThrottle
 from komon.history import rotate_history, save_current_usage
-from komon.settings_validator import validate_settings
+from komon.settings_validator import validate_threshold_config, ValidationError
 
 def load_config(path: str = "settings.yml") -> dict:
     """
@@ -121,16 +121,18 @@ def _is_metric_alert(alert: str, metric_type: str) -> bool:
 
 
 def main():
-    if not validate_settings("settings.yml"):
-        print("❌ settings.yml に問題があります。log/komon_error.log を確認してください。")
-        return
-
     config = load_config()
     if not config:
         return
+    
+    # 閾値設定の検証
+    try:
+        thresholds = validate_threshold_config(config)
+    except ValidationError as e:
+        print(f"❌ 設定エラー: {e}")
+        return
 
     usage = collect_detailed_resource_usage()
-    thresholds = load_thresholds(config)
     alerts, levels = analyze_usage_with_levels(usage, thresholds)
 
     rotate_history()

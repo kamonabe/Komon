@@ -458,6 +458,74 @@ bash run_coverage.sh
 ```
 {% endif %}
 
+### スクリプトファイルのテスト
+
+{% if project.type == "cli-tool" %}
+`scripts/`配下の実行スクリプトも、最低限のインポートテストを追加します。
+{% else %}
+実行スクリプトがある場合は、最低限のインポートテストを追加します。
+{% endif %}
+
+**目的**: 実行時まで発覚しないImportErrorを防ぐ
+
+**対象**:
+{% if project.type == "cli-tool" %}
+- `scripts/main.py` - メイン監視スクリプト
+- `scripts/advise.py` - アドバイス表示
+- `scripts/status.py` - ステータス表示
+- その他の実行スクリプト
+{% else %}
+- プロジェクトの実行スクリプト
+{% endif %}
+
+**テスト内容**:
+- ✅ インポートが成功すること
+- ✅ 主要な関数が存在すること
+- ✅ 依存モジュールが正しくインポートされること
+
+**ファイル命名**: `test_scripts_import.py`
+
+**例**:
+{% if project.language == "python" %}
+```python
+"""スクリプトファイルのインポートテスト"""
+
+import sys
+import pytest
+from pathlib import Path
+
+
+class TestScriptsImport:
+    """スクリプトファイルのインポートテスト"""
+    
+    def setup_method(self):
+        """テスト前にscriptsディレクトリをパスに追加"""
+        scripts_path = Path(__file__).parent.parent / "scripts"
+        if str(scripts_path) not in sys.path:
+            sys.path.insert(0, str(scripts_path))
+    
+    def test_main_script_imports(self):
+        """main.pyが正常にインポートできることを確認"""
+        try:
+            import main
+            assert hasattr(main, 'main')
+            assert hasattr(main, 'load_config')
+        except ImportError as e:
+            pytest.fail(f"main.pyのインポートに失敗: {e}")
+```
+{% endif %}
+
+**ルール**:
+- ✅ 全ての実行スクリプトにインポートテストを追加
+- ✅ 主要な関数の存在確認も行う
+- ✅ CI/CDでも実行する
+- ❌ 詳細な動作テストは不要（統合テストで実施）
+
+**効果**:
+- ImportErrorを実行前に検知
+- 関数名の変更による影響を早期発見
+- リファクタリング時の安全性向上
+
 ### Kiroへの指示
 
 #### テスト作成時のチェックリスト
@@ -476,6 +544,7 @@ bash run_coverage.sh
 - [ ] 全テストに`**検証要件: AC-XXX**`を記載した
 - [ ] モックは外部APIのみに使用した
 - [ ] ファイルI/Oは`tmp_path`を使用した
+- [ ] スクリプトファイルのインポートテストを追加した（新規スクリプト追加時）
 - [ ] カバレッジが{{testing.coverage_target}}%以上を維持している
 
 #### テスト実行の順序
