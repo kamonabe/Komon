@@ -802,6 +802,86 @@ class TestScriptsImport:
 - [ ] バージョン番号を提案した
 - [ ] GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記した
 
+### リリース前の最終確認
+
+実装完了後、リリース前に以下を確認します：
+
+#### 基本チェックリスト
+
+- [ ] **全テストがパス**
+{% if project.language == "python" %}
+  ```bash
+  bash run_coverage.sh
+  ```
+{% endif %}
+
+- [ ] **カバレッジが目標値以上**
+  - 目標: {{testing.coverage_target}}%以上
+
+- [ ] **実際に動作確認（手動実行）**
+{% if project.type == "cli-tool" %}
+  ```bash
+  # 主要コマンドを実行
+  {{project.name|lower}} advise
+  {{project.name|lower}} status
+  ```
+{% endif %}
+
+- [ ] **ドキュメントが更新されている**
+  - README.md
+  - {{changelog.location}}
+  - version.txt
+
+- [ ] **CHANGELOGが記録されている**
+  - `[Unreleased]`セクションに変更内容を記載
+
+{% if project.type == "cli-tool" %}
+#### cronジョブのテスト（該当する場合）
+
+cronジョブで実行されるスクリプトは、以下を確認：
+
+1. **手動実行テスト**
+{% if project.language == "python" %}
+   ```bash
+   python scripts/main.py
+   ```
+{% endif %}
+
+2. **ログ確認**
+   ```bash
+   tail -20 log/main.log
+   ```
+
+3. **1分待ってcron実行を確認**
+   ```bash
+   # 1分後
+   tail -5 log/main.log
+   ```
+
+4. **エラーがないことを確認**
+   - ImportError
+   - 設定ファイルエラー
+   - 実行時エラー
+{% endif %}
+
+#### リリース判断
+
+全てのチェックが完了したら、リリース可能です：
+
+1. ✅ 全テストパス
+2. ✅ カバレッジ目標達成
+3. ✅ 手動動作確認OK
+{% if project.type == "cli-tool" %}
+4. ✅ cronジョブ正常動作（該当する場合）
+{% endif %}
+5. ✅ ドキュメント更新完了
+
+**リリース手順**:
+1. {{git.main_branch}}にマージ
+2. バージョンタグ作成
+3. リモートにプッシュ
+4. GitHub Releasesに登録
+
 ## まとめ
 
 - **小さな追加機能**: Specモードで自律的に進める
