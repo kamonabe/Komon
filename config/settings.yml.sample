@@ -69,3 +69,17 @@ throttle:  # 通知頻度制御設定
   enabled: true  # 通知頻度制御を有効にする場合は true
   interval_minutes: 60  # 同一アラートの通知間隔（分）デフォルト: 60分
   escalation_minutes: 180  # 長時間継続する問題の再通知間隔（分）デフォルト: 180分（3時間）
+
+progressive_notification:  # 段階的通知メッセージ設定
+  enabled: true  # 段階的メッセージを有効にする場合は true
+  time_window_hours: 24  # 通知回数をカウントする時間窓（時間）デフォルト: 24時間
+  
+  # カスタムテンプレート（オプション）
+  # 通知回数に応じてメッセージが変化します
+  # {metric_name}: メトリクス名（CPU使用率、メモリ使用率、ディスク使用率）
+  # {value}: 現在の値
+  # {unit}: 単位（%）
+  templates:
+    1: "ちょっと気になることがあります。{metric_name}が {value}{unit} になっています。"
+    2: "まだ続いてますね。{metric_name}が {value}{unit} のままです。"
+    3: "そろそろ見た方がいいかも。{metric_name}が {value}{unit} の状態が続いています。"

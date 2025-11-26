@@ -9,6 +9,7 @@ from .settings_validator import (
     determine_threshold_level,
     ThresholdLevel
 )
+from .progressive_message import get_notification_count, generate_progressive_message
 
 
 # レベル別メッセージテンプレート
@@ -50,15 +51,17 @@ def load_thresholds(config: dict) -> dict:
     return normalized_thresholds
 
 
-def analyze_usage(usage: dict, thresholds: dict) -> list:
+def analyze_usage(usage: dict, thresholds: dict, use_progressive: bool = False) -> list:
     """
     リソース使用率を分析し、閾値を超えた項目のアラートを生成します。
     
     3段階閾値（警告/警戒/緊急）に基づいてレベル別のメッセージを生成。
+    段階的通知メッセージ機能が有効な場合、通知回数に応じてメッセージを変化させます。
     
     Args:
         usage: リソース使用率データ
         thresholds: 閾値設定（3段階形式）
+        use_progressive: 段階的メッセージを使用するか（デフォルト: True）
         
     Returns:
         list: アラートメッセージのリスト
@@ -71,7 +74,18 @@ def analyze_usage(usage: dict, thresholds: dict) -> list:
     if isinstance(cpu_thresholds, dict):
         cpu_level = determine_threshold_level(cpu_value, cpu_thresholds)
         if cpu_level != ThresholdLevel.NORMAL:
-            alerts.append(_generate_message("CPU", cpu_value, cpu_level))
+            if use_progressive:
+                # 段階的メッセージを使用
+                count = get_notification_count("cpu")
+                message = generate_progressive_message(
+                    "cpu", cpu_value, 
+                    cpu_thresholds.get("critical", 90),
+                    count + 1  # 現在の通知を含める
+                )
+                alerts.append(message)
+            else:
+                # 従来のメッセージを使用
+                alerts.append(_generate_message("CPU", cpu_value, cpu_level))
     
     # メモリ使用率のチェック
     mem_value = usage.get("mem", 0)
@@ -79,7 +93,18 @@ def analyze_usage(usage: dict, thresholds: dict) -> list:
     if isinstance(mem_thresholds, dict):
         mem_level = determine_threshold_level(mem_value, mem_thresholds)
         if mem_level != ThresholdLevel.NORMAL:
-            alerts.append(_generate_message("メモリ", mem_value, mem_level))
+            if use_progressive:
+                # 段階的メッセージを使用
+                count = get_notification_count("mem")
+                message = generate_progressive_message(
+                    "mem", mem_value,
+                    mem_thresholds.get("critical", 90),
+                    count + 1  # 現在の通知を含める
+                )
+                alerts.append(message)
+            else:
+                # 従来のメッセージを使用
+                alerts.append(_generate_message("メモリ", mem_value, mem_level))
     
     # ディスク使用率のチェック
     disk_value = usage.get("disk", 0)
@@ -87,7 +112,18 @@ def analyze_usage(usage: dict, thresholds: dict) -> list:
     if isinstance(disk_thresholds, dict):
         disk_level = determine_threshold_level(disk_value, disk_thresholds)
         if disk_level != ThresholdLevel.NORMAL:
-            alerts.append(_generate_message("ディスク", disk_value, disk_level))
+            if use_progressive:
+                # 段階的メッセージを使用
+                count = get_notification_count("disk")
+                message = generate_progressive_message(
+                    "disk", disk_value,
+                    disk_thresholds.get("critical", 90),
+                    count + 1  # 現在の通知を含める
+                )
+                alerts.append(message)
+            else:
+                # 従来のメッセージを使用
+                alerts.append(_generate_message("ディスク", disk_value, disk_level))
     
     return alerts
 
