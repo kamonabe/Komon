@@ -15,7 +15,8 @@ Komonプロジェクトでは、2階層のタスク管理を採用していま�
 ├── README.md                          # このファイル
 ├── _templates/                        # タスクテンプレート（汎用）
 │   └── implementation-tasks.template.md
-└── implementation-tasks.md            # 実際のタスクリスト
+├── implementation-tasks.md            # 実装タスクリスト（進行中・未着手）
+└── completed-tasks.md                 # 完了タスクアーカイブ
 ```
 
 ## タスク管理の流れ
@@ -30,7 +31,17 @@ Komonプロジェクトでは、2階層のタスク管理を採用していま�
 .kiro/specs/{feature-name}/tasks.md に詳細タスクを記載
     ↓ 実装
 両方のタスクファイルを更新
+    ↓ 次のバージョンリリース時
+completed-tasks.md へアーカイブ
 ```
+
+## アーカイブルール
+
+- **implementation-tasks.md**: 進行中・未着手のタスク + 直近バージョンの完了タスク
+- **completed-tasks.md**: 過去バージョンの完了タスク（バージョン降順）
+- 次のバージョンがリリースされたら、前バージョンの完了タスクをアーカイブに移動
+
+**例**: v1.18.0リリース時 → v1.17.0の完了タスクを `completed-tasks.md` に移動
 
 ### 2. タスクの追加
 

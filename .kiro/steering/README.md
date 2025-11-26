@@ -32,7 +32,8 @@
 └── tasks/                             # タスク管理
     ├── _templates/                    # タスクテンプレート（汎用）
     │   └── implementation-tasks.template.md
-    └── implementation-tasks.md        # 実際のタスクリスト
+    ├── implementation-tasks.md        # 実装タスクリスト（進行中・未着手）
+    └── completed-tasks.md             # 完了タスクアーカイブ
 ```
 
 ## 使い方
@@ -213,6 +214,7 @@ ls -la .kiro/tasks/implementation-tasks.md
 **タスク管理の開始**:
 - `implementation-tasks.md`に実際のタスク（TASK-001, TASK-002...）を追加
 - `future-ideas.md`でアイデアを管理
+- 次のバージョンリリース時に完了タスクを`completed-tasks.md`にアーカイブ
 
 ### 3. プロジェクト設定のカスタマイズ
 

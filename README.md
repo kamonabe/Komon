@@ -200,7 +200,8 @@ Komon/
 │   │   ├── testing-strategy.md # テスト戦略
 │   │   └── notification-history/ # 通知履歴機能spec
 │   ├── tasks/              # タスク管理
-│   │   └── implementation-tasks.md # 実装タスクリスト
+│   │   ├── implementation-tasks.md # 実装タスクリスト（進行中・未着手）
+│   │   └── completed-tasks.md      # 完了タスクアーカイブ
 │   └── steering/           # 開発ルール
 │       ├── task-management.md
 │       ├── development-workflow.md

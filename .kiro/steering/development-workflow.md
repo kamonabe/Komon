@@ -186,7 +186,8 @@ Komonでは**しっかりしたテスト**を維持します：
 │   │   └── tasks.md
 │   └── ...
 ├── tasks/
-│   └── implementation-tasks.md      # 実装タスク管理（マスター）
+│   ├── implementation-tasks.md      # 実装タスク管理（進行中・未着手）
+│   └── completed-tasks.md           # 完了タスクアーカイブ
 └── steering/
     ├── task-management.md           # タスク管理ルール
     └── development-workflow.md      # このファイル
