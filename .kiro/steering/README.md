@@ -21,6 +21,11 @@
 │   │   ├── error-handling-and-logging.template.md
 │   │   ├── environment-and-communication.template.md
 │   │   └── commit-message-rules.template.md
+│   ├── _future/                       # 将来用ルール（現在未使用）
+│   │   ├── api-integration-rules.md
+│   │   ├── database-rules.md
+│   │   ├── security-guidelines.md
+│   │   └── performance-standards.md
 │   └── [生成されたルール]              # テンプレートから生成
 │       ├── versioning-rules.md
 │       ├── development-workflow.md
@@ -416,3 +421,109 @@ testing:
 - **生成スクリプト**: テンプレート + 設定 → ルール（`generate_steering_rules.py`）
 
 このアプローチにより、Komonの開発ルールを他のプロジェクトでも簡単に使用できます。
+
+
+## 将来用ルール（_future/）
+
+`.kiro/steering/_future/`には、現在Komonでは使用していないが、将来必要になる可能性があるルールの「骨格」が格納されています。
+
+### 含まれるルール
+
+#### 1. `api-integration-rules.md` - 外部API連携
+- 認証情報の管理
+- リトライ戦略
+- エラーハンドリング
+- レート制限への対応
+- テスト戦略（モックの使用）
+
+#### 2. `database-rules.md` - データベース操作
+- トランザクション管理
+- SQLインジェクション対策
+- パフォーマンス最適化
+- スキーマ管理とマイグレーション
+- テスト戦略（実DB使用）
+
+#### 3. `security-guidelines.md` - セキュリティ
+- 機密情報の安全な管理
+- ログへの機密情報の非出力
+- 入力値の検証
+- ファイル操作のセキュリティ
+- 依存パッケージの脆弱性チェック
+
+#### 4. `performance-standards.md` - パフォーマンス基準
+- 応答時間の目標設定
+- メモリ使用量の制限
+- ファイルサイズの管理
+- プロファイリングとベンチマーク
+- パフォーマンステスト
+
+### 使用方法
+
+将来、これらの機能が必要になった際：
+
+1. **該当するルールを確認**
+   ```bash
+   cat .kiro/steering/_future/api-integration-rules.md
+   ```
+
+2. **プロジェクト固有の内容を追加**
+   - 実際のAPI仕様に合わせて拡充
+   - 具体的な例を追加
+   - 実際の経験に基づいて改善
+
+3. **`_future/`から`.kiro/steering/`に移動**
+   ```bash
+   mv .kiro/steering/_future/api-integration-rules.md .kiro/steering/
+   ```
+
+4. **Kiroに認識させる**
+   - ファイルを移動すると、Kiroが自動的に読み込みます
+   - 実装時にこのルールに従って開発します
+
+### 他プロジェクトへの適用
+
+他のプロジェクト（例: API連携が必要なプロジェクト）でこれらの機能が必要な場合：
+
+1. **Komonのルールをコピー**
+   ```bash
+   cp -r /path/to/komon/.kiro/steering/_future /path/to/myproject/.kiro/steering/
+   ```
+
+2. **必要なルールを拡充**
+   - プロジェクト固有のAPI仕様を追加
+   - 実際の実装例を追加
+
+3. **`_future/`から`.kiro/steering/`に移動**
+   ```bash
+   mv .kiro/steering/_future/api-integration-rules.md .kiro/steering/
+   ```
+
+### 設計思想
+
+**なぜ「将来用ルール」を作るのか？**
+
+1. **拡張性の確保**
+   - 将来の機能追加がスムーズ
+   - 一から考える必要がない
+
+2. **他プロジェクトへの適用が簡単**
+   - Komonと同じ設計思想で統一
+   - ベースを拡充するだけで使える
+
+3. **「考えるべきこと」のチェックリスト**
+   - 何を考慮すべきか明確
+   - 抜け漏れを防げる
+
+4. **軽量さを保つ**
+   - 骨格のみ（各50行程度）
+   - 現在のKomonはシンプルに保てる
+
+### 統計
+
+```
+現在のステアリングルール: 2,722行
+将来用ルール（骨格のみ）: ~800行（4ファイル）
+合計: ~3,500行
+```
+
+将来用ルールを含めても、全体の約23%増加に留まります。
