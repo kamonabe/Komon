@@ -1,0 +1,64 @@
+version: 1.0.0
+updated: '2025-11-26'
+description: Kiroが処理するステアリングルールのメタデータ
+rules:
+  versioning-rules:
+    priority: high
+    applies-to:
+    - release
+    - versioning
+    - changelog
+    triggers:
+    - implementation-complete
+    - changelog-update
+    description: Semantic Versioningに基づくバージョン番号の決定ルール
+  development-workflow:
+    priority: high
+    applies-to:
+    - implementation
+    - spec-creation
+    - task-management
+    triggers:
+    - task-start
+    - spec-creation
+    - implementation-start
+    description: 仕様駆動開発のワークフロー
+  task-management:
+    priority: medium
+    applies-to:
+    - task-management
+    triggers:
+    - task-complete
+    - task-update
+    description: タスク管理の2階層構造ルール
+  spec-quality-assurance:
+    priority: high
+    applies-to:
+    - spec-creation
+    - implementation-start
+    triggers:
+    - spec-complete
+    - implementation-start
+    description: Spec品質保証と検証スクリプト実行ルール
+  error-handling-and-logging:
+    priority: medium
+    applies-to:
+    - implementation
+    - error-handling
+    triggers:
+    - code-implementation
+    description: エラーハンドリングとログ出力の標準
+  environment-and-communication:
+    priority: high
+    applies-to:
+    - all
+    triggers:
+    - always
+    description: 開発環境とコミュニケーション言語のルール
+  commit-message-rules:
+    priority: low
+    applies-to:
+    - commit
+    triggers:
+    - commit-creation
+    description: Conventional Commits形式のコミットメッセージルール

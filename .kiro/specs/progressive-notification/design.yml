@@ -1,0 +1,43 @@
+metadata:
+  title: 段階的通知メッセージ - 設計書
+  feature: progressive-notification
+  status: in-progress
+  created: 2025-11-26
+  updated: 2025-11-26
+correctness-properties:
+- id: P1
+  title: 通知回数の正確性
+  type: invariant
+  description: '*任意の*メトリクスタイプと時間窓について、get_notification_count()は指定された時間窓内の同一メトリクスタイプの通知回数を正確に返すこと'
+  validates:
+  - AC-001
+  test-strategy: property-based
+- id: P2
+  title: 段階的メッセージの一貫性
+  type: invariant
+  description: '*任意の*通知回数（1, 2, 3以上）について、generate_progressive_message()は対応するテンプレートを使用してメッセージを生成すること'
+  validates:
+  - AC-002
+  test-strategy: property-based
+- id: P3
+  title: 時間窓のリセット
+  type: invariant
+  description: '*任意の*メトリクスタイプについて、時間窓外の通知はカウントされないこと'
+  validates:
+  - AC-004
+  test-strategy: property-based
+- id: P4
+  title: メトリクスタイプの独立性
+  type: invariant
+  description: '*任意の*2つの異なるメトリクスタイプについて、一方の通知回数は他方に影響しないこと'
+  validates:
+  - AC-001
+  - AC-004
+  test-strategy: property-based
+- id: P5
+  title: エラー時のデフォルト動作
+  type: invariant
+  description: '*任意の*エラー状態（履歴ファイル不在、破損等）について、get_notification_count()は0を返し、デフォルトメッセージが生成されること'
+  validates:
+  - AC-005
+  test-strategy: property-based

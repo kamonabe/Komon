@@ -1,0 +1,87 @@
+metadata:
+  title: 段階的通知メッセージ - 実装タスク
+  feature: progressive-notification
+  status: completed
+  created: 2025-11-26
+  updated: 2025-11-26
+tasks:
+- id: T1
+  title: "段階的メッセージモジュールの作成\n  - `src/komon/progressive_message.py`を作成\n  - `get_notification_count()`関数を実装\n\
+    \  - `generate_progressive_message()`関数を実装\n  - デフォルトテンプレートを定義\n  - _要件: AC-001.1,\
+    \ AC-001.2, AC-001.3, AC-002.1, AC-002.2, AC-002.3, AC-002.4_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T2
+  title: "Analyzerモジュールの修正\n  - `src/komon/analyzer.py`の`analyze_usage()`を修正\n  -\
+    \ 閾値超過時に通知回数を取得\n  - 段階的メッセージを生成\n  - CPU、メモリ、ディスクの3つに対応\n  - _要件: AC-003.1, AC-003.2,\
+    \ AC-003.3_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T3
+  title: "設定ファイルの拡張\n  - `config/settings.yml.sample`に`progressive_notification`セクションを追加\n\
+    \  - デフォルト値とコメントを記載\n  - _要件: AC-002.5, AC-003.5_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T4
+  title: "統合テストの追加\n  - シナリオ1: 初回通知（1回目のメッセージ）\n  - シナリオ2: 2回目通知（2回目のメッセージ）\n  - シナリオ3:\
+    \ 3回目以降通知（3回目のメッセージ）\n  - シナリオ4: 時間窓リセット（24時間後に1回目）\n  - シナリオ5: 異なるメトリクス（独立カウント）\n\
+    \  - _要件: AC-003.1, AC-003.2, AC-003.3, AC-004.1, AC-004.3_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T5
+  title: "チェックポイント - 全テストがパスすることを確認\n  - 全テストがパスすることを確認し、疑問があればユーザーに質問する"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T6
+  title: "ドキュメントの更新\n  - README.mdに段階的通知メッセージの説明を追加\n  - CHANGELOG.mdにv1.17.0の変更内容を記録\n\
+    \  - _要件: 全て_\n\n## 詳細タスク\n\n### 1. 段階的メッセージモジュールの作成\n\n**ファイル**: `src/komon/progressive_message.py`\n\
+    \n**実装内容**:\n- `get_notification_count()`: 通知回数の取得\n- `generate_progressive_message()`:\
+    \ 段階的メッセージの生成\n- `DEFAULT_TEMPLATES`: デフォルトテンプレート定義\n\n**要件**: AC-001, AC-002\n\
+    \n**完了条件**:\n- 通知履歴から24時間以内の同一メトリクスタイプをカウントできる\n- 通知回数（1, 2, 3以上）に応じたメッセージが生成される\n\
+    - エラー時は0を返す（デフォルトメッセージ）\n\n### 2. Analyzerモジュールの修正\n\n**ファイル**: `src/komon/analyzer.py`\n\
+    \n**実装内容**:\n- `analyze_usage()`関数を修正\n- 閾値超過時に`get_notification_count()`を呼び出し\n\
+    - `generate_progressive_message()`でメッセージを生成\n- CPU、メモリ、ディスクの3つに対応\n\n**要件**: AC-003\n\
+    \n**完了条件**:\n- 既存の閾値判定ロジックは変更なし\n- 段階的メッセージが正しく生成される\n- 既存テストが全てパス\n\n### 3. 設定ファイルの拡張\n\
+    \n**ファイル**: `config/settings.yml.sample`\n\n**実装内容**:\n- `progressive_notification`セクションを追加\n\
+    - `enabled`, `time_window_hours`, `templates`の設定項目\n- デフォルト値とコメントを記載\n\n**要件**:\
+    \ AC-002\n\n**完了条件**:\n- 設定ファイルサンプルが更新される\n- 既存の設定項目は変更なし\n\n### 4. プロパティベーステストの追加\n\
+    \n**ファイル**: `tests/test_progressive_message_properties.py`\n\n**実装内容**:\n- プロパティ1:\
+    \ 通知回数の正確性\n- プロパティ2: 段階的メッセージの一貫性\n- プロパティ3: 時間窓のリセット\n- プロパティ4: メトリクスタイプの独立性\n\
+    - プロパティ5: エラー時のデフォルト動作\n\n**要件**: 全AC\n\n**完了条件**:\n- 5つのプロパティテストが実装される\n- 各テストが100回以上実行される\n\
+    - 全テストがパス\n\n### 5. ユニットテストの追加\n\n**ファイル**: `tests/test_progressive_message.py`\n\
+    \n**実装内容**:\n- `get_notification_count()`のテスト\n  - 通知なし（0件）\n  - 通知あり（1件、2件、3件以上）\n\
+    \  - 時間窓外の通知は除外\n  - 異なるメトリクスタイプは除外\n- `generate_progressive_message()`のテスト\n\
+    \  - 各段階のメッセージ生成\n  - カスタムテンプレート\n  - エラーハンドリング\n\n**要件**: 全AC\n\n**完了条件**:\n\
+    - 10件以上のユニットテストが実装される\n- 全テストがパス\n- カバレッジ95%以上\n\n### 6. 統合テストの追加\n\n**ファイル**:\
+    \ `tests/test_progressive_notification_integration.py`\n\n**実装内容**:\n- シナリオ1:\
+    \ 初回通知（1回目のメッセージ）\n- シナリオ2: 2回目通知（2回目のメッセージ）\n- シナリオ3: 3回目以降通知（3回目のメッセージ）\n- シナリオ4:\
+    \ 時間窓リセット（24時間後に1回目）\n- シナリオ5: 異なるメトリクス（独立カウント）\n\n**要件**: AC-003, AC-004\n\n\
+    **完了条件**:\n- 5つの統合テストが実装される\n- 全テストがパス\n- 既存の統合テストも全てパス\n\n### 7. ドキュメント更新\n\n\
+    **ファイル**: `README.md`, `docs/CHANGELOG.md`\n\n**実装内容**:\n- README.md: 段階的通知メッセージの説明を追加\n\
+    - CHANGELOG.md: v1.17.0の変更内容を記録\n\n**要件**: 全AC\n\n**完了条件**:\n- ドキュメントが更新される\n\
+    - 使い方の例が記載される\n\n### 8. 全テストの実行とカバレッジ確認\n\n**コマンド**: `bash run_coverage.sh`\n\n\
+    **実装内容**:\n- 全テストを実行\n- カバレッジレポートを確認\n- README.mdのバッジを更新（必要に応じて）\n\n**要件**: 全AC\n\
+    \n**完了条件**:\n- 全テストがパス\n- カバレッジ95%以上を維持\n- README.mdのバッジが最新\n\n## 実装順序\n\n```\n\
+    1. progressive_message.py の作成\n   ↓\n2. analyzer.py の修正\n   ↓\n3. settings.yml.sample\
+    \ の更新\n   ↓\n4. ユニットテストの追加\n   ↓\n5. プロパティベーステストの追加\n   ↓\n6. 統合テストの追加\n   ↓\n\
+    7. 全テスト実行\n   ↓\n8. ドキュメント更新\n```\n\n## 完了条件"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []

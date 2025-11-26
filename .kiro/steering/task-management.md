@@ -1,3 +1,14 @@
+---
+rule-id: task-management
+priority: medium
+applies-to:
+- task-management
+triggers:
+- task-complete
+- task-update
+description: タスク管理の2階層構造ルール
+---
+
 # Komonプロジェクトのタスク管理ルール
 
 ## タスクファイルの構造

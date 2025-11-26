@@ -1,0 +1,43 @@
+metadata:
+  title: 通知頻度制御（同一アラートの抑制）- 設計書
+  feature: notification-throttle
+  status: draft
+  created: 2025-11-24
+  updated: 2025-11-24
+correctness-properties:
+- id: P1
+  title: 通知抑制の正確性
+  type: invariant
+  description: '*任意の*同一メトリクスの通知について、設定された間隔内に2回以上送信されない（閾値レベル上昇を除く）'
+  validates:
+  - AC-001.2
+  test-strategy: property-based
+- id: P2
+  title: 閾値レベル上昇時の即時通知
+  type: invariant
+  description: '*任意の*閾値レベル上昇について、通知間隔に関わらず即座に通知される'
+  validates:
+  - AC-002.2
+  test-strategy: property-based
+- id: P3
+  title: エスカレーションの正確性
+  type: invariant
+  description: '*任意の*再通知間隔を超えた問題について、エスカレーション通知が送信される'
+  validates:
+  - AC-003.2
+  test-strategy: property-based
+- id: P4
+  title: 履歴ファイルの整合性
+  type: invariant
+  description: '*任意の*通知履歴について、ファイルの読み書きが正しく行われデータが失われない'
+  validates:
+  - AC-004.1
+  - AC-004.5
+  test-strategy: property-based
+- id: P5
+  title: 設定無効時の動作
+  type: invariant
+  description: '*任意の*頻度制御無効時について、全ての通知が抑制なしで送信される'
+  validates:
+  - AC-005.5
+  test-strategy: property-based

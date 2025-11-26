@@ -1,0 +1,151 @@
+# 設計書（完全構造化版）
+# 人間は読まない、Kiroが処理する
+
+metadata:
+  title: "機能名"
+  feature: "feature-name"
+  status: "draft"
+  created: "YYYY-MM-DD"
+  updated: "YYYY-MM-DD"
+
+architecture:
+  overview: |
+    アーキテクチャの概要
+  components:
+    - name: "モジュール名"
+      type: "module"  # module, class, function
+      responsibility: "責務"
+      dependencies: ["依存モジュール1", "依存モジュール2"]
+      
+  data-flow:
+    - from: "入力"
+      to: "処理"
+      description: "データの流れ"
+
+modules:
+  - name: "module_name"
+    path: "src/module_name.py"
+    description: |
+      モジュールの説明
+    classes:
+      - name: "ClassName"
+        responsibility: "責務"
+        methods:
+          - name: "method_name"
+            parameters:
+              - name: "param1"
+                type: "str"
+                description: "説明"
+            returns:
+              type: "dict"
+              description: "説明"
+            raises:
+              - "ValueError: 条件"
+    functions:
+      - name: "function_name"
+        parameters:
+          - name: "param1"
+            type: "str"
+            description: "説明"
+        returns:
+          type: "dict"
+          description: "説明"
+
+correctness-properties:
+  - id: "P1"
+    title: "計算結果の正確性"
+    type: "invariant"  # invariant, idempotence, boundary, monotonicity
+    description: |
+      任意のデータに対して、計算結果は数学的に正しい値でなければならない
+    validates: ["AC-001", "AC-002"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.lists(st.floats(min_value=0.0, max_value=100.0), min_size=2)"
+      assertion: "abs(result - expected) < 0.0001"
+    
+  - id: "P2"
+    title: "境界値の挙動"
+    type: "boundary"
+    description: |
+      0%, 100%の境界値で正しく動作する
+    validates: ["AC-001"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.floats(min_value=0.0, max_value=100.0)"
+      assertion: "0.0 <= result <= 100.0"
+
+data-structures:
+  - name: "DataStructureName"
+    type: "dict"  # dict, list, class, dataclass
+    schema:
+      field1:
+        type: "str"
+        required: true
+        description: "説明"
+      field2:
+        type: "int"
+        required: false
+        default: 0
+        description: "説明"
+
+error-handling:
+  - error: "FileNotFoundError"
+    handling: "continue"  # stop, continue, retry
+    message: "ファイルが見つかりません"
+    log-level: "warning"
+    
+  - error: "ValidationError"
+    handling: "stop"
+    message: "設定エラー"
+    log-level: "error"
+    exit-code: 1
+
+configuration:
+  - name: "setting_name"
+    type: "str"
+    required: true
+    default: null
+    description: "説明"
+    validation:
+      - "非空文字列"
+
+dependencies:
+  internal:
+    - "src.analyzer"
+    - "src.notification"
+  external:
+    - name: "requests"
+      version: ">=2.28.0"
+      purpose: "HTTP通信"
+
+testing-strategy:
+  property-tests:
+    - property: "P1"
+      file: "tests/test_module_properties.py"
+      function: "test_property_calculation_accuracy"
+      
+  integration-tests:
+    - validates: ["AC-001", "AC-002", "AC-005"]
+      file: "tests/test_module_integration.py"
+      function: "test_end_to_end_with_data"
+      
+  unit-tests:
+    - validates: ["AC-001"]
+      file: "tests/test_module_unit.py"
+      function: "test_calculate_insufficient_data"
+
+performance:
+  targets:
+    - metric: "response-time"
+      target: "< 1s"
+      measurement: "time.time()"
+    - metric: "memory-usage"
+      target: "< 50MB"
+      measurement: "psutil.Process().memory_info().rss"
+
+security:
+  considerations:
+    - "環境変数から認証情報を読み込む"
+    - "ログに機密情報を出力しない"

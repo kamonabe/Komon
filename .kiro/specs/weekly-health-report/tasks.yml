@@ -1,0 +1,115 @@
+metadata:
+  title: 週次健全性レポート - 実装タスク
+  feature: weekly-health-report
+  status: completed
+  created: 2025-11-22
+  updated: 2025-11-25
+tasks:
+- id: T1
+  title: "データ収集モジュールの作成\n  - `collect_weekly_data()` 関数の実装\n  - `get_alert_history()`\
+    \ 関数の実装\n  - `analyze_trend()` 関数の実装\n  - `calculate_average_usage()` 関数の実装\n\
+    \  - _要件: AC-001, AC-002_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T2
+  title: "レポートフォーマッターモジュールの作成\n  - `format_weekly_report()` 関数の実装\n  - `format_resource_status()`\
+    \ 関数の実装\n  - `format_trend_indicator()` 関数の実装\n  - `format_alert_summary()` 関数の実装\n\
+    \  - _要件: AC-001.1, AC-001.2, AC-001.3, AC-001.4_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T3
+  title: "メイン週次レポートスクリプトの作成\n  - `main()` 関数の実装\n  - `load_config()` 関数の実装\n  - `generate_weekly_report()`\
+    \ 関数の実装\n  - `send_report()` 関数の実装\n  - _要件: AC-001, AC-003, AC-004_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T4
+  title: "settings.ymlへの設定追加\n  - weekly_report設定セクションの追加\n  - デフォルト値の設定\n  - コメントの追加\n\
+    \  - _要件: AC-005_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T5
+  title: "プロパティベーステストの作成\n  - プロパティ1: データの正確性\n  - プロパティ2: 日付範囲の正確性\n  - プロパティ3: トレンド分類\n\
+    \  - プロパティ4: 警戒履歴の完全性\n  - プロパティ5: グレースフルデグラデーション\n  - _要件: AC-001, AC-002_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T6
+  title: "統合テストの作成\n  - エンドツーエンドのレポート生成\n  - 通知配信（モック）\n  - 設定読み込み\n  - 警戒履歴のフィルタリング\n\
+    \  - _要件: AC-003, AC-004_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T7
+  title: "ユニットテストの作成\n  - データ収集関数のテスト\n  - メッセージフォーマットのテスト\n  - トレンド分析のテスト\n  - エラーハンドリングのテスト\n\
+    \  - _要件: 全て_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T8
+  title: "ドキュメント更新\n  - README.mdに使い方を追加\n  - cron設定例を追加\n  - CHANGELOG.mdにv1.12.0エントリーを追加\n\
+    \  - _要件: AC-006_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T9
+  title: "全テストのパス確認\n  - テストスイート実行\n  - カバレッジ確認（92%達成）\n  - 150テスト全てパス\n  - _要件: 全て_"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+- id: T10
+  title: "タスクステータス更新\n  - implementation-tasks.mdのTASK-012を\U0001F7E2 Doneにマーク\n \
+    \ - 全サブタスクを[x]にマーク\n  - _要件: 全て_\n\n## 詳細タスク分解\n\n### タスク1: データ収集モジュールの作成\n**ファイル:**\
+    \ `src/komon/weekly_data.py`\n\n**実装する関数:**\n- `collect_weekly_data() -> dict`\n\
+    - `get_alert_history(days: int = 7) -> list`\n- `analyze_trend(current: float,\
+    \ previous: float, threshold: float = 5.0) -> str`\n- `calculate_average_usage(days:\
+    \ int = 7) -> dict`\n\n**要件:**\n- `data/usage_history/` から履歴データを読み込み\n- `data/notifications/queue.json`\
+    \ から警戒履歴を読み込み\n- 先週比の計算\n- データ不足時の適切な処理\n\n### タスク2: レポートフォーマッターモジュールの作成\n**ファイル:**\
+    \ `src/komon/report_formatter.py`\n\n**実装する関数:**\n- `format_weekly_report(data:\
+    \ dict) -> str`\n- `format_resource_status(resource: str, current: float, change:\
+    \ float) -> str`\n- `format_trend_indicator(trend: str) -> str`\n- `format_alert_summary(alerts:\
+    \ list) -> str`\n\n**要件:**\n- 人間が読みやすいレポートメッセージの生成\n- 適切な絵文字と視覚的インジケーターの使用\n-\
+    \ 日本語出力のサポート\n\n### タスク3: メイン週次レポートスクリプトの作成\n**ファイル:** `scripts/weekly_report.py`\n\
+    \n**実装する関数:**\n- `main()`\n- `load_config(path: str = \"settings.yml\") -> dict`\n\
+    - `generate_weekly_report(config: dict) -> str`\n- `send_report(message: str,\
+    \ config: dict)`\n\n**要件:**\n- レポート生成の統括\n- 通知システムとの統合\n- エラーの適切な処理\n- コンソール出力の提供\n\
+    \n### タスク4: 設定の追加\n**ファイル:** `settings.yml`\n\n**追加する設定:**\n```yaml\nweekly_report:\n\
+    \  enabled: true\n  day_of_week: 1  # 月曜日\n  hour: 9\n  minute: 0\n  notifications:\n\
+    \    slack: true\n    email: false\n```\n\n### タスク5: プロパティベーステストの作成\n**ファイル:**\
+    \ `tests/test_weekly_data_properties.py`\n\n**テストケース:**\n- 計算精度（先週比）\n- トレンド分類の一貫性\n\
+    - 日付範囲の検証\n- hypothesisによるエッジケース\n\n### タスク6: 統合テストの作成\n**ファイル:** `tests/test_weekly_report_integration.py`\n\
+    \n**テストケース:**\n- エンドツーエンドのレポート生成\n- 通知配信（モック）\n- 設定読み込み\n- 警戒履歴のフィルタリング\n\n###\
+    \ タスク7: ユニットテストの作成\n**ファイル:**\n- `tests/test_weekly_data.py`\n- `tests/test_report_formatter.py`\n\
+    \n**テストケース:**\n- データ収集関数\n- メッセージフォーマット\n- トレンド分析\n- エラーハンドリング\n\n### タスク8: ドキュメント更新\n\
+    **更新するファイル:**\n- `README.md`: 週次レポートの使い方を追加\n- `docs/README.md`: 詳細な設定ガイドを追加\n\
+    - `docs/CHANGELOG.md`: 新機能を記録\n\n**追加する内容:**\n- 機能説明\n- 設定例\n- cron設定手順\n- 出力例\n\
+    \n### タスク9: 全テストのパス確認\n**要件:**\n- テストスイート実行: `python -m pytest tests/ -v`\n- カバレッジ確認:\
+    \ `bash run_coverage.sh`\n- 目標: 95%カバレッジ維持\n- 全111+テストがパス\n\n### タスク10: タスクステータス更新\n\
+    **更新するファイル:**\n- `.kiro/tasks/implementation-tasks.md`: TASK-012を\U0001F7E2 Doneにマーク\n\
+    - `.kiro/specs/weekly-health-report/tasks.md`: 全サブタスクを[x]にマーク\n\n## テストチェックリスト"
+  status: done
+  priority: high
+  estimated-hours: 2
+  depends-on: []
+  validates: []

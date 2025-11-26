@@ -1,3 +1,14 @@
+---
+rule-id: error-handling-and-logging
+priority: medium
+applies-to:
+- implementation
+- error-handling
+triggers:
+- code-implementation
+description: エラーハンドリングとログ出力の標準
+---
+
 # エラーハンドリングとログ出力の標準
 
 ## 基本方針

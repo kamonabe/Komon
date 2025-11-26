@@ -1,0 +1,43 @@
+metadata:
+  title: 段階的閾値通知 - 設計書
+  feature: progressive-threshold
+  status: implemented
+  created: 2025-11-23
+  updated: 2025-11-25
+correctness-properties:
+- id: P1
+  title: 閾値の順序性
+  type: invariant
+  description: '*任意の*メトリクスタイプについて、警告閾値 < 警戒閾値 < 緊急閾値でなければならない'
+  validates:
+  - AC-006
+  test-strategy: property-based
+- id: P2
+  title: レベル判定の正確性
+  type: invariant
+  description: '*任意の*値Vと閾値(W, A, C)について、V < W の場合はNORMAL、W ≤ V < A の場合はWARNING、A ≤
+    V < C の場合はALERT、C ≤ V の場合はCRITICALと判定されなければならない'
+  validates:
+  - AC-003
+  test-strategy: property-based
+- id: P3
+  title: 後方互換性
+  type: invariant
+  description: '*任意の*従来の単一閾値Tについて、3段階(T, T, T)と等価でなければならない'
+  validates:
+  - AC-002
+  test-strategy: property-based
+- id: P4
+  title: メッセージの一貫性
+  type: invariant
+  description: '*任意の*閾値レベルについて、正確に1つの絵文字とメッセージテンプレートにマッピングされなければならない'
+  validates:
+  - AC-004
+  test-strategy: property-based
+- id: P5
+  title: 設定の検証
+  type: invariant
+  description: '*任意の*無効な閾値設定（例: 警告 > 警戒）について、ValidationErrorを発生させなければならない'
+  validates:
+  - AC-006
+  test-strategy: property-based

@@ -1,3 +1,16 @@
+---
+rule-id: versioning-rules
+priority: high
+applies-to:
+- release
+- versioning
+- changelog
+triggers:
+- implementation-complete
+- changelog-update
+description: Semantic Versioningに基づくバージョン番号の決定ルール
+---
+
 # バージョン番号の決定ルール
 
 ## 基本方針

@@ -32,6 +32,17 @@ def generate_steering_rules(config: dict, output_dir: str = ".kiro/steering"):
         print(f"❌ テンプレートディレクトリが見つかりません: {template_dir}")
         sys.exit(1)
     
+    # ルールメタデータを読み込み
+    metadata_path = template_dir / "rule-metadata.yml"
+    if not metadata_path.exists():
+        print(f"❌ ルールメタデータが見つかりません: {metadata_path}")
+        sys.exit(1)
+    
+    with open(metadata_path, 'r', encoding='utf-8') as f:
+        metadata_config = yaml.safe_load(f)
+    
+    rule_metadata = metadata_config.get('rules', {})
+    
     # Jinja2環境の設定
     env = Environment(
         loader=FileSystemLoader(str(template_dir)),
@@ -64,17 +75,36 @@ def generate_steering_rules(config: dict, output_dir: str = ".kiro/steering"):
             template = env.get_template(template_name)
             
             # レンダリング
-            output = template.render(**config)
+            content = template.render(**config)
             
             # 出力ファイル名（.template を削除）
             output_name = template_name.replace('.template', '')
+            rule_id = output_name.replace('.md', '')
             output_path = Path(output_dir) / output_name
+            
+            # Front Matterを追加
+            metadata = rule_metadata.get(rule_id, {})
+            if metadata:
+                front_matter = {
+                    'rule-id': rule_id,
+                    'priority': metadata.get('priority', 'medium'),
+                    'applies-to': metadata.get('applies-to', []),
+                    'triggers': metadata.get('triggers', []),
+                    'description': metadata.get('description', '')
+                }
+                
+                output = '---\n'
+                output += yaml.dump(front_matter, allow_unicode=True, sort_keys=False, default_flow_style=False)
+                output += '---\n\n'
+                output += content
+            else:
+                output = content
             
             # ファイルに書き込み
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(output)
             
-            print(f"✅ Generated: {output_name}")
+            print(f"✅ Generated: {output_name} (with Front Matter)")
             
         except Exception as e:
             print(f"❌ Error processing {template_name}: {e}")

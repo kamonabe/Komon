@@ -1,3 +1,17 @@
+---
+rule-id: development-workflow
+priority: high
+applies-to:
+- implementation
+- spec-creation
+- task-management
+triggers:
+- task-start
+- spec-creation
+- implementation-start
+description: 仕様駆動開発のワークフロー
+---
+
 # Komon仕様駆動開発ワークフロー
 
 ## 開発の基本方針

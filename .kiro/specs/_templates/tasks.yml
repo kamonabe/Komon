@@ -1,0 +1,125 @@
+# タスクリスト（完全構造化版）
+# 人間は読まない、Kiroが処理する
+
+metadata:
+  title: "機能名"
+  feature: "feature-name"
+  status: "draft"
+  created: "YYYY-MM-DD"
+  updated: "YYYY-MM-DD"
+
+tasks:
+  - id: "T1"
+    title: "Create module"
+    status: "todo"  # todo, in-progress, done
+    priority: "high"
+    estimated-hours: 4
+    actual-hours: null
+    depends-on: []
+    validates: ["AC-001", "AC-002"]
+    description: |
+      モジュールを作成する
+    subtasks:
+      - "src/module_name.pyを作成"
+      - "基本的な関数を実装"
+      - "エラーハンドリングを追加"
+    files:
+      - path: "src/module_name.py"
+        action: "create"
+        lines: 150
+    tests:
+      - "tests/test_module_unit.py"
+    
+  - id: "T2"
+    title: "Write property tests"
+    status: "todo"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-001", "AC-002"]
+    description: |
+      プロパティテストを作成する
+    subtasks:
+      - "tests/test_module_properties.pyを作成"
+      - "Property 1をテスト"
+      - "Property 2をテスト"
+    files:
+      - path: "tests/test_module_properties.py"
+        action: "create"
+        lines: 80
+    tests:
+      - "tests/test_module_properties.py"
+    
+  - id: "T3"
+    title: "Write integration tests"
+    status: "todo"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-005"]
+    description: |
+      統合テストを作成する
+    subtasks:
+      - "tests/test_module_integration.pyを作成"
+      - "エンドツーエンドのテスト"
+    files:
+      - path: "tests/test_module_integration.py"
+        action: "create"
+        lines: 60
+    tests:
+      - "tests/test_module_integration.py"
+    
+  - id: "T4"
+    title: "Update documentation"
+    status: "todo"
+    priority: "medium"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-006"]
+    description: |
+      ドキュメントを更新する
+    subtasks:
+      - "README.mdを更新"
+      - "CHANGELOG.mdに記録"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 10
+      - path: "docs/CHANGELOG.md"
+        action: "update"
+        lines: 5
+
+completion-criteria:
+  - id: "CC-001"
+    description: "全テストがパス"
+    status: "pending"
+    validation: "pytest tests/ -v"
+    
+  - id: "CC-002"
+    description: "カバレッジ95%以上"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    
+  - id: "CC-003"
+    description: "ドキュメント更新完了"
+    status: "pending"
+    validation: "manual"
+
+execution-plan:
+  parallel-tasks:
+    - ["T2", "T3"]  # T1完了後、T2とT3は並列実行可能
+  critical-path:
+    - "T1"
+    - "T2"  # または T3
+    - "T4"
+  total-estimated-hours: 10
+
+risks:
+  - task: "T1"
+    risk: "既存機能への影響"
+    mitigation: "統合テストで確認"
+    probability: "low"
+    impact: "high"

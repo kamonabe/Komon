@@ -1,0 +1,53 @@
+# トレーサビリティマトリクス（機械可読形式）
+# このファイルは検証スクリプトが自動生成します
+
+feature: "feature-name"
+generated: "YYYY-MM-DD HH:MM:SS"
+
+acceptance-criteria:
+  - id: AC-001
+    title: "基準名"
+    priority: high
+    type: functional
+    properties: [P1, P2]
+    tasks: [T1, T2]
+    tests: [test_xxx_properties, test_xxx_integration]
+    
+  - id: AC-002
+    title: "基準名2"
+    priority: medium
+    type: functional
+    properties: [P3]
+    tasks: [T3]
+    tests: [test_yyy_unit]
+
+properties:
+  - id: P1
+    title: "計算結果の正確性"
+    type: invariant
+    validates: [AC-001, AC-002]
+    test-strategy: property-based
+    
+  - id: P2
+    title: "境界値の挙動"
+    type: boundary
+    validates: [AC-001]
+    test-strategy: property-based
+
+tasks:
+  - id: T1
+    title: "Create module"
+    depends-on: []
+    validates: [AC-001, AC-002]
+    estimated-hours: 4
+    
+  - id: T2
+    title: "Write tests"
+    depends-on: [T1]
+    validates: [AC-001, AC-002, AC-003]
+    estimated-hours: 3
+
+coverage:
+  acceptance-criteria: 100%  # 全てのACがプロパティでカバーされている
+  properties: 100%  # 全てのプロパティがタスクでカバーされている
+  tasks: 100%  # 全てのタスクがACを参照している

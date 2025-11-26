@@ -1,214 +1,172 @@
-# Spec（仕様駆動開発）- 使い方ガイド
+# Komon Specs
 
-## 概要
+**このディレクトリは、Kiroが処理する機械可読な仕様書です。**
 
-このディレクトリには、**仕様駆動開発（Spec-Driven Development）**で使用するSpec文書が格納されています。
+人間が直接読む必要はありません。詳細はKiroに質問してください。
 
-Komonプロジェクトでは、アイデア → 仕様 → 実装 → テストの流れで開発を進めます。
+---
 
-## ディレクトリ構造
+## 🤖 Kiro向けの情報
+
+### ファイル構造
 
 ```
 .kiro/specs/
-├── README.md                          # このファイル
-├── future-ideas.md                    # アイデア管理
-├── {feature-name}/                    # 機能別Spec
-│   ├── requirements.md                # 要件定義
-│   ├── design.md                      # 設計書（正確性プロパティを含む）
-│   └── tasks.md                       # 実装タスクリスト
-└── ...
+├── README.md                    # このファイル
+├── future-ideas.md              # アイデア管理（人間が編集）
+├── komon-system.md              # システム全体の概要
+├── testing-strategy.md          # テスト戦略
+├── _templates/                  # Specテンプレート
+│   ├── requirements.yml
+│   ├── design.yml
+│   └── tasks.yml
+└── {feature-name}/              # 機能別Spec（YAML形式）
+    ├── requirements.yml         # 要件定義（構造化）
+    ├── design.yml               # 設計書（構造化）
+    └── tasks.yml                # タスクリスト（構造化）
 ```
 
-## 開発フロー
+### Specファイルの形式
 
-### 1. アイデア段階
+全てのSpecは**YAML形式**で記述されています：
 
-新機能のアイデアは`future-ideas.md`に追加します。
+- **requirements.yml**: 受入基準、ユーザーストーリー、WHEN-THEN条件
+- **design.yml**: 正確性プロパティ、モジュール設計、テスト戦略
+- **tasks.yml**: タスクリスト、依存関係、完了条件
 
-```markdown
-### [IDEA-XXX] 機能名
-**ステータス**: 💡 検討中
-**優先度**: High/Medium/Low
+### Kiroの処理フロー
 
-#### 概要
-どんな機能か、なぜ必要か。
+1. **Spec読み込み**: YAMLをパースして構造化データとして処理
+2. **トレーサビリティ確認**: AC → Property → Task の関連を検証
+3. **実装**: design.ymlの設計に基づいてコード生成
+4. **テスト**: tasks.ymlのvalidatesフィールドに基づいてテスト作成
 
-#### 期待効果
-- 効果1
-- 効果2
-
-#### 実装の難易度
-- 見積もり: 小/中/大
-```
-
-### 2. 実装決定
-
-実装を決定したら、`.kiro/tasks/implementation-tasks.md`に`TASK-XXX`として追加します。
-
-### 3. Spec作成
-
-機能別のディレクトリを作成し、3つのファイルを作成します：
-
-```bash
-mkdir -p .kiro/specs/{feature-name}
-```
-
-#### 3-1. requirements.md（要件定義）
-
-```markdown
----
-title: 機能名 - 要件定義
-feature: feature-name
-status: draft
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
 ---
 
-# 機能名 - 要件定義
+## 👤 人間向けの情報
 
-## 概要
-機能の概要説明。
+### 基本的な使い方
 
-## 受入基準
+**Specファイル（.yml）は直接読まないでください。**
 
-### [AC-001] 基準名
-**WHEN**: 条件
-**THEN**: 期待される結果
+代わりに、Kiroに質問してください：
+
+```
+「TASK-001の要件を教えて」
+「disk-trend-predictionの設計を説明して」
+「notification-historyの受入基準は？」
+「次に実装すべきタスクは？」
 ```
 
-#### 3-2. design.md（設計書）
+### 新しいアイデアを追加
 
-```markdown
+1. `future-ideas.md`に追加（人間が編集）
+2. Kiroに「IDEA-XXXを実装タスクに追加して」と依頼
+
+### 実装を開始
+
+```
+「TASK-XXXを実装しよう」
+```
+
+Kiroが自動的に：
+1. Specを読み込み
+2. ブランチ確認
+3. 実装開始
+
+### Specを確認
+
+```
+「disk-trend-predictionの概要を教えて」
+「AC-001の詳細は？」
+「Property 1は何をテストする？」
+```
+
+### 進捗を確認
+
+```
+「完了したタスクは？」
+「未完了のタスクは？」
+「TASK-001の進捗は？」
+```
+
 ---
-title: 機能名 - 設計書
-feature: feature-name
-status: draft
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
+
+## 🎯 設計思想
+
+### なぜYAML形式なのか？
+
+1. **機械可読性**: Kiroが正確に処理できる
+2. **構造化**: トレーサビリティが明確
+3. **検証可能**: スキーマ検証が可能
+4. **メンテナンス性**: 人間が直接編集しないので、一貫性が保たれる
+
+### 人間とKiroの役割分担
+
+```
+人間の役割:
+- アイデアを出す
+- 意思決定をする
+- 最終確認をする
+- README.mdだけ読む
+
+Kiroの役割:
+- Specを読み込む
+- 実装する
+- テストする
+- ドキュメント更新
+- YAMLファイルを管理
+```
+
+### メリット
+
+- ✅ ドキュメントメンテナンスの負担が激減
+- ✅ 常に最新の情報（Kiroが管理）
+- ✅ トレーサビリティが明確
+- ✅ 検証スクリプトが正確に動作
+- ✅ 人間は意思決定に集中できる
+
 ---
 
-# 機能名 - 設計書
+## 📚 参考情報
 
-## アーキテクチャ
-システム構成の説明。
+### Specの詳細を知りたい場合
 
-## 正確性プロパティ
+Kiroに聞いてください：
 
-### [PROP-001] プロパティ名
-**検証対象**: AC-001
-**プロパティ**: 不変条件の説明
+```
+「requirements.ymlの構造を教えて」
+「design.ymlには何が含まれる？」
+「tasks.ymlのフィールドは？」
 ```
 
-#### 3-3. tasks.md（実装タスクリスト）
+### Specを編集したい場合
 
-```markdown
+Kiroに依頼してください：
+
+```
+「TASK-001の受入基準を追加して」
+「disk-trend-predictionの設計を修正して」
+「Property 2の説明を改善して」
+```
+
+### トラブルシューティング
+
+**Q: YAMLファイルが読めない**
+→ 読む必要はありません。Kiroに聞いてください。
+
+**Q: Specを直接編集したい**
+→ Kiroに依頼してください。手動編集は推奨しません。
+
+**Q: 古いMarkdownファイルはどこ？**
+→ YAML化されました。履歴はgitで確認できます。
+
 ---
-title: 機能名 - 実装タスク
-feature: feature-name
-status: draft
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
----
 
-# 機能名 - 実装タスク
+## ✨ まとめ
 
-- [ ] 1. タスク1（要件: AC-001）
-- [ ] 2. タスク2（要件: AC-002）
-- [ ] 3. テスト追加
-- [ ] 4. ドキュメント更新
-```
+- **人間**: README.mdだけ読む、詳細はKiroに聞く
+- **Kiro**: YAMLファイルを処理する
+- **役割分担**: 人間は意思決定、Kiroは実装
 
-### 4. Spec検証
-
-Spec作成後、検証スクリプトを実行します：
-
-```bash
-python scripts/validate_specs.py
-python scripts/check_spec_consistency.py
-```
-
-### 5. 実装開始
-
-開発ブランチを作成してから実装を開始します：
-
-```bash
-git checkout -b feature/task-XXX-{feature-name}
-```
-
-### 6. 完了
-
-実装完了後、以下を更新します：
-
-- `tasks.md` の全タスクを `[x]` に
-- `.kiro/tasks/implementation-tasks.md` のステータスを 🟢 Done に
-- `docs/CHANGELOG.md` に記録
-- `future-ideas.md` のステータスを「実装済み」に
-
-## Spec品質保証
-
-### 構造検証（validate_specs.py）
-
-- Front Matterの必須フィールド
-- 日付フォーマット
-- 必須セクションの存在
-- 受入基準・プロパティ・タスクの数
-
-### 一貫性検証（check_spec_consistency.py）
-
-- 3ファイル間のfeature名一致
-- 存在しない受入基準の参照
-- プロパティと受入基準の対応
-- タスクと受入基準のカバレッジ
-
-## トレーサビリティ
-
-Komonでは、以下のトレーサビリティを維持します：
-
-```
-[IDEA-XXX] アイデア
-    ↓
-[TASK-XXX] 実装タスク
-    ↓
-[AC-XXX] 受入基準（requirements.md）
-    ↓
-[PROP-XXX] 正確性プロパティ（design.md）
-    ↓
-タスク（tasks.md）
-    ↓
-テストコード（tests/）
-```
-
-## 他のプロジェクトで使う場合
-
-### ステップ1: ディレクトリ構造をコピー
-
-```bash
-mkdir -p /path/to/myproject/.kiro/specs
-cp /path/to/komon/.kiro/specs/README.md /path/to/myproject/.kiro/specs/
-```
-
-### ステップ2: future-ideas.mdを作成
-
-```bash
-touch /path/to/myproject/.kiro/specs/future-ideas.md
-```
-
-### ステップ3: 検証スクリプトをコピー
-
-```bash
-cp /path/to/komon/scripts/validate_specs.py /path/to/myproject/scripts/
-cp /path/to/komon/scripts/check_spec_consistency.py /path/to/myproject/scripts/
-```
-
-### ステップ4: 開発開始
-
-アイデアを`future-ideas.md`に追加して、開発を開始します。
-
-## まとめ
-
-- **アイデア管理**: `future-ideas.md`
-- **Spec作成**: `{feature-name}/requirements.md`, `design.md`, `tasks.md`
-- **品質保証**: 検証スクリプトで自動チェック
-- **トレーサビリティ**: アイデア → 要件 → 設計 → タスク → テスト
-
-このアプローチにより、仕様と実装の乖離を防ぎ、高品質な開発が可能になります。
+**これがAI時代の開発スタイルです。**

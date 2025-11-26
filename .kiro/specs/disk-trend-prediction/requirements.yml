@@ -1,0 +1,54 @@
+metadata:
+  title: ディスク使用量の増加トレンド予測 - 要件定義
+  feature: disk-trend-prediction
+  status: implemented
+  created: 2025-11-23
+  updated: 2025-11-25
+  complexity: medium
+  estimated-hours: 8
+  dependencies: []
+overview:
+  description: 本機能は、過去のディスク使用量データから将来の使用量を予測し、ディスク容量が逼迫する前にユーザーに警告を発する機能です。84%から90%に急激にジャンプするケースに対応し、事前の計画的な対応を可能にします。
+acceptance-criteria:
+- id: AC-001
+  title: データ読み込みと前処理
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-002
+  title: 線形回帰による予測計算
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-003
+  title: 急激な変化の検出
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-004
+  title: 予測結果のメッセージ生成
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-005
+  title: adviseコマンドへの統合
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-006
+  title: 週次レポートへの統合
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-007
+  title: テストによる品質保証
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []

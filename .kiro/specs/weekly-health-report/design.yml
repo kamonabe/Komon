@@ -1,0 +1,46 @@
+metadata:
+  title: 週次健全性レポート - 設計書
+  feature: weekly-health-report
+  status: implemented
+  created: 2025-11-22
+  updated: 2025-11-25
+correctness-properties:
+- id: P1
+  title: データの正確性
+  type: invariant
+  description: '*任意の*現在値と前回値について、先週比の計算は `((current - previous) / previous) * 100`
+    と一致しなければならない'
+  validates:
+  - AC-001.2
+  - AC-002.2
+  test-strategy: property-based
+- id: P2
+  title: 日付範囲の正確性
+  type: invariant
+  description: '*任意の*レポート期間について、常に正確に7日間をカバーしなければならない'
+  validates:
+  - AC-002.1
+  test-strategy: property-based
+- id: P3
+  title: トレンド分類
+  type: invariant
+  description: '*任意の*変化率について、|change| < 5%の場合は''stable''、change >= 5%の場合は''increasing''、change
+    <= -5%の場合は''decreasing''と分類されなければならない'
+  validates:
+  - AC-001.4
+  test-strategy: property-based
+- id: P4
+  title: 警戒履歴の完全性
+  type: invariant
+  description: '*任意の*7日間の期間について、期間内の全ての警戒情報がレポートに含まれなければならない'
+  validates:
+  - AC-001.3
+  - AC-002.3
+  test-strategy: property-based
+- id: P5
+  title: グレースフルデグラデーション
+  type: invariant
+  description: '*任意の*履歴データ不足について、レポート生成を妨げず「データ不足」と表示しなければならない'
+  validates:
+  - AC-002.4
+  test-strategy: property-based

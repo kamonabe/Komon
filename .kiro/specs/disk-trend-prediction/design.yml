@@ -1,0 +1,68 @@
+metadata:
+  title: ディスク使用量の増加トレンド予測 - 設計書
+  feature: disk-trend-prediction
+  status: implemented
+  created: 2025-11-23
+  updated: 2025-11-25
+correctness-properties:
+- id: P1
+  title: 日次平均計算の正確性
+  type: invariant
+  description: '*任意の*7日分のディスク使用率データに対して、日次平均を計算した結果は、各日のデータの算術平均と一致しなければならない'
+  validates:
+  - AC-001.1
+  test-strategy: property-based
+- id: P2
+  title: 欠損データの処理
+  type: invariant
+  description: '*任意の*欠損を含むディスク使用率データに対して、予測は利用可能なデータのみを使用して実行され、欠損データは無視されなければならない'
+  validates:
+  - AC-001.4
+  test-strategy: property-based
+- id: P3
+  title: 線形回帰の正確性
+  type: invariant
+  description: '*任意の*2点以上のデータセットに対して、最小二乗法で計算された傾きと切片は、数学的に正しい値でなければならない'
+  validates:
+  - AC-002.1
+  test-strategy: property-based
+- id: P4
+  title: 90%到達予測の正確性
+  type: invariant
+  description: '*任意の*増加傾向（傾き > 0）のデータに対して、90%到達予測日は `(90 - current_usage) / slope`
+    の計算式で算出された日数と一致しなければならない'
+  validates:
+  - AC-002.2
+  test-strategy: property-based
+- id: P5
+  title: 前日比計算の正確性
+  type: invariant
+  description: '*任意の*2日以上のデータに対して、前日比は最新日と前日のディスク使用率の差分と一致しなければならない'
+  validates:
+  - AC-003.1
+  test-strategy: property-based
+- id: P6
+  title: 急激な変化検出の正確性
+  type: invariant
+  description: '*任意の*前日比データに対して、10%以上の増加の場合は`is_rapid=True`、10%未満の場合は`is_rapid=False`でなければならない'
+  validates:
+  - AC-003.2
+  - AC-003.3
+  test-strategy: property-based
+- id: P7
+  title: 予測メッセージの完全性
+  type: invariant
+  description: '*任意の*予測結果に対して、生成されるメッセージは以下の要素を含まなければならない：増加トレンドの説明、90%到達予測日（存在する場合）、急激な変化の警告（検出された場合）、推奨アクション（警告がある場合）'
+  validates:
+  - AC-004.1
+  - AC-004.2
+  - AC-004.3
+  - AC-004.4
+  test-strategy: property-based
+- id: P8
+  title: 警告の優先度順表示
+  type: invariant
+  description: '*任意の*複数の警告を含む予測結果に対して、メッセージは優先度の高い順（急激な変化 > 90%到達予測 > 通常の増加）に表示されなければならない'
+  validates:
+  - AC-005.5
+  test-strategy: property-based

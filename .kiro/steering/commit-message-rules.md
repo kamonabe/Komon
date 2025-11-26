@@ -1,3 +1,13 @@
+---
+rule-id: commit-message-rules
+priority: low
+applies-to:
+- commit
+triggers:
+- commit-creation
+description: Conventional Commits形式のコミットメッセージルール
+---
+
 # Komonコミットメッセージルール
 
 ## 基本フォーマット

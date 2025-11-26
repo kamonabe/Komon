@@ -1,3 +1,13 @@
+---
+rule-id: environment-and-communication
+priority: high
+applies-to:
+- all
+triggers:
+- always
+description: 開発環境とコミュニケーション言語のルール
+---
+
 # Komon開発環境とコミュニケーションルール
 
 ## 開発環境

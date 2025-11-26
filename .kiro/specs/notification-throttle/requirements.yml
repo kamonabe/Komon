@@ -1,0 +1,50 @@
+metadata:
+  title: 通知頻度制御（同一アラートの抑制）- 要件定義
+  feature: notification-throttle
+  status: draft
+  created: 2025-11-24
+  updated: 2025-11-24
+  complexity: medium
+  estimated-hours: 8
+  dependencies: []
+overview:
+  description: '同一のアラート（CPU/メモリ/ディスク超過）が短時間に繰り返し通知されることを防ぎ、
+
+    「通知疲れ」や「オオカミ少年化」を防止する機能。'
+acceptance-criteria:
+- id: AC-001
+  title: 通知抑制機能
+  priority: high
+  type: functional
+  user-story: システム管理者として、同じアラートが短時間に繰り返し通知されることを防ぎたいので、通知間隔を制御する機能が必要です。
+  conditions: []
+- id: AC-002
+  title: 閾値レベル変化時の即時通知
+  priority: high
+  type: functional
+  user-story: システム管理者として、状況が悪化した場合は即座に知りたいので、閾値レベルが上昇した場合は抑制を無視して通知する機能が必要です。
+  conditions: []
+- id: AC-003
+  title: エスカレーション機能
+  priority: high
+  type: functional
+  user-story: システム管理者として、長時間継続する問題を見逃さないために、定期的に再通知する機能が必要です。
+  conditions: []
+- id: AC-004
+  title: 通知履歴の永続化
+  priority: high
+  type: functional
+  user-story: 開発者として、プロセス再起動後も抑制ロジックが機能するように、通知履歴を永続化する必要があります。
+  conditions: []
+- id: AC-005
+  title: 設定ファイルでの制御
+  priority: high
+  type: functional
+  user-story: システム管理者として、環境に応じて通知頻度制御の動作を調整したいので、設定ファイルで制御できる必要があります。
+  conditions: []
+- id: AC-006
+  title: 既存機能との互換性
+  priority: high
+  type: functional
+  user-story: 開発者として、既存の通知機能に影響を与えずに頻度制御を追加したいので、後方互換性を保つ必要があります。
+  conditions: []

@@ -1,0 +1,48 @@
+metadata:
+  title: 週次健全性レポート - 要件定義
+  feature: weekly-health-report
+  status: implemented
+  created: 2025-11-22
+  updated: 2025-11-25
+  complexity: medium
+  estimated-hours: 8
+  dependencies: []
+overview:
+  description: この機能は、システム監視のための定期的な健全性レポートを提供します。管理者がSSHログインせずにシステム状態を確認できるようにし、特に年末年始などの長期休暇前に有用です。
+acceptance-criteria:
+- id: AC-001
+  title: 週次レポートの生成
+  priority: high
+  type: functional
+  user-story: システム管理者として、SSHログインせずにシステム状態を確認したいので、定期的な健全性レポートが必要です。
+  conditions: []
+- id: AC-002
+  title: 履歴データの収集
+  priority: high
+  type: functional
+  user-story: 開発者として、正確なレポートを生成するために、履歴データを適切に収集・分析する必要があります。
+  conditions: []
+- id: AC-003
+  title: Slack通知との統合
+  priority: high
+  type: functional
+  user-story: システム管理者として、Slackで週次レポートを受け取りたいので、Slack通知との統合が必要です。
+  conditions: []
+- id: AC-004
+  title: メール通知との統合
+  priority: high
+  type: functional
+  user-story: システム管理者として、メールで週次レポートを受け取りたいので、メール通知との統合が必要です。
+  conditions: []
+- id: AC-005
+  title: 設定の制御
+  priority: high
+  type: functional
+  user-story: システム管理者として、週次レポートの動作を調整したいので、設定ファイルで制御できる必要があります。
+  conditions: []
+- id: AC-006
+  title: Cronスケジューリング
+  priority: high
+  type: functional
+  user-story: システム管理者として、週次レポートを自動実行したいので、cronスケジューリングの設定方法が必要です。
+  conditions: []

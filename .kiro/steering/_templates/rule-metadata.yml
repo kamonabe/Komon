@@ -1,0 +1,43 @@
+# ステアリングルールのメタデータ
+# 各ルールファイルの先頭に追加することを推奨
+
+rules:
+  - file: versioning-rules.md
+    priority: high
+    applies-to: [release, versioning]
+    triggers: [implementation-complete, changelog-update]
+    
+  - file: development-workflow.md
+    priority: high
+    applies-to: [implementation, spec-creation]
+    triggers: [task-start, spec-creation]
+    
+  - file: task-management.md
+    priority: medium
+    applies-to: [task-management]
+    triggers: [task-complete, task-update]
+    
+  - file: spec-quality-assurance.md
+    priority: high
+    applies-to: [spec-creation, implementation-start]
+    triggers: [spec-complete, implementation-start]
+    
+  - file: error-handling-and-logging.md
+    priority: medium
+    applies-to: [implementation]
+    triggers: [code-implementation]
+    
+  - file: environment-and-communication.md
+    priority: high
+    applies-to: [all]
+    triggers: [always]
+    
+  - file: commit-message-rules.md
+    priority: low
+    applies-to: [commit]
+    triggers: [commit-creation]
+
+# 使用例:
+# - implementation-start時: development-workflow.md, spec-quality-assurance.md を優先
+# - implementation時: error-handling-and-logging.md を参照
+# - release時: versioning-rules.md を優先

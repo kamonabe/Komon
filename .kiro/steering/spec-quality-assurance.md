@@ -1,3 +1,15 @@
+---
+rule-id: spec-quality-assurance
+priority: high
+applies-to:
+- spec-creation
+- implementation-start
+triggers:
+- spec-complete
+- implementation-start
+description: Spec品質保証と検証スクリプト実行ルール
+---
+
 # Spec品質保証ルール
 
 ## 基本方針

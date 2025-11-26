@@ -1,0 +1,67 @@
+# 要件定義（完全構造化版）
+# 人間は読まない、Kiroが処理する
+
+metadata:
+  title: "機能名"
+  feature: "feature-name"
+  status: "draft"  # draft, review, approved, implemented
+  created: "YYYY-MM-DD"
+  updated: "YYYY-MM-DD"
+  complexity: "low"  # low, medium, high
+  estimated-hours: 8
+  dependencies: []
+
+overview:
+  description: |
+    機能の概要を記述
+  background: |
+    背景や動機を記述
+  goals:
+    - "目標1"
+    - "目標2"
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "基準名"
+    priority: "high"  # high, medium, low
+    type: "functional"  # functional, non-functional, security, performance
+    description: |
+      詳細な説明
+    when: "条件"
+    then: "期待される結果"
+    examples:
+      - input: "入力例1"
+        output: "出力例1"
+      - input: "入力例2"
+        output: "出力例2"
+    
+  - id: "AC-002"
+    title: "基準名2"
+    priority: "medium"
+    type: "functional"
+    description: |
+      詳細な説明
+    when: "条件"
+    then: "期待される結果"
+
+non-functional-requirements:
+  performance:
+    - "応答時間: 1秒以内"
+  reliability:
+    - "エラー時も処理を継続"
+  maintainability:
+    - "テストカバレッジ95%以上"
+
+constraints:
+  - "AlmaLinux 9専用"
+  - "Python 3.10+以上"
+
+assumptions:
+  - "ユーザーは日本語話者"
+  - "cronで定期実行される"
+
+risks:
+  - risk: "既存機能への影響"
+    mitigation: "統合テストで確認"
+    probability: "low"
+    impact: "high"

@@ -1,0 +1,30 @@
+metadata:
+  title: 段階的閾値通知 - 要件定義
+  feature: progressive-threshold
+  status: implemented
+  created: 2025-11-23
+  updated: 2025-11-25
+  complexity: medium
+  estimated-hours: 8
+  dependencies: []
+overview:
+  description: 3段階の閾値通知システム（警告/警戒/緊急）を実装し、リソース問題の早期検知を可能にする。既存の単一閾値設定との後方互換性を維持する。
+acceptance-criteria:
+- id: AC-001
+  title: "3段階閾値設定のサポート\n**WHEN** システムがsettings.ymlを読み込むとき  \n**THEN** 各メトリクスタイプ（CPU/メモリ/ディスク）に対して3段階の閾値設定（警告/警戒/緊急）をサポートすること"
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-003
+  title: "3段階判定ロジック\n**WHEN** メトリクス値がいずれかの閾値レベルを超えたとき  \n**THEN** システムは適切なレベル（警告/警戒/緊急）を判定し、対応するメッセージを生成すること"
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+- id: AC-005
+  title: "エスカレーション検知\n**WHEN** 閾値レベルが上昇したとき（例: 70% → 80% → 90%）  \n**THEN** システムはエスカレーションを検知し、通知頻度制御の設定に関わらず即座に通知すること"
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []

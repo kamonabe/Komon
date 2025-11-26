@@ -1,0 +1,42 @@
+metadata:
+  title: 段階的通知メッセージ - 要件定義
+  feature: progressive-notification
+  status: in-progress
+  created: 2025-11-26
+  updated: 2025-11-26
+  complexity: medium
+  estimated-hours: 8
+  dependencies: []
+overview:
+  description: この機能は、既存の通知履歴機能（v1.11.0）を活用して、同一問題の繰り返し回数に応じて通知メッセージを段階的に変化させる機能です。これにより、問題の緊急度を適切に伝え、「通知疲れ」を防ぎ、ユーザーの注意を適切に引きつけることを目的としています。
+acceptance-criteria:
+- id: AC-001
+  title: 通知履歴の分析
+  priority: high
+  type: functional
+  user-story: システム管理者として、同じ問題が繰り返し発生しているかを把握したいので、通知回数を自動的に判定する機能が必要です。
+  conditions: []
+- id: AC-002
+  title: 段階的メッセージの生成
+  priority: high
+  type: functional
+  user-story: システム管理者として、問題の緊急度を把握したいので、通知回数に応じて異なるメッセージが表示される機能が必要です。
+  conditions: []
+- id: AC-003
+  title: 既存機能との統合
+  priority: high
+  type: functional
+  user-story: 開発者として、既存の通知機能に影響を与えずに段階的メッセージを追加したいので、既存コードとの統合が適切に行われる必要があります。
+  conditions: []
+- id: AC-004
+  title: 時間窓のリセット
+  priority: high
+  type: functional
+  user-story: システム管理者として、問題が解決した後は通知回数がリセットされてほしいので、時間窓による自動リセット機能が必要です。
+  conditions: []
+- id: AC-005
+  title: エラーハンドリング
+  priority: high
+  type: functional
+  user-story: システム管理者として、エラーが発生しても通知が送信されてほしいので、適切なエラーハンドリングが必要です。
+  conditions: []
