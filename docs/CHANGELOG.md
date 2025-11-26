@@ -6,6 +6,8 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.17.1] - 2025-11-26
+
 ### Fixed
 
 - **scripts/main.pyのImportError修正**
