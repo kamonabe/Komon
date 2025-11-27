@@ -23,10 +23,12 @@
 ### 3. Spec作成（{{git.main_branch}}ブランチ）
 **フォルダ**: `{{spec.location}}{feature-name}/`
 
-以下の{{spec.required_files|length}}ファイルを**{{communication.language_name}}で**作成：
-{% for file in spec.required_files %}
-- `{{file}}`{% if file == "requirements.md" %}: 要件定義{% endif %}{% if file == "design.md" %}: 設計書（正確性プロパティを含む）{% endif %}{% if file == "tasks.md" %}: 実装タスクリスト{% endif %}
-{% endfor %}
+以下の3ファイルを**YML形式で**作成：
+- `requirements.yml`: 要件定義（構造化YAML）
+- `design.yml`: 設計書（正確性プロパティを含む、構造化YAML）
+- `tasks.yml`: 実装タスクリスト（構造化YAML）
+
+**テンプレート**: `{{spec.location}}_templates/` を参照
 
 **この時点ではまだ{{git.main_branch}}ブランチでOK**
 
@@ -68,7 +70,7 @@ Kiroは以下を**連続して自律的に**実行します：
 
 **ユーザーの介入は不要**です。実装完了後に報告します。
 
-### 6. 完了報告とマージ
+### 6. 完了報告とバージョン決定
 
 Kiroが以下を報告：
 - 実装内容のサマリー
@@ -76,9 +78,42 @@ Kiroが以下を報告：
 - 提案するバージョン番号（例: v1.12.0）
 
 **ユーザーが最終確認**して：
-1. バージョン番号を決定
-2. {{git.main_branch}}ブランチにマージ
-3. バージョンタグを作成
+1. バージョン番号を決定（例: v1.12.0）
+
+### 7. 🚨 CHANGELOGの更新（重要！）
+
+**Kiroへの指示**: ユーザーがバージョン番号を決定したら、**必ず以下をリマインド**してください：
+
+```
+📋 リリース前の必須作業:
+
+1. CHANGELOGを更新してください：
+   {{changelog.location}} の [Unreleased] を [1.X.X] - YYYY-MM-DD に変更
+
+2. 変更例：
+   ## [Unreleased]
+   ↓
+   ## [Unreleased]
+   
+   ## [1.X.X] - 2025-11-27
+
+3. この作業が完了したら、次のステップに進みます
+```
+
+**なぜ重要か**：
+- ❌ この手順を忘れると`generate_release_notes.py`が動かない
+- ❌ CHANGELOGが不正確になる
+- ❌ 次のリリース時に混乱する
+
+**Kiroのチェックポイント**：
+- [ ] ユーザーがバージョン番号を決定した
+- [ ] CHANGELOGの更新をリマインドした
+- [ ] ユーザーが「更新完了」と返答した
+- [ ] 上記が全て完了してから次のステップに進む
+
+### 8. {{git.main_branch}}ブランチへのマージとタグ作成
+
+**ユーザーが実行**：
 
 ```bash
 git checkout {{git.main_branch}}
@@ -87,13 +122,19 @@ git tag v1.X.X
 git push origin {{git.main_branch}} --tags
 ```
 
-### 7. GitHub Releases用の情報を準備
+### 9. GitHub Releases用の情報を準備
 
-**重要**: バージョンタグを作成した後、GitHub Releases登録用の情報を`.kiro/RELEASE_NOTES.md`に追記します。
+**Kiroが自動実行**：
 
-Kiroが以下を自動的に追記：
-- **Release Title**: `v1.X.X - 機能名`
-- **Release Notes**: CHANGELOG.mdから該当バージョンの内容を抽出
+```bash
+# リリースノートを自動生成
+python scripts/generate_release_notes.py v1.X.X
+```
+
+スクリプトが以下を自動的に実行：
+- **{{changelog.location}}から該当バージョンを抽出**
+- **GitHub Releases用にフォーマット**
+- **RELEASE_NOTES.mdの「登録待ちリリース」セクションに追記**
 
 ```markdown
 ### v1.X.X - 機能名
@@ -115,7 +156,7 @@ v1.X.X - 機能名
 
 ### ✅ Kiroが自律的に進めて良いこと
 
-- {% for file in spec.required_files %}{{file}}{% if not loop.last %}, {% endif %}{% endfor %} の作成（{{communication.language_name}}で）
+- requirements.yml, design.yml, tasks.yml の作成（YML形式で）
 - コード実装
 - テスト作成（しっかりした品質を維持）
 - ドキュメント更新（README, CHANGELOG）

@@ -109,6 +109,7 @@ Kiroに聞いてください：
 | error-handling-and-logging | medium | implementation | コード実装 |
 | environment-and-communication | high | all | 常時 |
 | commit-message-rules | low | commit | コミット作成 |
+| ai-security-guardrails | critical | all | 常時（機密情報検知） |
 
 詳細は`rules-metadata.yml`を参照してください。
 

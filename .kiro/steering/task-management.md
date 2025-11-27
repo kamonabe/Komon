@@ -145,63 +145,11 @@ Komonプロジェクトでは、2階層のタスク管理を採用していま�
 
 **例**: 次のバージョンリリース時 → 前バージョンの完了タスクを`completed-tasks.md`に移動
 
-## ステータス整合性チェック
-
-タスク完了時やリリース時に、以下の4つのファイルのステータスが一致しているか確認してください：
-
-### チェック対象ファイル
-
-1. **`.kiro/specs/future-ideas.md`** - アイデアのステータス
-2. **`.kiro/tasks/implementation-tasks.md`** - 実装タスクのステータス
-3. **`.kiro/specs/{feature-name}/tasks.yml`** - Spec別タスクのステータス
-4. **`.kiro/tasks/completed-tasks.md`** - 完了タスクのアーカイブ
-
-### チェックポイント
-
-#### タスク完了時
-```
-✅ future-ideas.md: ✅ 実装済み (vX.X.X)
-✅ implementation-tasks.md: 🟢 Done (vX.X.X)
-✅ {feature-name}/tasks.yml: status: completed
-✅ 全ての完了条件が ✅ になっている
-```
-
-#### 次のバージョンリリース時
-```
-✅ 前バージョンの完了タスクを completed-tasks.md に移動
-✅ implementation-tasks.md から削除
-✅ アーカイブルールの「直近バージョン」を更新
-```
-
-### Kiroへの指示
-
-リリース完了報告時に、以下を確認してください：
-
-```
-📋 ステータス整合性チェック:
-1. future-ideas.md の該当アイデアが「実装済み」になっているか
-2. implementation-tasks.md のタスクが 🟢 Done になっているか
-3. {feature-name}/tasks.yml が status: completed になっているか
-4. 前バージョンの完了タスクが completed-tasks.md に移動されているか
-
-不一致がある場合は、ユーザーに報告して修正を提案してください。
-```
-
-### チェックコマンド（将来的に自動化可能）
-
-```bash
-# 手動チェック用のコマンド例
-grep -n "IDEA-XXX" .kiro/specs/future-ideas.md
-grep -n "TASK-XXX" .kiro/tasks/implementation-tasks.md
-grep -n "status:" .kiro/specs/{feature-name}/tasks.yml
-```
-
 ## まとめ
 
 - **2つのタスクファイルは常に同期させる**
 - **完了時は必ず両方を更新する**
 - **不一致を見つけたら即座に修正する**
 - **次のバージョンリリース時に前バージョンの完了タスクをアーカイブ**
-- **4つのファイルのステータス整合性を定期的にチェック**
 
 これにより、プロジェクトの進捗状況が常に正確に把握でき、タスクリストも見やすく保たれます。

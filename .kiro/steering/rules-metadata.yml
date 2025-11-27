@@ -62,3 +62,16 @@ rules:
     triggers:
     - commit-creation
     description: Conventional Commits形式のコミットメッセージルール
+  ai-security-guardrails:
+    priority: critical
+    applies-to:
+    - all
+    - spec-creation
+    - implementation
+    - code-review
+    triggers:
+    - always
+    - user-input
+    - file-upload
+    - code-generation
+    description: AI自身が機密情報を検知して警告するガードレール

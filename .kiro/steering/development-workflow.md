@@ -145,7 +145,7 @@ python scripts/generate_release_notes.py v1.X.X
 ```
 
 スクリプトが以下を自動的に実行：
-- **CHANGELOG.mdから該当バージョンを抽出**
+- **docs/CHANGELOG.mdから該当バージョンを抽出**
 - **GitHub Releases用にフォーマット**
 - **RELEASE_NOTES.mdの「登録待ちリリース」セクションに追記**
 
@@ -628,9 +628,9 @@ class TestScriptsImport:
 ├── specs/
 │   ├── future-ideas.md              # アイデア管理
 │   ├── {feature-name}/              # 機能別Spec
-│   │   ├── requirements.yml
-│   │   ├── design.yml
-│   │   └── tasks.yml
+│   │   ├── requirements.md
+│   │   ├── design.md
+│   │   └── tasks.md
 │   └── ...
 ├── tasks/
 │   ├── implementation-tasks.md      # 実装タスク管理（進行中・未着手）
@@ -650,9 +650,9 @@ class TestScriptsImport:
 2. 実装を決定 → implementation-tasks.md に [TASK-001] 追加（mainブランチ）
    ↓
 3. .kiro/specs/progressive-notification/ を作成（mainブランチ）
-   - requirements.yml: 要件定義
-   - design.yml: 設計書
-   - tasks.yml: タスクリスト
+   - requirements.md: 要件定義
+   - design.md: 設計書
+   - tasks.md: タスクリスト
    ↓
 4. ユーザー「TASK-001の実装を開始しよう」
    ↓
@@ -695,7 +695,7 @@ class TestScriptsImport:
    - 影響範囲を確認
    ↓
 4. 仕様が固まったらSpecモードに移行
-   - requirements.yml, design.yml を作成
+   - requirements.md, design.md を作成
    - 実装開始
    ↓
 5. 完了報告 → リリース
@@ -710,7 +710,7 @@ class TestScriptsImport:
 - ドキュメント整備（README, CHANGELOG等）
 - future-ideas.mdへのアイデア追加
 - implementation-tasks.mdへのタスク追加
-- Spec作成（requirements.yml, design.yml, tasks.yml）
+- Spec作成（requirements.md, design.md, tasks.md）
 - ステアリングルールの追加・更新
 
 ### 開発ブランチを切る必要がある
@@ -773,32 +773,8 @@ refactor/{module-name}         # リファクタリング
    # の XX% 部分を新しい値に変更
    ```
 3. バージョン番号を提案
-4. **🚨 CHANGELOGの更新をリマインド（必須）**
-   ```
-   ユーザーに以下をリマインド：
-   「CHANGELOGの[Unreleased]を[1.X.X] - YYYY-MM-DDに変更してください」
-   
-   ユーザーが「完了」と返答するまで次に進まない
-   ```
-5. **ユーザーがCHANGELOG更新完了後、リリースノートを自動生成**
-   ```bash
-   python scripts/generate_release_notes.py v1.X.X
-   ```
-6. **ユーザーにmainへのマージとタグ作成を依頼**
-7. **リリース完了後、ユーザーにリマインド**
-   ```
-   ✅ v1.X.Xのリリースが完了しました
-   
-   📋 次のステップ:
-   1. GitHub Releasesに登録してください
-   2. 前バージョン（v1.Y.Y）の完了タスクを`completed-tasks.md`にアーカイブしてください
-      - `implementation-tasks.md`から移動
-      - バージョン降順で整理
-   3. ステータス整合性をチェックしてください
-      - `future-ideas.md`: ✅ 実装済み (vX.X.X)
-      - `implementation-tasks.md`: 🟢 Done (vX.X.X)
-      - `{feature-name}/tasks.yml`: status: completed
-   ```
+4. ユーザーにmainへのマージを依頼
+5. バージョンタグ作成後、GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
 
 #### チェックリスト（実装開始前）
 
@@ -813,61 +789,7 @@ refactor/{module-name}         # リファクタリング
 - [ ] カバレッジを確認した（`bash run_coverage.sh`）
 - [ ] カバレッジが変わっている場合、README.mdのバッジを更新した
 - [ ] バージョン番号を提案した
-- [ ] **🚨 CHANGELOGの[Unreleased]を[1.X.X]に変更するようリマインドした**
-- [ ] **ユーザーが「CHANGELOG更新完了」と返答した**
-- [ ] `python scripts/generate_release_notes.py v1.X.X`でリリースノートを生成した
-
-### マージ時のトラブルシューティング
-
-mainブランチへのマージでエラーが発生した場合の対処法：
-
-#### エラー: "Your local changes would be overwritten by merge"
-
-**原因**: mainブランチに未コミットの変更が残っている
-
-**対処法**:
-```bash
-# 1. 現在の状態を確認
-git status
-
-# 2. 変更を破棄してクリーンな状態に
-git reset --hard HEAD
-git clean -fd
-
-# 3. 状態確認
-git status
-
-# 4. 再度マージ
-git merge feature/task-XXX-feature-name
-```
-
-#### エラー: "unable to create file ... No such file or directory"
-
-**原因**: ディレクトリが存在しない
-
-**対処法**:
-```bash
-# 必要なディレクトリを作成
-mkdir -p .kiro/steering
-mkdir -p .kiro/tasks
-mkdir -p .kiro/specs
-
-# 再度マージ
-git merge feature/task-XXX-feature-name
-```
-
-#### マージ後の確認
-
-```bash
-# マージ結果を確認
-git status
-
-# ログ確認
-git log --oneline -5
-
-# リモートにプッシュ
-git push origin main
-```
+- [ ] GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記した
 
 ### リリース前の最終確認
 
@@ -965,37 +887,110 @@ cronジョブで実行されるスクリプトは、以下を確認：
 3. リモートにプッシュ
 4. GitHub Releasesに登録
 5. RELEASE_NOTES.mdをアーカイブ
-6. **前バージョンの完了タスクを`completed-tasks.md`にアーカイブ**
-   - `implementation-tasks.md`から前バージョン（v1.17.0等）の完了タスクを移動
-   - `completed-tasks.md`はバージョン降順で整理（新しいものが上）
-7. **ステータス整合性チェック（自動）**
-   ```bash
-   python scripts/check_status_consistency.py
-   ```
-   - `future-ideas.md`の該当アイデアが「✅ 実装済み (vX.X.X)」になっているか
-   - `implementation-tasks.md`のタスクが 🟢 Done になっているか
-   - `{feature-name}/tasks.yml`が `status: completed` になっているか
-   - 不一致がある場合は修正
-   - **CI/CDでも自動実行**（`.github/workflows/status-check.yml`）
+
+### 既存テストの失敗への対応
+
+新機能実装中に既存テストが失敗した場合の対応方針：
+
+#### 1. 新機能と関係ない場合
+
+**判断基準**:
+- 失敗したテストが新機能のコードに触れていない
+- 以前から存在していた問題の可能性がある
+- 新機能を無効化してもテストが失敗する
+
+**対応**:
+- ✅ 既存の問題として記録（GitHub Issue作成）
+- ✅ 新機能のリリースは継続
+- ✅ 別タスクとして修正を計画
+- ✅ docs/CHANGELOG.mdに「既知の問題」として記載（必要に応じて）
+
+**例**:
+```
+TASK-003実装中に、notification_throttleのプロパティテスト2件が
+DeadlineExceededで失敗。新機能とは無関係なため、Issue #XXXとして記録し、
+vX.X.Xのリリースは継続。
+```
+
+#### 2. 新機能が原因の場合
+
+**判断基準**:
+- 失敗したテストが新機能のコードに関連している
+- 新機能を無効化するとテストがパスする
+- 既存機能の動作が変わった
+
+**対応**:
+- ❌ リリースを延期
+- ✅ 即座に修正
+- ✅ リリース前に全テストパスを確認
+- ✅ 後方互換性を確認
+
+**修正方針**:
+1. 既存機能への影響を最小化
+2. 新機能を無効化できるようにする（`enabled: false`）
+3. デフォルト値で従来通り動作するようにする
+
+### マージ時のトラブルシューティング
+
+mainブランチへのマージでエラーが発生した場合の対処法：
+
+#### エラー: "Your local changes would be overwritten by merge"
+
+**原因**: mainブランチに未コミットの変更が残っている
+
+**対処法**:
+```bash
+# 1. 現在の状態を確認
+git status
+
+# 2. 変更を破棄してクリーンな状態に
+git reset --hard HEAD
+git clean -fd
+
+# 3. 状態確認
+git status
+
+# 4. 再度マージ
+git merge feature/task-XXX-feature-name
+```
+
+#### エラー: "unable to create file ... No such file or directory"
+
+**原因**: ディレクトリが存在しない
+
+**対処法**:
+```bash
+# 必要なディレクトリを作成
+mkdir -p .kiro/steering
+mkdir -p .kiro/tasks
+mkdir -p .kiro/specs/
+
+# 再度マージ
+git merge feature/task-XXX-feature-name
+```
+
+#### マージ後の確認
+
+```bash
+# マージ結果を確認
+git status
+
+# ログ確認
+git log --oneline -5
+
+# リモートにプッシュ
+git push origin main
+```
 
 ### GitHub Releases登録後の作業
 
 バージョンタグをプッシュした後、以下の手順でGitHub Releasesに登録します：
 
-#### 1. リリースノートを自動生成
-
-```bash
-# CHANGELOGの[Unreleased]を[1.X.X]に変更した後
-python scripts/generate_release_notes.py v1.X.X
-
-# 自動的に.kiro/RELEASE_NOTES.mdに追記される
-```
-
-#### 2. RELEASE_NOTES.mdから情報をコピー
+#### 1. RELEASE_NOTES.mdから情報をコピー
 
 `.kiro/RELEASE_NOTES.md`の「登録待ちリリース」セクションから、該当バージョンの情報をコピーします。
 
-#### 3. GitHub Releasesに登録
+#### 2. GitHub Releasesに登録
 
 1. GitHubのリリースページにアクセス: `https://github.com/{user}/{repo}/releases/new`
 2. 以下の情報を入力：
@@ -1004,7 +999,7 @@ python scripts/generate_release_notes.py v1.X.X
    - **Description**: RELEASE_NOTES.mdの内容をコピー＆ペースト
 3. 「Publish release」をクリック
 
-#### 4. RELEASE_NOTES.mdをアーカイブ
+#### 3. RELEASE_NOTES.mdをアーカイブ
 
 GitHub Releasesに登録完了後、`.kiro/RELEASE_NOTES.md`を更新：
 
@@ -1026,48 +1021,6 @@ GitHub Releasesに登録完了後、`.kiro/RELEASE_NOTES.md`を更新：
 ```
 
 **重要**: 登録日とGitHub ReleaseのURLを必ず記載してください。
-
-### 既存テストの失敗への対応
-
-新機能実装中に既存テストが失敗した場合の対応方針：
-
-#### 1. 新機能と関係ない場合
-
-**判断基準**:
-- 失敗したテストが新機能のコードに触れていない
-- 以前から存在していた問題の可能性がある
-- 新機能を無効化してもテストが失敗する
-
-**対応**:
-- ✅ 既存の問題として記録（GitHub Issue作成）
-- ✅ 新機能のリリースは継続
-- ✅ 別タスクとして修正を計画
-- ✅ CHANGELOG.mdに「既知の問題」として記載（必要に応じて）
-
-**例**:
-```
-TASK-003実装中に、notification_throttleのプロパティテスト2件が
-DeadlineExceededで失敗。新機能とは無関係なため、Issue #XXXとして記録し、
-v1.18.0のリリースは継続。
-```
-
-#### 2. 新機能が原因の場合
-
-**判断基準**:
-- 失敗したテストが新機能のコードに関連している
-- 新機能を無効化するとテストがパスする
-- 既存機能の動作が変わった
-
-**対応**:
-- ❌ リリースを延期
-- ✅ 即座に修正
-- ✅ リリース前に全テストパスを確認
-- ✅ 後方互換性を確認
-
-**修正方針**:
-1. 既存機能への影響を最小化
-2. 新機能を無効化できるようにする（`enabled: false`）
-3. デフォルト値で従来通り動作するようにする
 
 ## まとめ
 
