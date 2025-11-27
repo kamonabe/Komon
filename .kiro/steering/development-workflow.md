@@ -83,7 +83,7 @@ Kiroは以下を**連続して自律的に**実行します：
 
 **ユーザーの介入は不要**です。実装完了後に報告します。
 
-### 6. 完了報告とマージ
+### 6. 完了報告とバージョン決定
 
 Kiroが以下を報告：
 - 実装内容のサマリー
@@ -91,9 +91,42 @@ Kiroが以下を報告：
 - 提案するバージョン番号（例: v1.12.0）
 
 **ユーザーが最終確認**して：
-1. バージョン番号を決定
-2. mainブランチにマージ
-3. バージョンタグを作成
+1. バージョン番号を決定（例: v1.12.0）
+
+### 7. 🚨 CHANGELOGの更新（重要！）
+
+**Kiroへの指示**: ユーザーがバージョン番号を決定したら、**必ず以下をリマインド**してください：
+
+```
+📋 リリース前の必須作業:
+
+1. CHANGELOGを更新してください：
+   docs/CHANGELOG.md の [Unreleased] を [1.X.X] - YYYY-MM-DD に変更
+
+2. 変更例：
+   ## [Unreleased]
+   ↓
+   ## [Unreleased]
+   
+   ## [1.X.X] - 2025-11-27
+
+3. この作業が完了したら、次のステップに進みます
+```
+
+**なぜ重要か**：
+- ❌ この手順を忘れると`generate_release_notes.py`が動かない
+- ❌ CHANGELOGが不正確になる
+- ❌ 次のリリース時に混乱する
+
+**Kiroのチェックポイント**：
+- [ ] ユーザーがバージョン番号を決定した
+- [ ] CHANGELOGの更新をリマインドした
+- [ ] ユーザーが「更新完了」と返答した
+- [ ] 上記が全て完了してから次のステップに進む
+
+### 8. mainブランチへのマージとタグ作成
+
+**ユーザーが実行**：
 
 ```bash
 git checkout main
@@ -102,13 +135,19 @@ git tag v1.X.X
 git push origin main --tags
 ```
 
-### 7. GitHub Releases用の情報を準備
+### 9. GitHub Releases用の情報を準備
 
-**重要**: バージョンタグを作成した後、GitHub Releases登録用の情報を`.kiro/RELEASE_NOTES.md`に追記します。
+**Kiroが自動実行**：
 
-Kiroが以下を自動的に追記：
-- **Release Title**: `v1.X.X - 機能名`
-- **Release Notes**: CHANGELOG.mdから該当バージョンの内容を抽出
+```bash
+# リリースノートを自動生成
+python scripts/generate_release_notes.py v1.X.X
+```
+
+スクリプトが以下を自動的に実行：
+- **CHANGELOG.mdから該当バージョンを抽出**
+- **GitHub Releases用にフォーマット**
+- **RELEASE_NOTES.mdの「登録待ちリリース」セクションに追記**
 
 ```markdown
 ### v1.X.X - 機能名
@@ -734,9 +773,19 @@ refactor/{module-name}         # リファクタリング
    # の XX% 部分を新しい値に変更
    ```
 3. バージョン番号を提案
-4. ユーザーにmainへのマージを依頼
-5. バージョンタグ作成後、GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
-6. **リリース完了後、ユーザーにリマインド**
+4. **🚨 CHANGELOGの更新をリマインド（必須）**
+   ```
+   ユーザーに以下をリマインド：
+   「CHANGELOGの[Unreleased]を[1.X.X] - YYYY-MM-DDに変更してください」
+   
+   ユーザーが「完了」と返答するまで次に進まない
+   ```
+5. **ユーザーがCHANGELOG更新完了後、リリースノートを自動生成**
+   ```bash
+   python scripts/generate_release_notes.py v1.X.X
+   ```
+6. **ユーザーにmainへのマージとタグ作成を依頼**
+7. **リリース完了後、ユーザーにリマインド**
    ```
    ✅ v1.X.Xのリリースが完了しました
    
@@ -764,7 +813,9 @@ refactor/{module-name}         # リファクタリング
 - [ ] カバレッジを確認した（`bash run_coverage.sh`）
 - [ ] カバレッジが変わっている場合、README.mdのバッジを更新した
 - [ ] バージョン番号を提案した
-- [ ] GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記した
+- [ ] **🚨 CHANGELOGの[Unreleased]を[1.X.X]に変更するようリマインドした**
+- [ ] **ユーザーが「CHANGELOG更新完了」と返答した**
+- [ ] `python scripts/generate_release_notes.py v1.X.X`でリリースノートを生成した
 
 ### マージ時のトラブルシューティング
 
@@ -917,21 +968,34 @@ cronジョブで実行されるスクリプトは、以下を確認：
 6. **前バージョンの完了タスクを`completed-tasks.md`にアーカイブ**
    - `implementation-tasks.md`から前バージョン（v1.17.0等）の完了タスクを移動
    - `completed-tasks.md`はバージョン降順で整理（新しいものが上）
-7. **ステータス整合性チェック**
+7. **ステータス整合性チェック（自動）**
+   ```bash
+   python scripts/check_status_consistency.py
+   ```
    - `future-ideas.md`の該当アイデアが「✅ 実装済み (vX.X.X)」になっているか
    - `implementation-tasks.md`のタスクが 🟢 Done になっているか
    - `{feature-name}/tasks.yml`が `status: completed` になっているか
    - 不一致がある場合は修正
+   - **CI/CDでも自動実行**（`.github/workflows/status-check.yml`）
 
 ### GitHub Releases登録後の作業
 
 バージョンタグをプッシュした後、以下の手順でGitHub Releasesに登録します：
 
-#### 1. RELEASE_NOTES.mdから情報をコピー
+#### 1. リリースノートを自動生成
+
+```bash
+# CHANGELOGの[Unreleased]を[1.X.X]に変更した後
+python scripts/generate_release_notes.py v1.X.X
+
+# 自動的に.kiro/RELEASE_NOTES.mdに追記される
+```
+
+#### 2. RELEASE_NOTES.mdから情報をコピー
 
 `.kiro/RELEASE_NOTES.md`の「登録待ちリリース」セクションから、該当バージョンの情報をコピーします。
 
-#### 2. GitHub Releasesに登録
+#### 3. GitHub Releasesに登録
 
 1. GitHubのリリースページにアクセス: `https://github.com/{user}/{repo}/releases/new`
 2. 以下の情報を入力：
@@ -940,7 +1004,7 @@ cronジョブで実行されるスクリプトは、以下を確認：
    - **Description**: RELEASE_NOTES.mdの内容をコピー＆ペースト
 3. 「Publish release」をクリック
 
-#### 3. RELEASE_NOTES.mdをアーカイブ
+#### 4. RELEASE_NOTES.mdをアーカイブ
 
 GitHub Releasesに登録完了後、`.kiro/RELEASE_NOTES.md`を更新：
 

@@ -194,6 +194,8 @@ Komon/
 │   ├── komon_guide.py      # ガイドメニュー
 │   ├── check_coverage.py   # カバレッジ分析
 │   ├── setup_coverage_fix.sh # カバレッジ設定修正
+│   ├── generate_release_notes.py # リリースノート自動生成
+│   ├── check_status_consistency.py # ステータス整合性チェック
 │   └── init.sh             # 初期化スクリプト
 ├── config/                 # 設定ファイル
 │   └── settings.yml.sample # 設定サンプル
@@ -201,7 +203,7 @@ Komon/
 │   ├── README.md           # 詳細ドキュメント
 │   ├── CHANGELOG.md        # 変更履歴
 │   └── SECURITY.md         # セキュリティ情報
-├── tests/                  # テストコード（93%カバレッジ、315テスト）
+├── tests/                  # テストコード（93%カバレッジ、339テスト）
 ├── data/                   # データ保存先（自動生成）
 │   ├── usage_history/      # リソース使用履歴
 │   ├── notifications/      # 通知履歴
@@ -545,7 +547,7 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**テストカバレッジ: 93%** (315テスト、全てパス)
+**テストカバレッジ: 93%** (339テスト、全てパス)
 
 詳細は [tests/README.md](tests/README.md) を参照してください。
 

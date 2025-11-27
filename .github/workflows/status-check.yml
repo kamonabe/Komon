@@ -1,0 +1,46 @@
+name: Status Consistency Check
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.kiro/specs/future-ideas.md'
+      - '.kiro/tasks/implementation-tasks.md'
+      - '.kiro/specs/*/tasks.yml'
+      - '.kiro/tasks/completed-tasks.md'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.kiro/specs/future-ideas.md'
+      - '.kiro/tasks/implementation-tasks.md'
+      - '.kiro/specs/*/tasks.yml'
+      - '.kiro/tasks/completed-tasks.md'
+
+jobs:
+  check-status:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+      
+      - name: Check status consistency
+        run: python scripts/check_status_consistency.py
+      
+      - name: Report results
+        if: failure()
+        run: |
+          echo "❌ ステータス整合性チェックに失敗しました"
+          echo "詳細は上記のログを確認してください"

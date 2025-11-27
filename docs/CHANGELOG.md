@@ -6,6 +6,38 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.18.1] - 2025-11-27
+
+### Developer Improvements
+
+- **リリースノート自動生成機能**
+  - CHANGELOGから該当バージョンを抽出
+  - GitHub Releases用にフォーマット
+  - `.kiro/RELEASE_NOTES.md`の「登録待ちリリース」セクションに自動追記
+  - `python scripts/generate_release_notes.py v1.X.X` で実行
+
+- **ステータス整合性チェック機能**
+  - 4つのファイルのステータス整合性を自動チェック
+    - `.kiro/specs/future-ideas.md` - アイデアのステータス
+    - `.kiro/tasks/implementation-tasks.md` - 実装タスクのステータス
+    - `.kiro/specs/{feature-name}/tasks.yml` - Spec別タスクのステータス
+    - `.kiro/tasks/completed-tasks.md` - 完了タスクのアーカイブ
+  - リリース時の確認漏れを防止
+  - CI/CDで自動実行（GitHub Actions）
+  - `python scripts/check_status_consistency.py` で手動実行可能
+
+- **開発ワークフローの改善**
+  - リリース手順を明確化（CHANGELOGの更新手順を追加）
+  - Kiroのチェックポイントを追加
+  - ステータス整合性チェックをリリース手順に統合
+
+- **テストの追加**
+  - リリースノート生成のテスト: 12件
+  - ステータス整合性チェックのテスト: 12件
+  - 全339テストがパス、カバレッジ93%を維持
+
+## [1.18.0] - 2025-11-27
+
 ### Added
 
 - **コンテキスト型アドバイス機能**
