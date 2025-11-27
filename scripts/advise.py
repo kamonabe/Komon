@@ -171,8 +171,39 @@ def advise_process_breakdown(usage: dict):
         for proc in mem_details:
             print(f"- {proc['name']}: {proc['mem']} MB")
 
-def advise_process_details(thresholds: dict):
+def advise_process_details(thresholds: dict, config: dict = None):
+    """
+    高負荷プロセスの詳細情報を表示します。
+    
+    contextual_adviceが有効な場合は、コンテキスト型アドバイスを表示します。
+    無効な場合は、従来のプロセス情報のみを表示します。
+    """
+    # contextual_adviceの設定を確認
+    contextual_config = config.get("contextual_advice", {}) if config else {}
+    contextual_enabled = contextual_config.get("enabled", False)
+    
     print("\n🧐 高負荷プロセスの詳細情報（CPU使用率が高いもの）")
+    
+    # contextual_adviceが有効な場合
+    if contextual_enabled:
+        try:
+            from komon.contextual_advisor import get_contextual_advice
+            
+            # CPU使用率でコンテキストアドバイスを取得
+            result = get_contextual_advice("cpu", config, contextual_config.get("advice_level", "normal"))
+            
+            if result["top_processes"]:
+                print(result["formatted_message"])
+            else:
+                print("→ 現在、高負荷なプロセスは検出されていません。")
+            return
+            
+        except Exception as e:
+            logger.error("Failed to get contextual advice: %s", e, exc_info=True)
+            print(f"⚠️ コンテキストアドバイスの取得に失敗しました: {e}")
+            # フォールバック: 従来の表示に切り替え
+    
+    # contextual_adviceが無効な場合、または取得失敗時
     cpu_threshold = thresholds.get("proc_cpu", 20)
     found = False
 
@@ -319,7 +350,7 @@ def run_advise(history_limit: int = None):
     advise_log_trend(config)
     advise_disk_prediction()  # ディスク使用量の予測を追加
     advise_process_breakdown(usage)
-    advise_process_details(thresholds)
+    advise_process_details(thresholds, config)
     
     # 通知履歴を表示
     advise_notification_history(limit=history_limit)

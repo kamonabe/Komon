@@ -61,3 +61,19 @@ class TestScriptsImport:
             assert hasattr(initial, 'main')
         except ImportError as e:
             pytest.fail(f"initial.pyのインポートに失敗: {e}")
+
+
+class TestModulesImport:
+    """モジュールのインポートテスト"""
+    
+    def test_contextual_advisor_imports(self):
+        """contextual_advisor.pyが正常にインポートできることを確認"""
+        try:
+            from src.komon import contextual_advisor
+            assert hasattr(contextual_advisor, 'get_contextual_advice')
+            assert hasattr(contextual_advisor, '_get_top_processes')
+            assert hasattr(contextual_advisor, '_match_pattern')
+            assert hasattr(contextual_advisor, '_format_advice')
+            assert hasattr(contextual_advisor, 'DEFAULT_PATTERNS')
+        except ImportError as e:
+            pytest.fail(f"contextual_advisor.pyのインポートに失敗: {e}")

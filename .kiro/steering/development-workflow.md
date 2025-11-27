@@ -37,8 +37,13 @@ Komonプロジェクトは**仕様駆動開発（Spec-Driven Development）**を
 ### 3. Spec作成（mainブランチ）
 **フォルダ**: `.kiro/specs/{feature-name}/`
 
-以下の3ファイルを**日本語で**作成：
-- `requirements.md`: 要件定義- `design.md`: 設計書（正確性プロパティを含む）- `tasks.md`: 実装タスクリスト
+以下の3ファイルを**YML形式で**作成：
+- `requirements.yml`: 要件定義（構造化YAML）
+- `design.yml`: 設計書（正確性プロパティを含む、構造化YAML）
+- `tasks.yml`: 実装タスクリスト（構造化YAML）
+
+**テンプレート**: `.kiro/specs/_templates/` を参照
+
 **この時点ではまだmainブランチでOK**
 
 ### 4. 🚨 実装開始前の必須チェック 🚨
@@ -125,7 +130,7 @@ v1.X.X - 機能名
 
 ### ✅ Kiroが自律的に進めて良いこと
 
-- requirements.md, design.md, tasks.md の作成（日本語で）
+- requirements.yml, design.yml, tasks.yml の作成（YML形式で）
 - コード実装
 - テスト作成（しっかりした品質を維持）
 - ドキュメント更新（README, CHANGELOG）
@@ -579,9 +584,9 @@ class TestScriptsImport:
 ├── specs/
 │   ├── future-ideas.md              # アイデア管理
 │   ├── {feature-name}/              # 機能別Spec
-│   │   ├── requirements.md
-│   │   ├── design.md
-│   │   └── tasks.md
+│   │   ├── requirements.yml
+│   │   ├── design.yml
+│   │   └── tasks.yml
 │   └── ...
 ├── tasks/
 │   ├── implementation-tasks.md      # 実装タスク管理（進行中・未着手）
@@ -601,9 +606,9 @@ class TestScriptsImport:
 2. 実装を決定 → implementation-tasks.md に [TASK-001] 追加（mainブランチ）
    ↓
 3. .kiro/specs/progressive-notification/ を作成（mainブランチ）
-   - requirements.md: 要件定義
-   - design.md: 設計書
-   - tasks.md: タスクリスト
+   - requirements.yml: 要件定義
+   - design.yml: 設計書
+   - tasks.yml: タスクリスト
    ↓
 4. ユーザー「TASK-001の実装を開始しよう」
    ↓
@@ -646,7 +651,7 @@ class TestScriptsImport:
    - 影響範囲を確認
    ↓
 4. 仕様が固まったらSpecモードに移行
-   - requirements.md, design.md を作成
+   - requirements.yml, design.yml を作成
    - 実装開始
    ↓
 5. 完了報告 → リリース
@@ -661,7 +666,7 @@ class TestScriptsImport:
 - ドキュメント整備（README, CHANGELOG等）
 - future-ideas.mdへのアイデア追加
 - implementation-tasks.mdへのタスク追加
-- Spec作成（requirements.md, design.md, tasks.md）
+- Spec作成（requirements.yml, design.yml, tasks.yml）
 - ステアリングルールの追加・更新
 
 ### 開発ブランチを切る必要がある

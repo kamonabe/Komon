@@ -51,22 +51,33 @@ def load_thresholds(config: dict) -> dict:
     return normalized_thresholds
 
 
-def analyze_usage(usage: dict, thresholds: dict, use_progressive: bool = False) -> list:
+def analyze_usage(usage: dict, thresholds: dict, use_progressive: bool = False, 
+                  use_contextual_advice: bool = False, config: dict = None) -> list:
     """
     リソース使用率を分析し、閾値を超えた項目のアラートを生成します。
     
     3段階閾値（警告/警戒/緊急）に基づいてレベル別のメッセージを生成。
     段階的通知メッセージ機能が有効な場合、通知回数に応じてメッセージを変化させます。
+    コンテキストアドバイス機能が有効な場合、プロセス情報と具体的な提案を追加します。
     
     Args:
         usage: リソース使用率データ
         thresholds: 閾値設定（3段階形式）
         use_progressive: 段階的メッセージを使用するか（デフォルト: True）
+        use_contextual_advice: コンテキストアドバイスを使用するか（デフォルト: False）
+        config: 設定ファイルの内容（コンテキストアドバイス用）
         
     Returns:
         list: アラートメッセージのリスト
     """
     alerts = []
+    
+    # コンテキストアドバイスが有効な場合、モジュールをインポート
+    if use_contextual_advice:
+        try:
+            from .contextual_advisor import get_contextual_advice
+        except ImportError:
+            use_contextual_advice = False
     
     # CPU使用率のチェック
     cpu_value = usage.get("cpu", 0)
@@ -86,6 +97,14 @@ def analyze_usage(usage: dict, thresholds: dict, use_progressive: bool = False) 
             else:
                 # 従来のメッセージを使用
                 alerts.append(_generate_message("CPU", cpu_value, cpu_level))
+            
+            # コンテキストアドバイスを追加
+            if use_contextual_advice and config:
+                contextual_config = config.get("contextual_advice", {})
+                if contextual_config.get("enabled", True):
+                    advice_level = contextual_config.get("advice_level", "normal")
+                    contextual = get_contextual_advice("cpu", config, advice_level)
+                    alerts.append(contextual["formatted_message"])
     
     # メモリ使用率のチェック
     mem_value = usage.get("mem", 0)
@@ -105,6 +124,14 @@ def analyze_usage(usage: dict, thresholds: dict, use_progressive: bool = False) 
             else:
                 # 従来のメッセージを使用
                 alerts.append(_generate_message("メモリ", mem_value, mem_level))
+            
+            # コンテキストアドバイスを追加
+            if use_contextual_advice and config:
+                contextual_config = config.get("contextual_advice", {})
+                if contextual_config.get("enabled", True):
+                    advice_level = contextual_config.get("advice_level", "normal")
+                    contextual = get_contextual_advice("memory", config, advice_level)
+                    alerts.append(contextual["formatted_message"])
     
     # ディスク使用率のチェック
     disk_value = usage.get("disk", 0)

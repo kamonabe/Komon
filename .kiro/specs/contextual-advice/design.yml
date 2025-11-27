@@ -1,0 +1,403 @@
+# 設計書: コンテキストに応じた具体的アドバイス
+
+metadata:
+  title: "コンテキストに応じた具体的アドバイス"
+  feature: "contextual-advice"
+  status: "draft"
+  created: "2025-11-27"
+  updated: "2025-11-27"
+
+architecture:
+  overview: |
+    analyzer.pyが閾値超過を検知した際、contextual_advisor.pyを呼び出して
+    プロセス情報と提案を取得し、メッセージに統合する。
+    プロセス情報の取得にはpsutilを使用し、パターンマッチングは
+    設定ファイルのパターン定義に基づいて行う。
+  
+  components:
+    - name: "contextual_advisor"
+      type: "module"
+      responsibility: "プロセス情報の取得、パターンマッチング、提案生成"
+      dependencies: ["psutil", "logging"]
+    
+    - name: "analyzer"
+      type: "module"
+      responsibility: "閾値判定、メッセージ生成、contextual_advisorの呼び出し"
+      dependencies: ["contextual_advisor", "progressive_message"]
+  
+  data-flow:
+    - from: "analyzer.generate_advice()"
+      to: "contextual_advisor.get_contextual_advice()"
+      description: "閾値超過時にプロセス情報と提案を要求"
+    
+    - from: "contextual_advisor.get_contextual_advice()"
+      to: "contextual_advisor._get_top_processes()"
+      description: "上位プロセスを取得"
+    
+    - from: "contextual_advisor._get_top_processes()"
+      to: "contextual_advisor._match_pattern()"
+      description: "各プロセスのパターンをマッチング"
+    
+    - from: "contextual_advisor._match_pattern()"
+      to: "contextual_advisor._format_advice()"
+      description: "提案メッセージを整形"
+
+modules:
+  - name: "contextual_advisor"
+    path: "src/komon/contextual_advisor.py"
+    description: |
+      プロセス情報の取得、パターンマッチング、提案生成を行うモジュール
+    
+    functions:
+      - name: "get_contextual_advice"
+        parameters:
+          - name: "metric_type"
+            type: "str"
+            description: "メトリクスタイプ（cpu, memory）"
+          - name: "config"
+            type: "dict"
+            description: "設定ファイルの内容"
+          - name: "advice_level"
+            type: "str"
+            description: "詳細度（minimal, normal, detailed）"
+        returns:
+          type: "dict"
+          description: "プロセス情報と整形されたメッセージ"
+        raises:
+          - "ValueError: metric_typeが不正"
+      
+      - name: "_get_top_processes"
+        parameters:
+          - name: "metric_type"
+            type: "str"
+            description: "cpu または memory"
+          - name: "count"
+            type: "int"
+            description: "取得件数"
+        returns:
+          type: "list[dict]"
+          description: "プロセス情報のリスト"
+        raises:
+          - "psutil.NoSuchProcess: スキップ"
+          - "psutil.AccessDenied: スキップ"
+      
+      - name: "_match_pattern"
+        parameters:
+          - name: "process_name"
+            type: "str"
+            description: "プロセス名"
+          - name: "patterns"
+            type: "dict"
+            description: "パターン定義"
+        returns:
+          type: "tuple[str, str]"
+          description: "(パターン名, アドバイステキスト)"
+        raises: []
+      
+      - name: "_format_advice"
+        parameters:
+          - name: "processes"
+            type: "list[dict]"
+            description: "プロセス情報のリスト"
+          - name: "advice_level"
+            type: "str"
+            description: "詳細度"
+        returns:
+          type: "str"
+          description: "整形されたメッセージ"
+        raises: []
+  
+  - name: "analyzer"
+    path: "src/komon/analyzer.py"
+    description: |
+      既存のanalyzer.pyを拡張し、use_contextual_adviceパラメータを追加
+    
+    functions:
+      - name: "generate_advice"
+        parameters:
+          - name: "metrics"
+            type: "dict"
+            description: "メトリクス情報"
+          - name: "thresholds"
+            type: "dict"
+            description: "閾値設定"
+          - name: "use_progressive"
+            type: "bool"
+            description: "段階的メッセージを使用するか"
+          - name: "use_contextual_advice"
+            type: "bool"
+            description: "コンテキストアドバイスを使用するか（新規）"
+          - name: "config"
+            type: "dict"
+            description: "設定ファイルの内容（新規）"
+        returns:
+          type: "str"
+          description: "アドバイスメッセージ"
+        raises: []
+
+correctness-properties:
+  - id: "P1"
+    title: "プロセス情報の正確性"
+    type: "invariant"
+    description: |
+      任意のシステム状態において、取得したプロセス情報は実際のプロセスと一致する。
+      取得件数は指定したcount以下である。
+    validates: ["AC-001"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.integers(min_value=1, max_value=10)"
+      assertion: "len(processes) <= count"
+  
+  - id: "P2"
+    title: "パターンマッチングの一貫性"
+    type: "idempotence"
+    description: |
+      同じプロセス名に対して、常に同じパターンがマッチする。
+      複数回実行しても結果は変わらない。
+    validates: ["AC-002"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.text(min_size=1, max_size=20)"
+      assertion: "result1 == result2"
+  
+  - id: "P3"
+    title: "メッセージ整形の冪等性"
+    type: "idempotence"
+    description: |
+      同じプロセス情報と詳細度に対して、常に同じメッセージが生成される。
+    validates: ["AC-003"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.lists(st.fixed_dictionaries({...}), min_size=1, max_size=5)"
+      assertion: "message1 == message2"
+  
+  - id: "P4"
+    title: "詳細度の順序性"
+    type: "monotonicity"
+    description: |
+      詳細度が上がるほど、メッセージの長さが増加する。
+      minimal <= normal <= detailed
+    validates: ["AC-003"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.lists(st.fixed_dictionaries({...}), min_size=1, max_size=3)"
+      assertion: "len(minimal) <= len(normal) <= len(detailed)"
+  
+  - id: "P5"
+    title: "パフォーマンス保証"
+    type: "boundary"
+    description: |
+      プロセス情報取得処理は常に100ms以内に完了する。
+    validates: ["AC-005"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.integers(min_value=1, max_value=10)"
+      assertion: "elapsed < 0.1"
+
+data-structures:
+  - name: "ProcessInfo"
+    type: "dict"
+    schema:
+      name:
+        type: "str"
+        required: true
+        description: "プロセス名"
+      pid:
+        type: "int"
+        required: true
+        description: "プロセスID"
+      cpu_percent:
+        type: "float"
+        required: true
+        description: "CPU使用率（%）"
+      memory_percent:
+        type: "float"
+        required: true
+        description: "メモリ使用率（%）"
+      cmdline:
+        type: "str"
+        required: false
+        default: ""
+        description: "コマンドライン"
+      pattern:
+        type: "str"
+        required: false
+        default: "unknown"
+        description: "マッチしたパターン名"
+      advice:
+        type: "str"
+        required: false
+        default: ""
+        description: "提案テキスト"
+  
+  - name: "ContextualAdviceResult"
+    type: "dict"
+    schema:
+      top_processes:
+        type: "list[ProcessInfo]"
+        required: true
+        description: "上位プロセスのリスト"
+      formatted_message:
+        type: "str"
+        required: true
+        description: "整形されたメッセージ"
+
+error-handling:
+  - error: "psutil.NoSuchProcess"
+    handling: "continue"
+    message: "プロセスが途中で終了"
+    log-level: "debug"
+  
+  - error: "psutil.AccessDenied"
+    handling: "continue"
+    message: "アクセス権限がない"
+    log-level: "debug"
+  
+  - error: "psutil.ZombieProcess"
+    handling: "continue"
+    message: "ゾンビプロセス"
+    log-level: "debug"
+  
+  - error: "ValueError"
+    handling: "stop"
+    message: "不正なパラメータ"
+    log-level: "error"
+    exit-code: 1
+
+configuration:
+  - name: "contextual_advice.enabled"
+    type: "bool"
+    required: false
+    default: true
+    description: "機能の有効/無効"
+    validation:
+      - "bool型"
+  
+  - name: "contextual_advice.advice_level"
+    type: "str"
+    required: false
+    default: "normal"
+    description: "詳細度（minimal/normal/detailed）"
+    validation:
+      - "minimal, normal, detailedのいずれか"
+  
+  - name: "contextual_advice.top_processes_count"
+    type: "int"
+    required: false
+    default: 3
+    description: "表示する上位プロセス数"
+    validation:
+      - "1-10の範囲"
+  
+  - name: "contextual_advice.patterns"
+    type: "dict"
+    required: false
+    default: "DEFAULT_PATTERNS"
+    description: "パターン定義"
+    validation:
+      - "各パターンにkeywordsとadviceが必要"
+
+dependencies:
+  internal:
+    - "src.komon.analyzer"
+  external:
+    - name: "psutil"
+      version: ">=5.9.0"
+      purpose: "プロセス情報取得"
+
+testing-strategy:
+  property-tests:
+    - property: "P1"
+      file: "tests/test_contextual_advisor_properties.py"
+      function: "test_property_top_processes_count"
+    
+    - property: "P2"
+      file: "tests/test_contextual_advisor_properties.py"
+      function: "test_property_pattern_matching_consistency"
+    
+    - property: "P3"
+      file: "tests/test_contextual_advisor_properties.py"
+      function: "test_property_message_formatting_idempotency"
+    
+    - property: "P4"
+      file: "tests/test_contextual_advisor_properties.py"
+      function: "test_property_advice_level_ordering"
+    
+    - property: "P5"
+      file: "tests/test_contextual_advisor_properties.py"
+      function: "test_property_performance_guarantee"
+  
+  integration-tests:
+    - validates: ["AC-001", "AC-002", "AC-003"]
+      file: "tests/test_contextual_advisor_integration.py"
+      function: "test_end_to_end_contextual_advice"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_contextual_advisor_integration.py"
+      function: "test_config_loading_and_application"
+    
+    - validates: ["AC-004"]
+      file: "tests/test_contextual_advisor_integration.py"
+      function: "test_integration_with_analyzer"
+    
+    - validates: ["AC-004"]
+      file: "tests/test_contextual_advisor_integration.py"
+      function: "test_backward_compatibility"
+    
+    - validates: ["AC-005"]
+      file: "tests/test_contextual_advisor_integration.py"
+      function: "test_performance_impact"
+    
+    - validates: ["AC-001"]
+      file: "tests/test_contextual_advisor_integration.py"
+      function: "test_error_handling"
+  
+  unit-tests:
+    - validates: ["AC-001"]
+      file: "tests/test_contextual_advisor_unit.py"
+      function: "test_get_top_processes_cpu"
+    
+    - validates: ["AC-001"]
+      file: "tests/test_contextual_advisor_unit.py"
+      function: "test_get_top_processes_memory"
+    
+    - validates: ["AC-002"]
+      file: "tests/test_contextual_advisor_unit.py"
+      function: "test_match_pattern_node"
+    
+    - validates: ["AC-002"]
+      file: "tests/test_contextual_advisor_unit.py"
+      function: "test_match_pattern_docker"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_contextual_advisor_unit.py"
+      function: "test_format_advice_minimal"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_contextual_advisor_unit.py"
+      function: "test_format_advice_normal"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_contextual_advisor_unit.py"
+      function: "test_format_advice_detailed"
+
+performance:
+  targets:
+    - metric: "process-info-retrieval"
+      target: "< 100ms"
+      measurement: "time.time()"
+    
+    - metric: "overall-impact"
+      target: "< 10% increase"
+      measurement: "比較測定"
+
+security:
+  considerations:
+    - "プロセス情報は一般ユーザー権限で取得可能"
+    - "コマンドラインに機密情報が含まれる可能性があるため、ログ出力時は注意"
+    - "root権限は不要"

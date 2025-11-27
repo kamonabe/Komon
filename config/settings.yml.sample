@@ -83,3 +83,35 @@ progressive_notification:  # 段階的通知メッセージ設定
     1: "ちょっと気になることがあります。{metric_name}が {value}{unit} になっています。"
     2: "まだ続いてますね。{metric_name}が {value}{unit} のままです。"
     3: "そろそろ見た方がいいかも。{metric_name}が {value}{unit} の状態が続いています。"
+
+contextual_advice:  # コンテキストに応じた具体的アドバイス設定
+  enabled: true  # コンテキストアドバイスを有効にする場合は true
+  advice_level: normal  # minimal / normal / detailed
+  top_processes_count: 3  # 表示する上位プロセス数（1-10）
+  
+  # パターン定義（カスタマイズ可能）
+  patterns:
+    node:
+      keywords: [node, npm, yarn, webpack]
+      advice: "開発サーバーが起動しっぱなしかも？不要なら停止してみてください"
+      detailed_advice: "停止方法: kill {pid} または Ctrl+C"
+    
+    docker:
+      keywords: [docker, containerd]
+      advice: "不要なコンテナが残っているかも？`docker ps` で確認してみてください"
+      detailed_advice: "確認方法: docker ps\n停止方法: docker stop <container_id>"
+    
+    python:
+      keywords: [python, python3]
+      advice: "学習プロセスや長時間スクリプトが動いているかも？確認してみてください"
+      detailed_advice: "確認方法: ps aux | grep python"
+    
+    java:
+      keywords: [java, javac]
+      advice: "Javaアプリケーションが動いているかも？不要なら停止してみてください"
+      detailed_advice: "確認方法: jps -l"
+    
+    database:
+      keywords: [mysql, postgres, mongod, redis]
+      advice: "データベースが高負荷かも？クエリやインデックスを確認してみてください"
+      detailed_advice: "確認方法: データベースのスロークエリログを確認"

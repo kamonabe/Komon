@@ -12,23 +12,24 @@ Specファイルの構造を検証するスクリプト
 import os
 import re
 import sys
+import yaml
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 
 class SpecValidator:
     """Spec文書の検証クラス"""
     
-    REQUIRED_FRONTMATTER_FIELDS = {
-        'requirements.md': ['title', 'feature', 'status', 'created', 'updated'],
-        'design.md': ['title', 'feature', 'status', 'created', 'updated'],
-        'tasks.md': ['title', 'feature', 'status', 'created', 'updated']
+    REQUIRED_METADATA_FIELDS = {
+        'requirements.yml': ['title', 'feature', 'status', 'created', 'updated'],
+        'design.yml': ['title', 'feature', 'status', 'created', 'updated'],
+        'tasks.yml': ['title', 'feature', 'status', 'created', 'updated']
     }
     
-    REQUIRED_SECTIONS = {
-        'requirements.md': ['概要', '用語集', '受入基準'],
-        'design.md': ['概要', 'アーキテクチャ', 'コンポーネントとインターフェース', '正確性プロパティ', 'テスト戦略'],
-        'tasks.md': ['タスクチェックリスト']
+    REQUIRED_TOP_LEVEL_KEYS = {
+        'requirements.yml': ['metadata', 'acceptance-criteria'],
+        'design.yml': ['metadata', 'correctness-properties'],
+        'tasks.yml': ['metadata', 'tasks']
     }
     
     def __init__(self, spec_dir: str = '.kiro/specs'):
@@ -59,7 +60,7 @@ class SpecValidator:
     
     def _validate_feature(self, feature_dir: Path):
         """1つの機能のSpecを検証"""
-        for spec_type in ['requirements.md', 'design.md', 'tasks.md']:
+        for spec_type in ['requirements.yml', 'design.yml', 'tasks.yml']:
             spec_file = feature_dir / spec_type
             
             if not spec_file.exists():
@@ -70,27 +71,133 @@ class SpecValidator:
     
     def _validate_spec_file(self, spec_file: Path, spec_type: str):
         """個別のSpecファイルを検証"""
-        with open(spec_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Front Matter検証
-        frontmatter = self._extract_frontmatter(content)
-        if not frontmatter:
-            self.errors.append(f"{spec_file.relative_to(self.spec_dir)}: Front Matterが見つかりません")
+        try:
+            with open(spec_file, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            self.errors.append(f"{spec_file.relative_to(self.spec_dir)}: YAML形式が不正です - {e}")
+            return
+        except Exception as e:
+            self.errors.append(f"{spec_file.relative_to(self.spec_dir)}: ファイル読み込みエラー - {e}")
             return
         
-        self._validate_frontmatter(spec_file, frontmatter, spec_type)
+        if not isinstance(data, dict):
+            self.errors.append(f"{spec_file.relative_to(self.spec_dir)}: YAMLのルートは辞書型である必要があります")
+            return
         
-        # セクション検証
-        self._validate_sections(spec_file, content, spec_type)
+        # メタデータ検証
+        self._validate_yml_metadata(spec_file, data, spec_type)
+        
+        # トップレベルキー検証
+        self._validate_yml_top_level_keys(spec_file, data, spec_type)
         
         # 特定ファイルの追加検証
-        if spec_type == 'requirements.md':
-            self._validate_requirements(spec_file, content)
-        elif spec_type == 'design.md':
-            self._validate_design(spec_file, content)
-        elif spec_type == 'tasks.md':
-            self._validate_tasks(spec_file, content)
+        if spec_type == 'requirements.yml':
+            self._validate_yml_requirements(spec_file, data)
+        elif spec_type == 'design.yml':
+            self._validate_yml_design(spec_file, data)
+        elif spec_type == 'tasks.yml':
+            self._validate_yml_tasks(spec_file, data)
+    
+    def _validate_yml_metadata(self, spec_file: Path, data: Dict[str, Any], spec_type: str):
+        """YMLファイルのメタデータを検証"""
+        if 'metadata' not in data:
+            self.errors.append(f"{spec_file.relative_to(self.spec_dir)}: 'metadata'キーが見つかりません")
+            return
+        
+        metadata = data['metadata']
+        if not isinstance(metadata, dict):
+            self.errors.append(f"{spec_file.relative_to(self.spec_dir)}: 'metadata'は辞書型である必要があります")
+            return
+        
+        required_fields = self.REQUIRED_METADATA_FIELDS.get(spec_type, [])
+        for field in required_fields:
+            if field not in metadata or not metadata[field]:
+                self.errors.append(
+                    f"{spec_file.relative_to(self.spec_dir)}: "
+                    f"metadataに必須フィールド '{field}' がありません"
+                )
+        
+        # 日付フォーマット検証
+        for date_field in ['created', 'updated']:
+            if date_field in metadata:
+                date_value = str(metadata[date_field])
+                if not re.match(r'^\d{4}-\d{2}-\d{2}$', date_value):
+                    self.errors.append(
+                        f"{spec_file.relative_to(self.spec_dir)}: "
+                        f"metadata.{date_field} の日付フォーマットが不正です（YYYY-MM-DD形式で記述してください）"
+                    )
+    
+    def _validate_yml_top_level_keys(self, spec_file: Path, data: Dict[str, Any], spec_type: str):
+        """YMLファイルのトップレベルキーを検証"""
+        required_keys = self.REQUIRED_TOP_LEVEL_KEYS.get(spec_type, [])
+        
+        for key in required_keys:
+            if key not in data:
+                self.errors.append(
+                    f"{spec_file.relative_to(self.spec_dir)}: "
+                    f"必須キー '{key}' が見つかりません"
+                )
+    
+    def _validate_yml_requirements(self, spec_file: Path, data: Dict[str, Any]):
+        """requirements.ymlの追加検証"""
+        if 'acceptance-criteria' not in data:
+            return
+        
+        ac_list = data['acceptance-criteria']
+        if not isinstance(ac_list, list):
+            self.warnings.append(f"{spec_file.relative_to(self.spec_dir)}: 'acceptance-criteria'はリスト型である必要があります")
+            return
+        
+        ac_count = len(ac_list)
+        if ac_count < 3:
+            self.warnings.append(
+                f"{spec_file.relative_to(self.spec_dir)}: "
+                f"受入基準が{ac_count}個しかありません（推奨: 3個以上）"
+            )
+    
+    def _validate_yml_design(self, spec_file: Path, data: Dict[str, Any]):
+        """design.ymlの追加検証"""
+        if 'correctness-properties' not in data:
+            return
+        
+        properties = data['correctness-properties']
+        if not isinstance(properties, list):
+            self.warnings.append(f"{spec_file.relative_to(self.spec_dir)}: 'correctness-properties'はリスト型である必要があります")
+            return
+        
+        property_count = len(properties)
+        if property_count < 3:
+            self.warnings.append(
+                f"{spec_file.relative_to(self.spec_dir)}: "
+                f"正確性プロパティが{property_count}個しかありません（推奨: 3個以上）"
+            )
+    
+    def _validate_yml_tasks(self, spec_file: Path, data: Dict[str, Any]):
+        """tasks.ymlの追加検証"""
+        if 'tasks' not in data:
+            return
+        
+        tasks = data['tasks']
+        if not isinstance(tasks, list):
+            self.errors.append(f"{spec_file.relative_to(self.spec_dir)}: 'tasks'はリスト型である必要があります")
+            return
+        
+        task_count = len(tasks)
+        if task_count == 0:
+            self.errors.append(
+                f"{spec_file.relative_to(self.spec_dir)}: "
+                f"タスクが1つも定義されていません"
+            )
+        
+        # 要件とのトレーサビリティチェック
+        tasks_with_requirements = sum(1 for task in tasks if task.get('validates'))
+        
+        if task_count > 0 and tasks_with_requirements < task_count * 0.5:
+            self.warnings.append(
+                f"{spec_file.relative_to(self.spec_dir)}: "
+                f"多くのタスクに要件（validates）が記載されていません"
+            )
     
     def _extract_frontmatter(self, content: str) -> Dict[str, str]:
         """Front Matterを抽出"""

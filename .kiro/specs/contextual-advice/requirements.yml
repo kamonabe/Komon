@@ -1,0 +1,173 @@
+# 要件定義: コンテキストに応じた具体的アドバイス
+
+metadata:
+  title: "コンテキストに応じた具体的アドバイス"
+  feature: "contextual-advice"
+  status: "draft"
+  created: "2025-11-27"
+  updated: "2025-11-27"
+  complexity: "high"
+  estimated-hours: 12
+  dependencies: []
+
+overview:
+  description: |
+    CPU/メモリ使用率が閾値を超えた際に、単なる数値の通知だけでなく、
+    どのプロセスが原因で、具体的に何をすべきかを提案する機能。
+    プロセス名のパターンマッチングにより、node/docker/python等の種類に応じた
+    適切なアドバイスを自動生成する。
+  background: |
+    現状のKomonは「メモリ使用率が85%です」といった抽象的な通知のみを行っている。
+    ユーザーは通知を受けた後、手動でtopやpsを実行してプロセスを特定し、
+    対処を考える必要がある。本機能により、原因プロセスと具体的な提案を
+    セットで提示することで、ユーザーが即座にアクションを取れるようにする。
+  goals:
+    - "原因プロセスを自動的に特定して表示"
+    - "プロセスの種類に応じた具体的な提案を生成"
+    - "提案の詳細度を3段階で調整可能"
+    - "既存機能への影響なし"
+    - "パフォーマンスへの影響を最小限に"
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "上位プロセス情報の取得"
+    priority: "high"
+    type: "functional"
+    description: |
+      CPU/メモリ/ディスク使用率が閾値を超えた時、
+      上位3-5プロセス（プロセス名、PID、使用率）を取得できる
+    when: "CPU/メモリ/ディスク使用率が閾値を超えた時"
+    then: "上位3-5プロセス（プロセス名、PID、使用率）を取得できる"
+    examples:
+      - input: "CPU使用率90%"
+        output: "node (PID 12345): CPU 45%, メモリ 30%"
+      - input: "メモリ使用率85%"
+        output: "docker (PID 67890): CPU 20%, メモリ 25%"
+    
+  - id: "AC-002"
+    title: "パターン認識による提案生成"
+    priority: "high"
+    type: "functional"
+    description: |
+      上位プロセスのプロセス名を解析し、
+      プロセス名のパターン（node, docker, python等）に応じた
+      具体的な提案が生成される
+    when: "上位プロセスのプロセス名を解析した時"
+    then: "プロセス名のパターンに応じた具体的な提案が生成される"
+    examples:
+      - input: "node"
+        output: "開発サーバーが起動しっぱなしかも？不要なら停止してみてください"
+      - input: "docker"
+        output: "不要なコンテナが残っているかも？`docker ps` で確認してみてください"
+      - input: "python"
+        output: "学習プロセスや長時間スクリプトが動いているかも？確認してみてください"
+      - input: "unknown"
+        output: "このプロセスが高負荷です。必要なければ停止を検討してください"
+  
+  - id: "AC-003"
+    title: "提案の詳細度を設定で調整可能"
+    priority: "high"
+    type: "functional"
+    description: |
+      settings.ymlでadvice_levelを設定した時、
+      提案の詳細度が変わる（minimal/normal/detailed）
+    when: "settings.ymlでadvice_levelを設定した時"
+    then: "提案の詳細度が変わる"
+    examples:
+      - input: "advice_level: minimal"
+        output: "プロセス名とPIDのみ表示"
+      - input: "advice_level: normal"
+        output: "プロセス名、PID、簡潔な提案"
+      - input: "advice_level: detailed"
+        output: "プロセス名、PID、詳細な提案、コマンド例"
+  
+  - id: "AC-004"
+    title: "既存機能への影響なし"
+    priority: "high"
+    type: "non-functional"
+    description: |
+      本機能を有効化した時、
+      既存の通知機能、監視機能に影響がない
+    when: "本機能を有効化した時"
+    then: "既存の通知機能、監視機能に影響がない"
+    examples:
+      - input: "use_contextual_advice=True"
+        output: "全既存テストがパス"
+  
+  - id: "AC-005"
+    title: "パフォーマンスへの影響が最小限"
+    priority: "medium"
+    type: "performance"
+    description: |
+      プロセス情報を取得する時、
+      処理時間が100ms以内に収まる
+    when: "プロセス情報を取得する時"
+    then: "処理時間が100ms以内に収まる"
+    examples:
+      - input: "上位3プロセスを取得"
+        output: "処理時間: 50ms"
+
+non-functional-requirements:
+  performance:
+    - "プロセス情報取得処理は100ms以内"
+    - "全体の処理時間への影響は10%以内"
+  reliability:
+    - "プロセスが途中で終了してもエラーにならない"
+    - "アクセス権限がないプロセスはスキップ"
+  maintainability:
+    - "パターン定義は設定ファイルで管理"
+    - "新しいパターンを簡単に追加できる"
+  usability:
+    - "提案メッセージは日本語で分かりやすく"
+    - "詳細度を3段階で調整可能"
+
+constraints:
+  - "AlmaLinux 9専用"
+  - "Python 3.10+以上"
+  - "psutilライブラリに依存（既に使用中）"
+  - "プロセス情報の取得にはroot権限不要"
+
+assumptions:
+  - "ユーザーは日本語話者"
+  - "komon adviseコマンドで実行される"
+  - "プロセス情報は取得時点のスナップショット"
+
+risks:
+  - risk: "既存機能への影響"
+    mitigation: "統合テストで確認、use_contextual_adviceフラグで制御"
+    probability: "low"
+    impact: "high"
+  
+  - risk: "パフォーマンス劣化"
+    mitigation: "プロセス情報取得を最適化、100ms以内を保証"
+    probability: "medium"
+    impact: "medium"
+  
+  - risk: "パターンマッチングの精度"
+    mitigation: "設定ファイルでパターンをカスタマイズ可能"
+    probability: "low"
+    impact: "low"
+
+scope:
+  in-scope:
+    - "上位プロセスの取得と表示"
+    - "パターンマッチングによる提案生成"
+    - "詳細度の調整機能"
+    - "設定ファイルでのパターンカスタマイズ"
+  
+  out-of-scope:
+    - "プロセスの自動停止（ユーザーが手動で判断・実行）"
+    - "過去のプロセス履歴の記録（将来の拡張として検討）"
+    - "リアルタイムのプロセス監視（現状の定期実行を維持）"
+
+success-metrics:
+  quantitative:
+    - "テストカバレッジ95%以上を維持"
+    - "全既存テスト（268テスト）がパス"
+    - "プロセス情報取得処理が100ms以内"
+    - "新規テスト26件を追加（プロパティ5件、統合6件、ユニット15件）"
+  
+  qualitative:
+    - "ユーザーが「これは便利！」と感じる"
+    - "通知を受けた後のアクションが明確になる"
+    - "Komonの「賢いアドバイザー」としての価値が向上"
