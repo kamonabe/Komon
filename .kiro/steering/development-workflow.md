@@ -736,6 +736,20 @@ refactor/{module-name}         # リファクタリング
 3. バージョン番号を提案
 4. ユーザーにmainへのマージを依頼
 5. バージョンタグ作成後、GitHub Releases用の情報を`.kiro/RELEASE_NOTES.md`に追記
+6. **リリース完了後、ユーザーにリマインド**
+   ```
+   ✅ v1.X.Xのリリースが完了しました
+   
+   📋 次のステップ:
+   1. GitHub Releasesに登録してください
+   2. 前バージョン（v1.Y.Y）の完了タスクを`completed-tasks.md`にアーカイブしてください
+      - `implementation-tasks.md`から移動
+      - バージョン降順で整理
+   3. ステータス整合性をチェックしてください
+      - `future-ideas.md`: ✅ 実装済み (vX.X.X)
+      - `implementation-tasks.md`: 🟢 Done (vX.X.X)
+      - `{feature-name}/tasks.yml`: status: completed
+   ```
 
 #### チェックリスト（実装開始前）
 
@@ -900,6 +914,14 @@ cronジョブで実行されるスクリプトは、以下を確認：
 3. リモートにプッシュ
 4. GitHub Releasesに登録
 5. RELEASE_NOTES.mdをアーカイブ
+6. **前バージョンの完了タスクを`completed-tasks.md`にアーカイブ**
+   - `implementation-tasks.md`から前バージョン（v1.17.0等）の完了タスクを移動
+   - `completed-tasks.md`はバージョン降順で整理（新しいものが上）
+7. **ステータス整合性チェック**
+   - `future-ideas.md`の該当アイデアが「✅ 実装済み (vX.X.X)」になっているか
+   - `implementation-tasks.md`のタスクが 🟢 Done になっているか
+   - `{feature-name}/tasks.yml`が `status: completed` になっているか
+   - 不一致がある場合は修正
 
 ### GitHub Releases登録後の作業
 
