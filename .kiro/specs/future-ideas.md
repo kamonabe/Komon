@@ -1648,8 +1648,361 @@ importance = {
 
 ---
 
+### [IDEA-020] Pythonバージョン管理（CI/CD + サーバ環境）
+
+**カテゴリ**: 開発環境管理・セキュリティ  
+**提案日**: 2025-11-27  
+**ステータス**: アイデア段階  
+**優先度**: 中（サーバ環境チェックは重要、CI/CDチェックは低）
+
+#### 背景・課題
+
+**ChatGPTとの対話から生まれた発想**:
+- GitHub ActionsでPython 3.10, 3.11, 3.12をテストしている
+- 2026年10月にPython 3.10がEOL/EOSになる
+- その時に`.github/workflows/ci.yml`を更新する必要がある
+- でも忘れがち
+
+**さらに重要な視点**:
+- **サーバで動いているPythonバージョンがEOL/EOSになっていないか**
+- CI/CDより、実際に動いているサーバの方が深刻
+- EOL後はセキュリティパッチが出ない → 脆弱性が放置される
+- でもサーバのPythonバージョンは意識しにくい
+
+**危険度の比較**:
+```
+❌ 危険度: 高
+サーバのPython 3.9がEOL → セキュリティパッチが出ない
+→ 脆弱性が放置される
+→ 実際に攻撃される可能性
+
+⚠️ 危険度: 中
+CI/CDのPython 3.10がEOL → テストが古いバージョンで動く
+→ 新しいバージョンでの問題を見逃す可能性
+→ でも本番環境は別
+```
+
+#### 改善案
+
+**1. サーバ環境のPythonバージョンチェック（優先度: 高）**
+
+```python
+# scripts/check_server_python.py
+import sys
+import requests
+from datetime import datetime, timedelta
+
+def check_server_python_version():
+    """サーバで動いているPythonバージョンをチェック"""
+    current_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    
+    # endoflife.date APIで確認
+    response = requests.get('https://endoflife.date/api/python.json')
+    versions = response.json()
+    
+    for v in versions:
+        if v['cycle'] == current_version:
+            eol_date = datetime.fromisoformat(v['eol'])
+            today = datetime.now()
+            
+            if eol_date < today:
+                print(f"❌ Python {current_version} はサポート終了しています")
+                print(f"   EOL日: {v['eol']}")
+                print(f"   セキュリティリスクがあります。アップグレードしてください。")
+                return False
+            
+            elif eol_date < today + timedelta(days=180):
+                print(f"⚠️  Python {current_version} は6ヶ月以内にEOLです")
+                print(f"   EOL日: {v['eol']}")
+                print(f"   アップグレードの計画を立ててください")
+                return True
+            
+            else:
+                print(f"✅ Python {current_version} はサポート中です")
+                print(f"   EOL日: {v['eol']}")
+                return True
+    
+    print(f"⚠️  Python {current_version} の情報が見つかりません")
+    return True
+
+if __name__ == '__main__':
+    check_server_python_version()
+```
+
+**Komonに統合する場合**:
+
+```bash
+# 週次レポートに含める
+komon weekly-report
+
+📊 週次健全性レポート (2025-11-18 〜 2025-11-24)
+
+【システム情報】
+Python: 3.10.12 ⚠️ 2026年10月にEOL予定
+  → アップグレードの計画を立ててください
+OS: AlmaLinux 9.3 ✅ サポート中（2032年まで）
+
+【リソース状況】
+...
+```
+
+**または独立コマンド**:
+
+```bash
+# 環境チェック（月次実行を推奨）
+komon check-environment
+
+🔍 環境チェック
+
+Python: 3.10.12 ⚠️ 2026年10月にEOL予定
+  推奨バージョン: 3.11, 3.12
+  アップグレード手順: https://docs.python.org/ja/3/using/unix.html
+
+OS: AlmaLinux 9.3 ✅ サポート中（2032年まで）
+```
+
+**2. CI/CDのPythonバージョンチェック（優先度: 低）**
+
+```python
+# scripts/check_ci_python_versions.py
+import requests
+import yaml
+from datetime import datetime, timedelta
+
+def get_supported_python_versions():
+    """endoflife.date APIからサポート中のPythonバージョンを取得"""
+    response = requests.get('https://endoflife.date/api/python.json')
+    versions = response.json()
+    
+    supported = []
+    eol_soon = []
+    
+    for v in versions:
+        eol_date = datetime.fromisoformat(v['eol'])
+        today = datetime.now()
+        
+        if eol_date > today:
+            supported.append(v['cycle'])
+            
+            # 6ヶ月以内にEOL
+            if eol_date < today + timedelta(days=180):
+                eol_soon.append({
+                    'version': v['cycle'],
+                    'eol_date': v['eol']
+                })
+    
+    return supported, eol_soon
+
+def get_ci_python_versions():
+    """GitHub ActionsのPythonバージョンを取得"""
+    with open('.github/workflows/ci.yml', 'r') as f:
+        ci_config = yaml.safe_load(f)
+    
+    matrix = ci_config['jobs']['test']['strategy']['matrix']
+    return matrix['python-version']
+
+def main():
+    supported, eol_soon = get_supported_python_versions()
+    ci_versions = get_ci_python_versions()
+    
+    print("📋 CI/CD Pythonバージョンチェック")
+    print(f"サポート中: {', '.join(supported)}")
+    print(f"CI設定: {', '.join(ci_versions)}")
+    
+    # EOL間近の警告
+    if eol_soon:
+        print("\n⚠️  EOL間近のバージョン:")
+        for v in eol_soon:
+            print(f"  - Python {v['version']}: {v['eol_date']}にEOL")
+    
+    # CI設定の検証
+    unsupported = [v for v in ci_versions if v not in supported]
+    if unsupported:
+        print(f"\n❌ サポート終了: {', '.join(unsupported)}")
+        print("   .github/workflows/ci.yml を更新してください")
+        exit(1)
+    
+    print("\n✅ 全てのバージョンがサポート中です")
+
+if __name__ == '__main__':
+    main()
+```
+
+**GitHub Actions統合**
+
+```yaml
+# .github/workflows/python-version-check.yml
+name: Python Version Check
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # 毎月1日
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install requests pyyaml
+      
+      - name: Check Python versions
+        id: check
+        run: |
+          python scripts/check_python_versions.py
+        continue-on-error: true
+      
+      - name: Create Issue if outdated
+        if: steps.check.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Pythonバージョンの更新が必要です',
+              body: `CI設定のPythonバージョンにサポート終了のものが含まれています。\n\n` +
+                    `.github/workflows/ci.yml を確認してください。\n\n` +
+                    `詳細: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['maintenance', 'python-version']
+            })
+```
+
+#### 実装メモ
+
+**メリット**:
+- ✅ **サーバ環境**: セキュリティリスクの早期発見（重要！）
+- ✅ **CI/CD**: EOL/EOSの追跡を自動化
+- ✅ 手動チェックの手間を削減
+- ✅ 確実に検知できる
+- ✅ 他プロジェクトにも応用可能（Node.js, Ruby等）
+- ✅ 他の言語にも拡張可能（OS、ミドルウェア等）
+
+**デメリット**:
+- ❌ 実装コスト（サーバチェック: 1時間、CI/CDチェック: 2-3時間）
+- ❌ メンテナンスコスト（API変更時）
+- ❌ Pythonバージョンは年1回程度しか変わらない
+- ❌ CI/CDチェックは手動管理でも十分（年1回、5分程度の作業）
+
+#### 現実的な対応
+
+**優先度1: サーバ環境チェック（推奨）**
+
+```bash
+# 月次で実行（cronまたはsystemd-timer）
+0 9 1 * * python /path/to/scripts/check_server_python.py
+```
+
+または週次レポート（IDEA-014）に統合：
+```python
+# src/komon/weekly_data.py に追加
+def get_python_version_status():
+    """Pythonバージョンの状態を取得"""
+    current_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    # endoflife.date APIで確認...
+    return {
+        'version': current_version,
+        'status': 'supported' | 'eol_soon' | 'eol',
+        'eol_date': '2026-10-04'
+    }
+```
+
+**優先度2: CI/CDチェック（手動管理でOK）**
+
+1. カレンダーリマインダー設定
+   ```
+   2026年9月: Python 3.10 EOL確認
+   → .github/workflows/ci.yml を更新
+   ```
+
+2. ドキュメント化
+   ```markdown
+   # docs/OPERATIONS.md
+   
+   ## Pythonバージョン管理
+   
+   ### サーバ環境
+   - 確認頻度: 月1回（自動）
+   - 確認方法: komon weekly-report または check-environment
+   - 対応: OSのパッケージマネージャーでアップグレード
+   
+   ### CI/CD
+   - 確認頻度: 年1回（9月）
+   - 確認先: https://endoflife.date/python
+   - 更新対象: .github/workflows/ci.yml
+   ```
+
+**将来（完全自動化）**:
+- 複数プロジェクトで使う場合
+- 他の言語（Node.js等）も管理したい場合
+- チーム開発で忘れがちな作業を減らしたい場合
+- GitHub Actions統合（Issue自動作成）
+
+#### 検討事項
+
+**実装する価値がある条件**:
+- 複数プロジェクトを管理している
+- 他の言語も同様に管理したい
+- チーム開発で忘れがちな作業を減らしたい
+
+**Komonの現状では**:
+- 年1回、5分程度の手動作業で十分
+- カレンダーリマインダーで対応可能
+- 自動化は将来の検討課題
+
+#### 期待効果（もし実装するなら）
+
+- EOL/EOSの追跡を完全自動化
+- 複数プロジェクトでの一貫した管理
+- 「実際に走らせてみた」実証例として価値がある
+- 他の言語（Node.js, Ruby等）にも応用可能
+
+#### 実装ステップ（もし実装するなら）
+
+**ステップ1**: future-ideas.mdに記録（✅ 完了）
+
+**ステップ2**: 2026年9月にカレンダーリマインダー設定
+
+**ステップ3**: 他プロジェクトでも同じ課題があれば実装検討
+
+**ステップ4**: 実装する場合
+1. `scripts/check_python_versions.py` を作成
+2. GitHub Actionsで月次実行
+3. Issue自動作成
+4. 他の言語にも拡張（Node.js, Ruby等）
+
+#### 開発者コメント
+
+```
+技術的には面白いアイデアだけど、
+Komonの現状では手動管理で十分。
+
+年1回、5分程度の作業を自動化するために
+2-3時間かけて実装するのは、
+費用対効果が合わない。
+
+ただし、複数プロジェクトを管理するようになったり、
+他の言語も同様に管理したくなったら、
+その時に実装を検討する価値はある。
+
+「今すぐやる必要はないけど、
+ 将来の選択肢として残しておく」
+というのが、このアイデアの位置づけ。
+```
+
+---
+
 ## 更新履歴
 
+- 2025-11-27: Pythonバージョン自動チェック機能のアイデアを追加（IDEA-020）
 - 2025-11-26: State Snapshot & Diff Detection のアイデアを追加（IDEA-019）
 - 2025-11-24: IDEA-008, IDEA-014, IDEA-015, IDEA-016を実装済みに更新（v1.11.0, v1.12.0, v1.13.0, v1.15.0）
 - 2025-11-23: 特別研究プロジェクトセクションを追加、自己修復システム（RESEARCH-001）を詳細に記録
