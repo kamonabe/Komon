@@ -93,7 +93,7 @@ Kiroが以下を報告：
 **ユーザーが最終確認**して：
 1. バージョン番号を決定（例: v1.12.0）
 
-### 7. 🚨 CHANGELOGの更新（重要！）
+### 7. 🚨 CHANGELOGとproject-configの更新（重要！）
 
 **Kiroへの指示**: ユーザーがバージョン番号を決定したら、**必ず以下をリマインド**してください：
 
@@ -110,17 +110,26 @@ Kiroが以下を報告：
    
    ## [1.X.X] - 2025-11-27
 
-3. この作業が完了したら、次のステップに進みます
+3. project-config.ymlのバージョンを更新してください：
+   .kiro/steering/project-config.yml の current_version を更新
+
+4. 変更例：
+   versioning:
+     current_version: "1.X.X"
+
+5. この作業が完了したら、次のステップに進みます
 ```
 
 **なぜ重要か**：
-- ❌ この手順を忘れると`generate_release_notes.py`が動かない
+- ❌ CHANGELOGを忘れると`generate_release_notes.py`が動かない
+- ❌ project-config.ymlを忘れるとステアリングルールが古いバージョンを参照する
 - ❌ CHANGELOGが不正確になる
 - ❌ 次のリリース時に混乱する
 
 **Kiroのチェックポイント**：
 - [ ] ユーザーがバージョン番号を決定した
 - [ ] CHANGELOGの更新をリマインドした
+- [ ] project-config.ymlの更新をリマインドした
 - [ ] ユーザーが「更新完了」と返答した
 - [ ] 上記が全て完了してから次のステップに進む
 
