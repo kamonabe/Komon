@@ -73,6 +73,11 @@ def handle_alerts(alerts: list, levels: dict, config: dict, usage: dict):
         
         message = f"⚠️ Komon 警戒情報:\n{metric_alert}"
         
+        # プロセス情報を追加
+        process_info = _get_process_info_for_metric(metric_type, usage)
+        if process_info:
+            message += f"\n\n📊 上位プロセス:\n{process_info}"
+        
         # エスカレーションメッセージを追加
         if reason == "escalation":
             duration = throttle.get_duration_message(metric_type)
@@ -118,6 +123,41 @@ def _is_metric_alert(alert: str, metric_type: str) -> bool:
     
     metric_name = metric_names.get(metric_type, "")
     return metric_name in alert
+
+
+def _get_process_info_for_metric(metric_type: str, usage: dict) -> str:
+    """
+    指定されたメトリクスに対応するプロセス情報を取得する
+    
+    Args:
+        metric_type: メトリクスタイプ（cpu, memory, disk）
+        usage: リソース使用率データ（プロセス情報を含む）
+        
+    Returns:
+        str: フォーマットされたプロセス情報（上位3プロセス）
+    """
+    if metric_type == "cpu":
+        processes = usage.get("cpu_by_process", [])
+        if not processes:
+            return ""
+        
+        lines = []
+        for i, proc in enumerate(processes[:3], 1):
+            lines.append(f"{i}. {proc['name']}: {proc['cpu']:.1f}%")
+        return "\n".join(lines)
+    
+    elif metric_type == "memory":
+        processes = usage.get("mem_by_process", [])
+        if not processes:
+            return ""
+        
+        lines = []
+        for i, proc in enumerate(processes[:3], 1):
+            lines.append(f"{i}. {proc['name']}: {proc['mem']:.1f}MB")
+        return "\n".join(lines)
+    
+    # ディスクの場合はプロセス情報は表示しない（ディスク使用量はプロセス単位で取得困難）
+    return ""
 
 
 def main():

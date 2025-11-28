@@ -27,6 +27,7 @@ ENV/
 env/
 .venv
 .pyenv/
+testenv/
 
 # IDE
 .vscode/
