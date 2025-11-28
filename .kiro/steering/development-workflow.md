@@ -736,6 +736,157 @@ refactor/{module-name}         # リファクタリング
 - refactor/analyzer-module
 ```
 
+## Git運用の安全策（複数マシン・チーム開発対応）
+
+### 前提条件チェック
+
+#### .gitの存在確認
+
+プロジェクト内に `.git` が存在しない場合：
+- Git関連の処理は実行しない
+- 代わりに次のような**推奨コメント**を表示・案内してよい
+
+```
+現在このプロジェクトにはGitが設定されていません。
+Gitを導入するとバージョン管理や安全な開発フローが利用できるため推奨です。
+```
+
+- Git導入の判断は開発者に委ねる（強制しない）
+- 希望する場合は、次のような自動化フローを提供：
+  - `git init`
+  - `.gitignore` 自動生成
+  - GitHub/社内Gitへのリポジトリ作成
+  - mainブランチの作成
+  - 初期commit/pushの案内
+
+### 作業開始前の必須手順
+
+**新しい作業ブランチを切る前に、必ず origin/main と同期する**
+
+これは**複数マシン開発**や**チーム開発**で、以下の事故を防ぐための保険：
+- 古いmainから作業を開始してしまう
+- 他の人の変更を知らずに開発してしまう
+- マージ時に余計なコンフリクトが発生する
+
+#### 手順
+
+```bash
+# 1. リモート情報を最新化
+git fetch origin
+
+# 2. mainに移動
+git switch main
+
+# 3. origin/mainを取り込む
+git pull origin main
+
+# 4. 最新のmainからfeatureブランチを作成
+git switch -c feature/task-XXX-{feature-name}
+```
+
+#### なぜ必要か
+
+一人開発では気づきにくいが、以下の状況で必須になる：
+- **複数マシンで開発**：PC-Aで作業 → push → PC-Bで作業開始時にpull忘れ
+- **チーム開発**：他の人がmainにマージ → 自分は古いmainから作業
+- **長期間の作業**：feature作業中にmainが進んでいる
+
+### マージ前の安全確認（マージテスト）
+
+**mainに直接マージする前に、仮マージで動作確認を行う**
+
+これは**mainを絶対に壊さない**ための文化。
+
+#### 方法1: 仮マージ（--no-commit）
+
+```bash
+# mainにいることを確認
+git checkout main
+git pull
+
+# 仮マージ（コミットはしない）
+git merge --no-commit --no-ff feature/task-beta
+
+# この状態で確認
+git status
+git diff
+
+# テスト実行
+python -m pytest tests/ -v
+
+# 問題なければコミット
+git commit
+
+# やめたい場合は
+git merge --abort
+```
+
+#### 方法2: マージテスト用ブランチ（推奨）
+
+```bash
+# mainを最新化
+git checkout main
+git pull
+
+# テスト用ブランチを作成
+git checkout -b merge-check/beta
+
+# ここでfeature/betaをマージ
+git merge feature/task-beta
+
+# テスト実行・動作確認
+bash run_coverage.sh
+
+# 問題なければ正式にマージ
+git checkout main
+git merge feature/task-beta
+
+# テスト用ブランチを削除
+git branch -D merge-check/beta
+```
+
+#### なぜ必要か
+
+Gitは**テキスト差分**しか見ないため：
+- 構文的にはマージ成功でも、**意味的に壊れる**ことがある
+- 同じ処理が重複する（for文が2つ並ぶ等）
+- 既存機能との相性問題
+
+これらは**人間が見て・テストして**初めて気づける。
+
+マージテストは：
+- **冗長ではなく安全策**
+- **mainを守るための投資**
+- **事故を未然に防ぐ文化**
+
+### Kiroの役割（AI IDEによる自動化）
+
+Kiroは以下を自動で実行・チェックできる：
+
+#### 1. 作業前の同期チェック
+- feature作成前に `git fetch origin` を自動実行
+- origin/mainとの差分を警告
+- 古いmainからの作業開始を防ぐ
+
+#### 2. マージ前の仮マージ自動実行
+- merge-checkブランチを裏で作成
+- mainとfeatureを自動統合
+- テスト実行
+- コンフリクト・意味的衝突を検知
+- 結果をユーザーに提示
+
+#### 3. ヒューマンエラーのゼロ化
+人間のルールでは「うっかり」が必ず出るが、AI IDEが強制すれば：
+- pull忘れ
+- 古いmainでの開発
+- コンフリクト放置
+- 動作確認不足
+- main破壊事故
+
+これらを**構造的に防げる**。
+
+少しの時間とクレジットで「不安ゼロ・事故ゼロ・正史保護」が手に入るなら、それは**開発品質への投資**。
+
 ### 🚨 Kiroへの厳格な指示 🚨
 
 #### 実装開始前の必須手順（絶対に守る）
