@@ -7,6 +7,16 @@
 [![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](htmlcov/index.html)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
 
+> **English**: Komon is a lightweight system monitoring advisor for developers. It quietly watches your development environment and sends friendly notifications when resources are overused, logs spike, or updates are needed. Simple architecture makes it easy to extend with custom notifications and monitoring targets.
+> 
+> **Key Features**: 3-tier threshold alerts • Progressive notifications • Disk usage prediction • Log trend analysis • Process-specific advice • Notification history
+> 
+> **Platform**: Linux (AlmaLinux 9 recommended) • Python 3.10+
+> 
+> 📖 **Documentation below is in Japanese** - Feel free to use translation tools, or check out the code examples which are self-explanatory!
+
+---
+
 **Komon は、開発者のための軽量アドバイザー型SOAR風ツールです。**
 
 開発環境で発生するリソースの過剰使用、ログの急増、更新忘れなどを静かに見守り、必要なときだけやさしく通知・提案してくれます。
