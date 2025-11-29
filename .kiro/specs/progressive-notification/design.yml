@@ -41,3 +41,10 @@ correctness-properties:
   validates:
   - AC-005
   test-strategy: property-based
+- id: P6
+  title: 既存機能との互換性
+  type: invariant
+  description: '*任意の*通知について、段階的メッセージ機能が無効の場合は従来のメッセージが生成され、既存の動作が維持されること'
+  validates:
+  - AC-003
+  test-strategy: property-based

@@ -198,6 +198,18 @@ correctness-properties:
       framework: "hypothesis"
       strategy: "st.integers(min_value=1, max_value=10)"
       assertion: "elapsed < 0.1"
+  
+  - id: "P6"
+    title: "既存機能への影響なし"
+    type: "invariant"
+    description: |
+      コンテキストアドバイス機能を有効化しても、既存の通知機能、監視機能が正常に動作し、全ての既存テストがパスする。
+    validates: ["AC-004"]
+    test-strategy: "integration"
+    implementation:
+      framework: "pytest"
+      strategy: "既存テスト全実行"
+      assertion: "all_tests_pass"
 
 data-structures:
   - name: "ProcessInfo"

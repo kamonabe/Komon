@@ -10,23 +10,22 @@ correctness-properties:
   type: invariant
   description: '*任意の*有効なmetric_type、metric_value、messageを持つ通知について、save_notificationを呼び出すと、その通知がキューファイルに存在する結果となること'
   validates:
-  - AC-001.1
-  - AC-001.2
+  - AC-001
   test-strategy: property-based
 - id: P2
   title: 最大キューサイズの不変条件
   type: invariant
   description: '*任意の*保存操作のシーケンスについて、キューファイルは100件を超える通知を含まないこと'
   validates:
-  - AC-001.4
-  - AC-003.1
+  - AC-001
+  - AC-003
   test-strategy: property-based
 - id: P3
   title: 時系列順序の保持
   type: invariant
   description: '*任意の*キュー状態について、新しい通知を追加した後、残りの全ての通知は時系列順序（新しい順）を維持すること'
   validates:
-  - AC-003.2
+  - AC-003
   test-strategy: property-based
 - id: P4
   title: 制限付き履歴取得
@@ -34,20 +33,27 @@ correctness-properties:
   description: '*任意の*N件の通知を持つキューと制限値Lについて、load_notification_history(limit=L)はmin(N,
     L)件の最新通知を正確に返すこと'
   validates:
-  - AC-002.2
+  - AC-002
   test-strategy: property-based
 - id: P5
   title: フォーマットの完全性
   type: invariant
   description: '*任意の*有効な通知について、format_notificationはタイムスタンプ、metric_type、metric_value、messageを含む文字列を生成すること'
   validates:
-  - AC-002.3
+  - AC-002
   test-strategy: property-based
 - id: P6
   title: グレースフルなエラーハンドリング
   type: invariant
   description: '*任意の*破損または無効なキューファイルについて、load_notification_historyはクラッシュせず、空のリストを返すか処理された例外を発生させること'
   validates:
-  - AC-002.5
-  - AC-003.3
+  - AC-002
+  - AC-003
   test-strategy: property-based
+- id: P7
+  title: 既存機能との統合
+  type: invariant
+  description: '*任意の*通知について、通知履歴機能が追加されても既存の通知機能が正常に動作し、全ての既存テストがパスすること'
+  validates:
+  - AC-004
+  test-strategy: integration

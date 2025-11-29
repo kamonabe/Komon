@@ -10,34 +10,40 @@ correctness-properties:
   type: invariant
   description: '*任意の*同一メトリクスの通知について、設定された間隔内に2回以上送信されない（閾値レベル上昇を除く）'
   validates:
-  - AC-001.2
+  - AC-001
   test-strategy: property-based
 - id: P2
   title: 閾値レベル上昇時の即時通知
   type: invariant
   description: '*任意の*閾値レベル上昇について、通知間隔に関わらず即座に通知される'
   validates:
-  - AC-002.2
+  - AC-002
   test-strategy: property-based
 - id: P3
   title: エスカレーションの正確性
   type: invariant
   description: '*任意の*再通知間隔を超えた問題について、エスカレーション通知が送信される'
   validates:
-  - AC-003.2
+  - AC-003
   test-strategy: property-based
 - id: P4
   title: 履歴ファイルの整合性
   type: invariant
   description: '*任意の*通知履歴について、ファイルの読み書きが正しく行われデータが失われない'
   validates:
-  - AC-004.1
-  - AC-004.5
+  - AC-004
   test-strategy: property-based
 - id: P5
   title: 設定無効時の動作
   type: invariant
   description: '*任意の*頻度制御無効時について、全ての通知が抑制なしで送信される'
   validates:
-  - AC-005.5
+  - AC-005
+  test-strategy: property-based
+- id: P6
+  title: 既存機能との互換性
+  type: invariant
+  description: '*任意の*通知について、頻度制御機能が追加されても既存の通知機能が正常に動作すること'
+  validates:
+  - AC-006
   test-strategy: property-based

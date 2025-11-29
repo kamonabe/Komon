@@ -8,7 +8,7 @@ tasks:
 - id: T1
   title: "設定バリデータモジュールの作成\n  - `ThresholdLevel` 列挙型の定義\n  - `validate_threshold_config()`\
     \ 関数の実装\n  - 従来形式と3段階形式の両方をサポート\n  - 閾値の順序検証（警告 < 警戒 < 緊急）\n  - 包括的なエラーメッセージの追加\n\
-    \  - _要件: AC-001, AC-002, AC-006_"
+    \  - _要件: AC-001_"
   status: done
   priority: high
   estimated-hours: 2
@@ -25,7 +25,7 @@ tasks:
 - id: T3
   title: "アナライザーに3段階ロジックを追加\n  - 設定バリデータをインポート\n  - `determine_threshold_level()`\
     \ 関数の実装\n  - `analyze_metrics()` を3段階ロジックに更新\n  - 従来の閾値との後方互換性を維持\n  - レベル別メッセージ生成を追加\n\
-    \  - _要件: AC-002, AC-003_"
+    \  - _要件: AC-003_"
   status: done
   priority: high
   estimated-hours: 2
@@ -33,7 +33,7 @@ tasks:
   validates: []
 - id: T4
   title: "メッセージテンプレートシステムの作成\n  - `MESSAGE_TEMPLATES` 辞書の定義\n  - 各レベルを絵文字とメッセージプレフィックスにマッピング\n\
-    \  - メッセージフォーマット関数の実装\n  - 日本語メッセージテンプレートのサポート\n  - _要件: AC-004_"
+    \  - メッセージフォーマット関数の実装\n  - 日本語メッセージテンプレートのサポート\n  - _要件: AC-003_"
   status: done
   priority: high
   estimated-hours: 2
@@ -41,8 +41,7 @@ tasks:
   validates: []
 - id: T5
   title: "プロパティベーステストの作成\n  - プロパティ1: 閾値の順序性\n  - プロパティ2: レベル判定の正確性\n  - プロパティ3: 後方互換性\n\
-    \  - プロパティ4: メッセージの一貫性\n  - プロパティ5: 設定の検証\n  - _要件: AC-001, AC-002, AC-003, AC-004,\
-    \ AC-006_"
+    \  - プロパティ4: メッセージの一貫性\n  - プロパティ5: 設定の検証\n  - _要件: AC-001, AC-003_"
   status: done
   priority: high
   estimated-hours: 2
@@ -58,7 +57,7 @@ tasks:
   validates: []
 - id: T7
   title: "統合テストの作成\n  - 3段階レベルでのエンドツーエンド閾値検知のテスト\n  - 適切なメッセージでの通知生成のテスト\n  - 設定ファイル読み込みのテスト\n\
-    \  - 従来設定との後方互換性のテスト\n  - _要件: AC-002, AC-005_"
+    \  - 従来設定との後方互換性のテスト\n  - _要件: AC-005_"
   status: done
   priority: high
   estimated-hours: 2

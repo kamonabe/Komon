@@ -10,7 +10,7 @@ correctness-properties:
   type: invariant
   description: '*任意の*メトリクスタイプについて、警告閾値 < 警戒閾値 < 緊急閾値でなければならない'
   validates:
-  - AC-006
+  - AC-001
   test-strategy: property-based
 - id: P2
   title: レベル判定の正確性
@@ -25,19 +25,26 @@ correctness-properties:
   type: invariant
   description: '*任意の*従来の単一閾値Tについて、3段階(T, T, T)と等価でなければならない'
   validates:
-  - AC-002
+  - AC-001
   test-strategy: property-based
 - id: P4
   title: メッセージの一貫性
   type: invariant
   description: '*任意の*閾値レベルについて、正確に1つの絵文字とメッセージテンプレートにマッピングされなければならない'
   validates:
-  - AC-004
+  - AC-003
   test-strategy: property-based
 - id: P5
   title: 設定の検証
   type: invariant
   description: '*任意の*無効な閾値設定（例: 警告 > 警戒）について、ValidationErrorを発生させなければならない'
   validates:
-  - AC-006
+  - AC-001
+  test-strategy: property-based
+- id: P6
+  title: エスカレーション検知
+  type: invariant
+  description: '*任意の*閾値レベル上昇（例: WARNING → ALERT → CRITICAL）について、通知頻度制御に関わらず即座に通知されなければならない'
+  validates:
+  - AC-005
   test-strategy: property-based

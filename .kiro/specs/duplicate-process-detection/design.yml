@@ -29,3 +29,27 @@ correctness-properties:
     validates:
       - AC-001
     test-strategy: property-based
+  
+  - id: P4
+    title: 助言メッセージの完全性
+    type: invariant
+    description: '*任意の*多重実行検出について、スクリプト名、実行数、推奨アクションを含むメッセージが生成されること'
+    validates:
+      - AC-003
+    test-strategy: property-based
+  
+  - id: P5
+    title: 設定値の検証
+    type: invariant
+    description: '*任意の*閾値設定について、1以上の整数のみが許可され、無効な値はデフォルト値(3)にフォールバックすること'
+    validates:
+      - AC-004
+    test-strategy: property-based
+  
+  - id: P6
+    title: 既存機能への影響なし
+    type: invariant
+    description: '*任意の*多重実行検出機能について、既存のKomon機能が正常に動作し、全ての既存テストがパスすること'
+    validates:
+      - AC-005
+    test-strategy: integration

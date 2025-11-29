@@ -12,6 +12,7 @@ Spec間の一貫性をチェックするスクリプト
 import os
 import re
 import sys
+import yaml
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -109,34 +110,37 @@ class SpecConsistencyChecker:
         return ac_ids
     
     def _check_property_coverage(self, feature_dir: Path, design_file: Path, acceptance_criteria: Set[str]):
-        """プロパティが受入基準を参照しているかチェック"""
-        with open(design_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # YAMLファイルからプロパティセクションを抽出
-        # プロパティは "validates:" フィールドでAC-XXXを参照
-        property_sections = re.findall(
-            r'validates:.*?$',
-            content,
-            re.DOTALL | re.MULTILINE
-        )
-        
-        if not property_sections:
-            return
-        
-        # 各プロパティが参照しているAC-XXXを抽出
-        referenced_acs = set()
-        for section in property_sections:
-            ac_refs = re.findall(r'AC-(\d+)', section)
-            referenced_acs.update(ac_refs)
-        
-        # 参照されていない受入基準
-        unreferenced = acceptance_criteria - referenced_acs
-        if unreferenced:
+        """プロパティが受入基準を参照しているかチェック（YAML解析版）"""
+        try:
+            with open(design_file, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+            
+            # YAMLからプロパティを抽出
+            properties = data.get('correctness-properties', [])
+            if not properties:
+                return
+            
+            # 各プロパティが参照しているAC-XXXを抽出
+            referenced_acs = set()
+            for prop in properties:
+                validates = prop.get('validates', [])
+                for ac_ref in validates:
+                    # AC-001 形式から数字部分を抽出
+                    match = re.match(r'AC-(\d+)', str(ac_ref))
+                    if match:
+                        referenced_acs.add(match.group(1))
+            
+            # 参照されていない受入基準
+            unreferenced = acceptance_criteria - referenced_acs
+            if unreferenced:
+                self.warnings.append(
+                    f"{feature_dir.name}/design.yml: "
+                    f"以下の受入基準がプロパティで参照されていません: "
+                    f"{', '.join(sorted(f'AC-{ac}' for ac in unreferenced))}"
+                )
+        except Exception as e:
             self.warnings.append(
-                f"{feature_dir.name}/design.yml: "
-                f"以下の受入基準がプロパティで参照されていません: "
-                f"{', '.join(sorted(f'AC-{ac}' for ac in unreferenced))}"
+                f"{feature_dir.name}/design.yml: YAML解析エラー: {e}"
             )
     
     def _check_task_coverage(self, feature_dir: Path, tasks_file: Path, acceptance_criteria: Set[str]):
