@@ -1,0 +1,63 @@
+metadata:
+  title: 多重実行プロセスの検出 - 要件定義
+  feature: duplicate-process-detection
+  status: draft
+  created: 2025-11-29
+  updated: 2025-11-29
+  complexity: medium
+  estimated-hours: 4
+  dependencies: []
+
+overview:
+  description: cronなどによる同一スクリプトの多重起動を検出し、リソース圧迫の原因として助言する機能。実行中のプロセスを走査し、同一スクリプトの多重実行を検出して`komon advise`で警告を表示します。
+
+acceptance-criteria:
+  - id: AC-001
+    title: 多重実行プロセスの検出
+    priority: high
+    type: functional
+    user-story: システム管理者として、同一スクリプトが複数実行されている状況を把握したいので、プロセス一覧から多重実行を検出する機能が必要です。
+    conditions:
+      - psutilでプロセス一覧を取得
+      - cmdlineで実行コマンドを比較
+      - 同一スクリプト名のプロセスをカウント
+  
+  - id: AC-002
+    title: 閾値による警告判定
+    priority: high
+    type: functional
+    user-story: システム管理者として、少数の多重実行は許容したいので、閾値を超えた場合のみ警告される機能が必要です。
+    conditions:
+      - デフォルト閾値は3個以上
+      - 設定ファイルで閾値を変更可能
+      - 閾値以下の場合は警告しない
+  
+  - id: AC-003
+    title: adviseコマンドでの表示
+    priority: high
+    type: functional
+    user-story: システム管理者として、多重実行プロセスの情報を簡単に確認したいので、komon adviseで警告が表示される機能が必要です。
+    conditions:
+      - スクリプト名と実行数を表示
+      - cron間隔を見直す助言を含む
+      - 複数のスクリプトが該当する場合は全て表示
+  
+  - id: AC-004
+    title: 設定ファイルでの閾値調整
+    priority: medium
+    type: functional
+    user-story: システム管理者として、環境に応じて閾値を調整したいので、設定ファイルで閾値を変更できる機能が必要です。
+    conditions:
+      - settings.ymlにduplicate_process_thresholdを追加
+      - デフォルト値は3
+      - 1以上の整数のみ許可
+  
+  - id: AC-005
+    title: 既存機能への影響なし
+    priority: high
+    type: non-functional
+    user-story: 開発者として、既存のKomon機能に影響を与えずに多重実行検出機能を追加したいので、既存コードとの統合が適切に行われる必要があります。
+    conditions:
+      - 既存のテストが全てパス
+      - カバレッジが維持される（90%以上）
+      - 他の助言項目と並列表示

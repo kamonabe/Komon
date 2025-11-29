@@ -1,0 +1,131 @@
+metadata:
+  title: 多重実行プロセスの検出 - 実装タスク
+  feature: duplicate-process-detection
+  status: completed
+  created: 2025-11-29
+  updated: 2025-11-29
+
+tasks:
+  - id: T1
+    title: duplicate_detector.pyモジュールの作成
+    status: done
+    priority: high
+    estimated-hours: 1.5
+    depends-on: []
+    validates:
+      - AC-001
+      - AC-002
+    description: |
+      - detect_duplicate_processes()関数の実装
+      - _extract_script_name()関数の実装
+      - エラーハンドリングの実装
+      - ログ出力の追加
+  
+  - id: T2
+    title: advise.pyの拡張
+    status: done
+    priority: high
+    estimated-hours: 0.5
+    depends-on:
+      - T1
+    validates:
+      - AC-003
+    description: |
+      - show_duplicate_process_warnings()関数の追加
+      - メイン処理への統合
+      - 表示フォーマットの実装
+  
+  - id: T3
+    title: ユニットテストの作成
+    status: done
+    priority: high
+    estimated-hours: 1.0
+    depends-on:
+      - T1
+    validates:
+      - AC-001
+      - AC-002
+      - AC-005
+    description: |
+      - test_duplicate_detector_unit.pyの作成
+      - detect_duplicate_processes()のテスト（正常系・異常系）
+      - _extract_script_name()のテスト（正常系・異常系）
+      - 閾値検証ロジックのテスト
+  
+  - id: T4
+    title: settings.ymlの拡張
+    status: done
+    priority: medium
+    estimated-hours: 0.3
+    depends-on: []
+    validates:
+      - AC-004
+    description: |
+      - duplicate_process_detectionセクションの追加
+      - デフォルト値の設定
+      - サンプルファイルの更新
+  
+  - id: T5
+    title: 統合テストの作成
+    status: done
+    priority: high
+    estimated-hours: 0.5
+    depends-on:
+      - T2
+      - T4
+    validates:
+      - AC-003
+      - AC-004
+      - AC-005
+    description: |
+      - test_duplicate_detector_integration.pyの作成
+      - advise.pyとの統合テスト
+      - 設定ファイルの読み込みテスト
+      - エンドツーエンドテスト
+  
+  - id: T6
+    title: プロパティテストの作成
+    status: done
+    priority: medium
+    estimated-hours: 0.5
+    depends-on:
+      - T1
+    validates:
+      - AC-001
+      - AC-002
+    description: |
+      - test_duplicate_detector_properties.pyの作成
+      - プロセスカウントの正確性テスト（P1）
+      - 閾値判定の正確性テスト（P2）
+      - スクリプト名抽出の正確性テスト（P3）
+  
+  - id: T7
+    title: ドキュメントの更新
+    status: done
+    priority: medium
+    estimated-hours: 0.3
+    depends-on:
+      - T2
+    validates:
+      - AC-003
+    description: |
+      - README.mdの更新（機能説明）
+      - CHANGELOG.mdの更新
+      - 設定ファイルサンプルのコメント追加
+  
+  - id: T8
+    title: 品質確認と最終テスト
+    status: done
+    priority: high
+    estimated-hours: 0.4
+    depends-on:
+      - T3
+      - T5
+      - T6
+    validates:
+      - AC-005
+    description: |
+      - 全テストの実行とパス確認
+      - カバレッジの確認（90%以上）
+      - 既存機能への影響確認
+      - 手動動作確認

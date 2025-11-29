@@ -115,3 +115,12 @@ contextual_advice:  # コンテキストに応じた具体的アドバイス設�
       keywords: [mysql, postgres, mongod, redis]
       advice: "データベースが高負荷かも？クエリやインデックスを確認してみてください"
       detailed_advice: "確認方法: データベースのスロークエリログを確認"
+
+duplicate_process_detection:  # 多重実行プロセス検出設定
+  enabled: true  # 多重実行プロセスの検出を有効にする場合は true
+  threshold: 3   # 警告閾値（この数以上で警告）デフォルト: 3
+  target_extensions:  # 対象とするスクリプト拡張子
+    - .py
+    - .sh
+    - .rb
+    - .pl

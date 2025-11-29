@@ -6,6 +6,42 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.20.0] - 2025-11-29
+
+### Added
+
+- **多重実行プロセスの検出機能**
+  - cronなどによる同一スクリプトの多重起動を検出
+  - `komon advise`で警告を表示
+  - 設定ファイルで検出閾値を調整可能（デフォルト: 3個以上）
+  - スクリプト名、実行数、PIDリストを表示
+  - cron間隔の見直しやロックファイル使用を推奨
+
+- **duplicate_detector.pyモジュールの追加**
+  - `detect_duplicate_processes()`関数で多重実行を検出
+  - `_extract_script_name()`関数でスクリプト名を抽出
+  - 対象拡張子: .py, .sh, .rb, .pl
+  - エラーハンドリングとログ出力を実装
+
+- **advise.pyの拡張**
+  - `advise_duplicate_processes()`関数を追加
+  - 多重実行プロセスの警告表示機能
+  - 設定ファイルから閾値と有効/無効を読み込み
+
+- **設定ファイルの拡張**
+  - `duplicate_process_detection`セクションを追加
+  - `enabled`: 機能の有効/無効（デフォルト: true）
+  - `threshold`: 警告閾値（デフォルト: 3）
+  - `target_extensions`: 対象拡張子リスト
+
+### Developer Improvements
+
+- **テストの追加**
+  - ユニットテスト: 15件
+  - 統合テスト: 7件
+  - プロパティテスト: 5件
+  - 全379テストがパス、カバレッジ93%を維持
+
 ## [1.19.0] - 2025-11-28
 
 ### Added

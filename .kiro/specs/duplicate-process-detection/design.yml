@@ -1,0 +1,31 @@
+metadata:
+  title: 多重実行プロセスの検出 - 設計書
+  feature: duplicate-process-detection
+  status: draft
+  created: 2025-11-29
+  updated: 2025-11-29
+
+correctness-properties:
+  - id: P1
+    title: プロセスカウントの正確性
+    type: invariant
+    description: '*任意の*プロセスリストについて、同一スクリプトのプロセス数は実際の実行数と一致すること'
+    validates:
+      - AC-001
+    test-strategy: property-based
+  
+  - id: P2
+    title: 閾値判定の正確性
+    type: invariant
+    description: '*任意の*閾値Tとプロセス数Nについて、N >= Tの場合のみ警告対象となること'
+    validates:
+      - AC-002
+    test-strategy: property-based
+  
+  - id: P3
+    title: スクリプト名抽出の正確性
+    type: invariant
+    description: '*任意の*コマンドライン形式について、対象拡張子(.py, .sh等)を持つスクリプト名が正しく抽出されること'
+    validates:
+      - AC-001
+    test-strategy: property-based
