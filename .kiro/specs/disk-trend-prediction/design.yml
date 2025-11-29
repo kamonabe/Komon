@@ -66,3 +66,57 @@ correctness-properties:
   validates:
   - AC-005.5
   test-strategy: property-based
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"
+    rationale: |
+      ディスク使用量予測機能は短命なCLI/バッチツールとして実行される。
+      継続的な接続維持や大量トラフィックを扱わないため、
+      サーキットブレイカー機構は不要。
+      
+      サーキットブレイカーが必要となるケースは、Komonの呼び出し元
+      （ジョブスケジューラ、監視システム等）で実装する方が
+      責務の分離として適切。
+    delegated-to: "upstream-system"
+    future-notes: |
+      将来Komonがデーモンモードを持つ場合は、サーキットブレイカー設計を
+      再検討する必要がある。
+    
+  notification-throttling:
+    considered: true
+    decision: "adopted"
+    rationale: |
+      ディスク使用量の急激な変化が連続して検出される場合、
+      通知スパムを防ぐため一時的に通知を抑制する。
+      
+      ただし、v1.16.0では基本実装のみで、将来のバージョンで
+      通知抑制機能を追加する。
+    implementation:
+      - "同じ警告が10回/3分以上 → 3分間通知停止（将来実装）"
+      - "停止中も内部ログには記録"
+      - "停止解除時に「通知を再開しました」メッセージ"
+      
+  baseline-reset:
+    considered: true
+    decision: "not-applicable"
+    rationale: |
+      ディスク使用量予測機能はbaselineを使用しないため、
+      baseline自動リセット機能は不要。
+      
+      この機能は、ログ異常検知など他のKomon機能で検討すべき。
+    implementation: []
+    
+  other-considerations:
+    - consideration: "データ欠損時のフォールバック"
+      decision: "adopted"
+      rationale: |
+        7日分のデータが不足している場合でも、利用可能なデータで
+        予測を実行する。最低2日分のデータがあれば予測可能。
+    - consideration: "異常値の除外"
+      decision: "not-adopted"
+      rationale: |
+        v1.16.0では異常値の自動除外は実装しない。
+        ユーザーが手動でデータを確認・修正することを想定。
+        将来のバージョンで検討。

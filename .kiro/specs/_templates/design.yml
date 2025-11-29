@@ -149,3 +149,32 @@ security:
   considerations:
     - "環境変数から認証情報を読み込む"
     - "ログに機密情報を出力しない"
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"  # adopted, not-adopted, delegated
+    rationale: |
+      理由を記述
+    delegated-to: null  # upstream-system, monitoring-platform, etc.
+    future-notes: |
+      将来の検討事項
+    
+  notification-throttling:
+    considered: true
+    decision: "not-adopted"  # adopted, not-adopted
+    rationale: |
+      理由を記述
+    implementation: []
+      
+  baseline-reset:
+    considered: true
+    decision: "not-adopted"  # adopted, not-adopted
+    rationale: |
+      理由を記述
+    implementation: []
+    
+  other-considerations:
+    - consideration: "その他のレジリエンス要素"
+      decision: "not-adopted"
+      rationale: "理由"
