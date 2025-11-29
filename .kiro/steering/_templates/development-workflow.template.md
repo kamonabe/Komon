@@ -178,7 +178,51 @@ git tag v1.X.X
 git push origin {{git.main_branch}} --tags
 ```
 
-### 9. GitHub Releases用の情報を準備
+### 9. 🚨 完了タスクのアーカイブ（必須作業）
+
+**タイミング**: タグ作成直後
+
+**Kiroの必須作業**:
+
+```markdown
+📋 タスクアーカイブ作業（必須）
+
+新バージョン v1.X.X をリリースしました。
+前バージョンの完了タスクをアーカイブします。
+
+1. 前バージョンの完了タスクを特定
+   - implementation-tasks.mdで前バージョンを検索
+   - 例: 「完了日: YYYY-MM-DD (v1.Y.Z)」
+
+2. completed-tasks.mdに移動
+   - v1.Y.Zセクションを作成（バージョン降順で配置）
+   - タスク全体をコピー＆ペースト
+   - implementation-tasks.mdから削除
+
+3. 更新履歴を記録
+   - 両ファイルの「更新履歴」セクションに記録
+   - 日付とタスク番号を明記
+
+この作業を完了してから、次のステップに進みます。
+```
+
+**具体例**:
+```
+v1.19.0をリリース（タグ作成）
+  ↓
+v1.18.0の完了タスク（TASK-003）をcompleted-tasks.mdに移動
+  ↓
+implementation-tasks.mdには直近バージョン（v1.19.0）のみ残る
+```
+
+**Kiroのチェックポイント**:
+- [ ] 前バージョンの完了タスクを特定した
+- [ ] completed-tasks.mdに移動した
+- [ ] implementation-tasks.mdから削除した
+- [ ] 両ファイルの更新履歴を記録した
+- [ ] 上記が全て完了してから次のステップに進んだ
+
+### 10. GitHub Releases用の情報を準備
 
 **Kiroが自動実行**：
 

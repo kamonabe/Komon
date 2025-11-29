@@ -36,6 +36,52 @@ description: Semantic Versioningに基づくバージョン番号の決定ルー
 2. **ルール読み込み**: 該当するルールを優先度順に読み込み
 3. **適用**: ルールに従って処理を実行
 
+### 🚨 Kiroへの重要な指示：ステアリングルール改修時
+
+**ステアリングルールを改修する必要がある場合、必ずテンプレートを修正してください。**
+
+#### 改修が必要なケース
+- ルールに曖昧な部分を発見した
+- 新しいベストプラクティスを追加したい
+- 既存ルールに不足がある
+
+#### 必須手順
+1. **テンプレートを修正**
+   - `.kiro/steering/_templates/XXX.template.md` を編集
+   - 生成済みルール（`.kiro/steering/XXX.md`）は直接編集しない
+
+2. **ルールを再生成**
+   ```bash
+   python scripts/generate_steering_rules.py
+   ```
+
+3. **差分を確認**
+   ```bash
+   git diff .kiro/steering/*.md
+   ```
+
+4. **両方をコミット**
+   - テンプレート（`_templates/`）
+   - 生成済みルール（`.kiro/steering/*.md`）
+
+#### ❌ やってはいけないこと
+- 生成済みルールを直接編集（次回の生成で消える）
+- テンプレートを修正せずにルールだけ修正
+- テンプレートだけ修正して再生成を忘れる
+
+#### ✅ 正しいフロー
+```
+問題発見
+  ↓
+テンプレート修正（_templates/XXX.template.md）
+  ↓
+再生成（python scripts/generate_steering_rules.py）
+  ↓
+差分確認（git diff）
+  ↓
+両方コミット（テンプレート + 生成済みルール）
+```
+
 ---
 
 ## 👤 人間向けの情報
@@ -143,6 +189,30 @@ Kiroの役割:
 
 ## 📝 ルールの更新方法
 
+### 🚨 重要：ステアリングルール改修の原則
+
+**ステアリングルールを改修する場合、必ずテンプレートを修正してください。**
+
+#### ❌ 間違った方法
+```bash
+# 生成済みのルールを直接編集（次回の生成で消える！）
+vim .kiro/steering/task-management.md
+```
+
+#### ✅ 正しい方法
+```bash
+# テンプレートを編集
+vim .kiro/steering/_templates/task-management.template.md
+
+# ルールを再生成
+python scripts/generate_steering_rules.py
+```
+
+**理由**:
+- 生成済みのルールは`generate_steering_rules.py`で上書きされる
+- テンプレートを修正しないと、次回の生成で改善が消える
+- テンプレートが「唯一の真実の情報源（Single Source of Truth）」
+
 ### 1. Komonプロジェクトでルールを更新する場合
 
 #### ステップ1: テンプレートを編集
@@ -150,6 +220,12 @@ Kiroの役割:
 ```bash
 # 例: バージョニングルールを修正
 vim .kiro/steering/_templates/versioning-rules.template.md
+
+# 例: タスク管理ルールを修正
+vim .kiro/steering/_templates/task-management.template.md
+
+# 例: 開発ワークフローを修正
+vim .kiro/steering/_templates/development-workflow.template.md
 ```
 
 #### ステップ2: ルールを再生成
@@ -164,12 +240,20 @@ python scripts/generate_steering_rules.py
 git diff .kiro/steering/*.md
 ```
 
+**確認ポイント**:
+- [ ] テンプレート変数が正しく展開されているか
+- [ ] プロジェクト固有の情報が正しく反映されているか
+- [ ] 意図しない変更が含まれていないか
+
 #### ステップ4: コミット
 
 ```bash
-git add .kiro/steering/
+git add .kiro/steering/_templates/
+git add .kiro/steering/*.md
 git commit -m "docs: ステアリングルールを更新"
 ```
+
+**重要**: テンプレートと生成済みルールの両方をコミットしてください。
 
 ### 1-2. タスクテンプレートを更新する場合
 
