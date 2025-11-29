@@ -3,9 +3,9 @@
 Spec間の一貫性をチェックするスクリプト
 
 検証項目:
-1. requirements.md, design.md, tasks.mdのfeature名が一致
-2. design.mdのプロパティがrequirements.mdの受入基準を参照
-3. tasks.mdのタスクがrequirements.mdの受入基準を参照
+1. requirements.yml, design.yml, tasks.ymlのfeature名が一致
+2. design.ymlのプロパティがrequirements.ymlの受入基準を参照
+3. tasks.ymlのタスクがrequirements.ymlの受入基準を参照
 4. 全ての受入基準がタスクでカバーされている
 """
 
@@ -47,10 +47,10 @@ class SpecConsistencyChecker:
     
     def _check_feature(self, feature_dir: Path):
         """1つの機能のSpec一貫性をチェック"""
-        # 各ファイルの存在確認
-        req_file = feature_dir / 'requirements.md'
-        design_file = feature_dir / 'design.md'
-        tasks_file = feature_dir / 'tasks.md'
+        # 各ファイルの存在確認（.yml形式）
+        req_file = feature_dir / 'requirements.yml'
+        design_file = feature_dir / 'design.yml'
+        tasks_file = feature_dir / 'tasks.yml'
         
         files_exist = {
             'requirements': req_file.exists(),
@@ -61,7 +61,7 @@ class SpecConsistencyChecker:
         if not all(files_exist.values()):
             missing = [k for k, v in files_exist.items() if not v]
             self.warnings.append(
-                f"{feature_dir.name}: {', '.join(missing)}.md が存在しません"
+                f"{feature_dir.name}: {', '.join(missing)}.yml が存在しません"
             )
             return
         
@@ -98,12 +98,12 @@ class SpecConsistencyChecker:
             )
     
     def _extract_acceptance_criteria(self, req_file: Path) -> Set[str]:
-        """受入基準のIDを抽出"""
+        """受入基準のIDを抽出（YAML形式）"""
         with open(req_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # AC-001, AC-002 などを抽出
-        ac_pattern = r'\[AC-(\d+)\]'
+        # YAMLファイルから "id: AC-001" または "id: 'AC-001'" または 'id: "AC-001"' 形式を抽出
+        ac_pattern = r'id:\s*["\']?AC-(\d+)["\']?'
         ac_ids = set(re.findall(ac_pattern, content))
         
         return ac_ids
@@ -113,9 +113,10 @@ class SpecConsistencyChecker:
         with open(design_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # プロパティセクションを抽出
+        # YAMLファイルからプロパティセクションを抽出
+        # プロパティは "validates:" フィールドでAC-XXXを参照
         property_sections = re.findall(
-            r'### プロパティ\d+:.*?\n\*\*検証対象:.*?$',
+            r'validates:.*?$',
             content,
             re.DOTALL | re.MULTILINE
         )
@@ -133,7 +134,7 @@ class SpecConsistencyChecker:
         unreferenced = acceptance_criteria - referenced_acs
         if unreferenced:
             self.warnings.append(
-                f"{feature_dir.name}/design.md: "
+                f"{feature_dir.name}/design.yml: "
                 f"以下の受入基準がプロパティで参照されていません: "
                 f"{', '.join(sorted(f'AC-{ac}' for ac in unreferenced))}"
             )
@@ -150,7 +151,7 @@ class SpecConsistencyChecker:
         uncovered = acceptance_criteria - referenced_acs
         if uncovered:
             self.warnings.append(
-                f"{feature_dir.name}/tasks.md: "
+                f"{feature_dir.name}/tasks.yml: "
                 f"以下の受入基準がタスクでカバーされていません: "
                 f"{', '.join(sorted(f'AC-{ac}' for ac in uncovered))}"
             )
@@ -159,7 +160,7 @@ class SpecConsistencyChecker:
         invalid_refs = referenced_acs - acceptance_criteria
         if invalid_refs:
             self.errors.append(
-                f"{feature_dir.name}/tasks.md: "
+                f"{feature_dir.name}/tasks.yml: "
                 f"存在しない受入基準を参照しています: "
                 f"{', '.join(sorted(f'AC-{ac}' for ac in invalid_refs))}"
             )
