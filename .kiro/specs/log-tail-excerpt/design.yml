@@ -1,326 +1,181 @@
-# 設計書: ログ急増時の末尾抜粋表示
-
 metadata:
-  title: "ログ急増時の末尾抜粋表示"
-  feature: "log-tail-excerpt"
-  status: "draft"
-  created: "2025-11-30"
-  updated: "2025-11-30"
+  title: ログ急増時の末尾抜粋表示 - 設計書
+  feature: log-tail-excerpt
+  status: draft
+  created: 2025-11-30
+  updated: 2025-11-30
   version: "1.0.0"
   last_validated: null
   validation_passed: null
 
 architecture:
-  overview: |
-    log_watcher.pyがログ急増を検知した際、新しいget_log_tail()関数を呼び出して
-    ログファイルの末尾N行を取得し、通知メッセージに統合する。
-    ファイル読み込みは効率的に行い、巨大なログファイルでもメモリを圧迫しない。
+  modules:
+    - name: log_tail_extractor.py
+      location: src/komon/
+      status: new
+      description: ログ末尾抽出モジュール
+    
+    - name: main_log_monitor.py
+      location: scripts/
+      status: modified
+      description: 末尾抜粋機能を統合
+    
+    - name: settings.yml.sample
+      location: config/
+      status: modified
+      description: 設定項目を追加
   
-  components:
-    - name: "log_watcher"
-      type: "module"
-      responsibility: "ログ監視、急増検知、末尾取得、通知メッセージ生成"
-      dependencies: ["logging"]
-    
-    - name: "notification"
-      type: "module"
-      responsibility: "Slack通知の送信"
-      dependencies: ["requests"]
-  
-  data-flow:
-    - from: "log_watcher.check_log_growth()"
-      to: "log_watcher.get_log_tail()"
-      description: "ログ急増検知時に末尾を取得"
-    
-    - from: "log_watcher.get_log_tail()"
-      to: "log_watcher._format_log_excerpt()"
-      description: "取得した末尾をコードブロック形式に整形"
-    
-    - from: "log_watcher._format_log_excerpt()"
-      to: "notification.send_slack_alert()"
-      description: "整形されたメッセージをSlack通知"
-
-modules:
-  - name: "log_watcher"
-    path: "src/komon/log_watcher.py"
-    description: |
-      既存のlog_watcher.pyを拡張し、ログ末尾取得機能を追加
-    
-    functions:
-      - name: "get_log_tail"
-        parameters:
-          - name: "log_path"
-            type: "str"
-            description: "ログファイルのパス"
-          - name: "lines"
-            type: "int"
-            description: "取得する行数"
-        returns:
-          type: "list[str]"
-          description: "ログの末尾行のリスト"
-        raises:
-          - "FileNotFoundError: ログファイルが存在しない（スキップ）"
-          - "PermissionError: アクセス権限がない（スキップ）"
-      
-      - name: "_format_log_excerpt"
-        parameters:
-          - name: "log_lines"
-            type: "list[str]"
-            description: "ログ行のリスト"
-          - name: "log_path"
-            type: "str"
-            description: "ログファイルのパス"
-        returns:
-          type: "str"
-          description: "コードブロック形式の文字列"
-        raises: []
-      
-      - name: "check_log_growth"
-        parameters:
-          - name: "log_path"
-            type: "str"
-            description: "ログファイルのパス"
-          - name: "config"
-            type: "dict"
-            description: "設定ファイルの内容"
-        returns:
-          type: "dict"
-          description: "急増情報と末尾抜粋を含む辞書"
-        raises: []
+  data-flow: |
+    1. LogWatcher: ログ差分を検出
+    2. check_log_anomaly: 異常判定
+    3. extract_log_tail: ログ末尾を抽出（新規）
+    4. format_alert_message: 通知メッセージを作成（変更）
+    5. send_slack_alert / send_email_alert: 通知送信
 
 correctness-properties:
-  - id: "P1"
-    title: "取得行数の正確性"
-    type: "invariant"
-    description: |
-      任意のログファイルにおいて、取得した行数は指定したlines以下である。
-      ファイルの総行数がlines未満の場合は、全行を取得する。
-    validates: ["AC-001"]
-    test-strategy: "property-based"
+  - id: P1
+    title: 行数カウントの正確性
+    type: invariant
+    description: '*任意の*行数のログに対して、抽出結果の行数は指定した行数と一致する（ファイルの行数が少ない場合を除く）'
+    validates:
+      - AC-001
+    test-strategy: property-based
     implementation:
-      framework: "hypothesis"
-      strategy: "st.integers(min_value=1, max_value=50)"
-      assertion: "len(result) <= lines"
+      framework: hypothesis
+      strategy: st.lists(st.text(), min_size=1, max_size=100)
+      assertion: len(result) == min(requested_lines, len(lines))
   
-  - id: "P2"
-    title: "末尾取得の冪等性"
-    type: "idempotence"
-    description: |
-      同じログファイルに対して複数回get_log_tail()を実行しても、
-      ファイルが変更されていない限り、同じ結果が返される。
-    validates: ["AC-001"]
-    test-strategy: "property-based"
+  - id: P2
+    title: 末尾からの順序性
+    type: invariant
+    description: '*任意の*ログファイルについて、抽出された行はファイルの末尾から指定行数分を古い順に並べたものである'
+    validates:
+      - AC-001
+    test-strategy: property-based
     implementation:
-      framework: "hypothesis"
-      strategy: "st.integers(min_value=1, max_value=20)"
-      assertion: "result1 == result2"
+      framework: hypothesis
+      strategy: st.lists(st.text(min_size=1), min_size=10, max_size=100)
+      assertion: result == lines[-requested_lines:]
   
-  - id: "P3"
-    title: "メッセージ整形の一貫性"
-    type: "invariant"
-    description: |
-      任意のログ行リストに対して、_format_log_excerpt()は
-      常にコードブロック形式（```で囲まれた）の文字列を返す。
-    validates: ["AC-002"]
-    test-strategy: "property-based"
+  - id: P3
+    title: 長い行の切り詰め
+    type: invariant
+    description: '*任意の*ログ行について、1行が最大文字数を超える場合、適切に切り詰められる'
+    validates:
+      - AC-004
+    test-strategy: property-based
     implementation:
-      framework: "hypothesis"
-      strategy: "st.lists(st.text(), min_size=1, max_size=10)"
-      assertion: "result.startswith('```') and result.endswith('```')"
+      framework: hypothesis
+      strategy: st.lists(st.text(min_size=1, max_size=1000), min_size=1, max_size=10)
+      assertion: all(len(line) <= max_length + len(" ... (truncated)") for line in result)
 
-data-structures:
-  - name: "LogTailResult"
-    type: "dict"
-    schema:
-      log_path:
-        type: "str"
-        required: true
-        description: "ログファイルのパス"
-      tail_lines:
-        type: "list[str]"
-        required: true
-        description: "末尾行のリスト"
-      formatted_excerpt:
-        type: "str"
-        required: true
-        description: "コードブロック形式の抜粋"
-      line_count:
-        type: "int"
-        required: true
-        description: "取得した行数"
-
-error-handling:
-  - error: "FileNotFoundError"
-    handling: "continue"
-    message: "ログファイルが存在しない"
-    log-level: "warning"
+detailed-design:
+  log-tail-extractor:
+    file: src/komon/log_tail_extractor.py
+    functions:
+      - name: extract_log_tail
+        signature: "extract_log_tail(log_path: str, lines: int = 10, max_line_length: int = 500) -> list[str]"
+        description: ログファイルの末尾N行を抽出
+        algorithm: |
+          1. ファイルを末尾から読み込む（seek(-1, 2)）
+          2. 改行を検出しながら逆順に読む
+          3. 指定行数に達したら停止
+          4. 結果を反転して返す（古い順に）
+        performance:
+          - 大きなファイルでも高速（末尾のみ読み込む）
+          - バッファサイズ: 8KB
+          - 最大読み込みサイズ: 100KB（安全装置）
+        error-handling:
+          - FileNotFoundError: ファイルが存在しない
+          - PermissionError: 読み込み権限がない
+          - 空ファイル: 空リストを返す
   
-  - error: "PermissionError"
-    handling: "continue"
-    message: "ログファイルへのアクセス権限がない"
-    log-level: "warning"
+  message-formatting:
+    file: scripts/main_log_monitor.py
+    functions:
+      - name: format_alert_with_tail
+        signature: "format_alert_with_tail(alert: str, log_path: str, tail_lines: list[str]) -> str"
+        description: 警告メッセージに末尾抜粋を追加
+        format: |
+          ⚠️ {alert}
+          
+          📄 ログファイル: {log_path}
+          📋 末尾 {len(tail_lines)} 行:
+          ```
+          {tail_lines}
+          ```
   
-  - error: "UnicodeDecodeError"
-    handling: "continue"
-    message: "ログファイルのエンコーディングエラー"
-    log-level: "warning"
-  
-  - error: "IOError"
-    handling: "continue"
-    message: "ログファイルの読み込みエラー"
-    log-level: "error"
-
-configuration:
-  - name: "log_tail_excerpt.enabled"
-    type: "bool"
-    required: false
-    default: true
-    description: "機能の有効/無効"
-    validation:
-      - "bool型"
-  
-  - name: "log_tail_excerpt.tail_lines"
-    type: "int"
-    required: false
-    default: 10
-    description: "表示する行数"
-    validation:
-      - "0-50の範囲"
-      - "0の場合は抜粋表示なし"
-  
-  - name: "log_tail_excerpt.max_line_length"
-    type: "int"
-    required: false
-    default: 200
-    description: "1行の最大文字数（超過時は切り詰め）"
-    validation:
-      - "50-500の範囲"
-
-dependencies:
-  internal:
-    - "src.komon.log_watcher"
-    - "src.komon.notification"
-  external: []
-
-testing-strategy:
-  property-tests:
-    - property: "P1"
-      file: "tests/test_log_tail_excerpt_properties.py"
-      function: "test_property_tail_line_count"
-    
-    - property: "P2"
-      file: "tests/test_log_tail_excerpt_properties.py"
-      function: "test_property_tail_idempotency"
-    
-    - property: "P3"
-      file: "tests/test_log_tail_excerpt_properties.py"
-      function: "test_property_format_consistency"
-  
-  integration-tests:
-    - validates: ["AC-001", "AC-002"]
-      file: "tests/test_log_tail_excerpt_integration.py"
-      function: "test_end_to_end_log_tail_excerpt"
-    
-    - validates: ["AC-003"]
-      file: "tests/test_log_tail_excerpt_integration.py"
-      function: "test_config_tail_lines"
-    
-    - validates: ["AC-004"]
-      file: "tests/test_log_tail_excerpt_integration.py"
-      function: "test_integration_with_log_watcher"
-    
-    - validates: ["AC-004"]
-      file: "tests/test_log_tail_excerpt_integration.py"
-      function: "test_backward_compatibility"
-    
-    - validates: ["AC-005"]
-      file: "tests/test_log_tail_excerpt_integration.py"
-      function: "test_performance_impact"
-  
-  unit-tests:
-    - validates: ["AC-001"]
-      file: "tests/test_log_tail_excerpt_unit.py"
-      function: "test_get_log_tail_normal"
-    
-    - validates: ["AC-001"]
-      file: "tests/test_log_tail_excerpt_unit.py"
-      function: "test_get_log_tail_short_file"
-    
-    - validates: ["AC-001"]
-      file: "tests/test_log_tail_excerpt_unit.py"
-      function: "test_get_log_tail_empty_file"
-    
-    - validates: ["AC-002"]
-      file: "tests/test_log_tail_excerpt_unit.py"
-      function: "test_format_log_excerpt"
-    
-    - validates: ["AC-001"]
-      file: "tests/test_log_tail_excerpt_unit.py"
-      function: "test_get_log_tail_file_not_found"
-    
-    - validates: ["AC-001"]
-      file: "tests/test_log_tail_excerpt_unit.py"
-      function: "test_get_log_tail_permission_error"
-    
-    - validates: ["AC-002"]
-      file: "tests/test_log_tail_excerpt_unit.py"
-      function: "test_format_log_excerpt_long_lines"
-
-performance:
-  targets:
-    - metric: "log-tail-retrieval"
-      target: "< 50ms"
-      measurement: "time.time()"
-    
-    - metric: "overall-impact"
-      target: "< 5% increase"
-      measurement: "比較測定"
-
-security:
-  considerations:
-    - "ログファイルに機密情報が含まれる可能性がある"
-    - "通知メッセージに機密情報が含まれる可能性を警告"
-    - "将来的にマスキング機能を検討"
-    - "アクセス権限がないファイルはスキップ"
+  configuration:
+    file: config/settings.yml.sample
+    new-settings:
+      log_analysis:
+        tail_lines: 10
+        max_line_length: 500
 
 resilience:
   circuit-breaker:
     considered: true
-    decision: "not-adopted"
-    rationale: |
-      Komonは短命なCLI/バッチツールであり、継続的な接続維持や
-      大量トラフィックを扱わない。サーキットブレイカーが必要となる
-      ケースは、Komonの呼び出し元で実装する方が適切。
-    delegated-to: "upstream-system"
-    future-notes: |
-      将来Komonがデーモンモードを持つ場合は、
-      サーキットブレイカー設計を再検討する必要がある。
+    decision: not-adopted
+    rationale: Komonは短命なCLI/バッチツールであり、継続的な接続維持や大量トラフィックを扱わない
   
   notification-throttling:
     considered: true
-    decision: "not-applicable"
-    rationale: |
-      この機能は既存のログ監視機能の拡張であり、
-      通知スパム防止は既存の仕組みで対応済み。
-    implementation: []
-  
-  baseline-reset:
-    considered: true
-    decision: "not-applicable"
-    rationale: |
-      この機能はbaselineを使用しないため、
-      baseline自動リセット機能は不要。
-    implementation: []
+    decision: delegated
+    rationale: 既存のthrottle機能で対応済み
   
   other-considerations:
-    - consideration: "巨大なログファイルの効率的な読み込み"
-      decision: "adopted"
-      rationale: |
-        末尾のみを効率的に読み込むため、ファイルの最後から
-        逆順に読み込む方式を採用。メモリ使用量を最小限に抑える。
+    - consideration: データ欠損時のフォールバック
+      decision: adopted
+      rationale: ログファイルが読めない場合でも、通知は継続する
+      implementation:
+        - 末尾抜粋なしで通知を送信
+        - エラーをログに記録
     
-    - consideration: "エンコーディングエラーへの対応"
-      decision: "adopted"
-      rationale: |
-        ログファイルのエンコーディングが不正な場合でも
-        処理を継続し、エラーをログに記録する。
+    - consideration: 異常値の除外
+      decision: not-applicable
+      rationale: ログ内容は加工せず、そのまま表示する
+
+test-strategy:
+  property-tests:
+    count: 3
+    file: tests/test_log_tail_extractor_properties.py
+    tests:
+      - Property 1: 行数カウントの正確性
+      - Property 2: 末尾からの順序性
+      - Property 3: 長い行の切り詰め
+  
+  integration-tests:
+    count: 5
+    file: tests/test_log_tail_extractor_integration.py
+    tests:
+      - エンドツーエンドの動作確認
+      - 設定ファイルの読み込み
+      - 通知メッセージのフォーマット
+      - エラーハンドリング
+      - 大きなファイルのパフォーマンス
+  
+  unit-tests:
+    count: 8
+    file: tests/test_log_tail_extractor_unit.py
+    tests:
+      - extract_log_tail: 正常系
+      - extract_log_tail: ファイルが存在しない
+      - extract_log_tail: 読み込み権限がない
+      - extract_log_tail: ファイルが空
+      - extract_log_tail: 行数が少ない
+      - format_alert_with_tail: 正常系
+      - format_alert_with_tail: 末尾抜粋が空
+      - 設定の読み込み
+
+performance-targets:
+  - metric: ログファイルの末尾読み込み
+    target: 1秒以内
+  - metric: 大きなファイル（1GB以上）
+    target: 高速動作
+  - metric: メモリ使用量
+    target: 1MB以内（末尾のみ読み込むため）
+
+security-considerations:
+  - ログに機密情報が含まれる可能性
+  - 設定で末尾抜粋を無効化可能（tail_lines: 0）
+  - 通知先のアクセス制御はユーザーの責任

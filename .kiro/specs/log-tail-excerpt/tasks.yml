@@ -1,277 +1,190 @@
-# タスクリスト: ログ急増時の末尾抜粋表示
-
 metadata:
-  title: "ログ急増時の末尾抜粋表示"
-  feature: "log-tail-excerpt"
-  status: "pending"
-  created: "2025-11-30"
-  updated: "2025-11-30"
-  completed: null
+  title: ログ急増時の末尾抜粋表示 - 実装タスク
+  feature: log-tail-excerpt
+  status: completed
+  created: 2025-11-30
+  updated: 2025-11-30
   version: "1.0.0"
   last_validated: null
   validation_passed: null
 
 tasks:
-  - id: "T1"
-    title: "Extend log_watcher.py"
-    status: "pending"
-    priority: "high"
-    estimated-hours: 1
-    actual-hours: null
+  - id: T1
+    title: ログ末尾抽出モジュールの作成
+    status: done
+    priority: high
+    estimated-hours: 1.0
     depends-on: []
-    validates: ["AC-001", "AC-002"]
+    validates:
+      - AC-001
+      - AC-004
+      - AC-005
     description: |
-      log_watcher.pyを拡張し、
-      ログ末尾取得機能とメッセージ整形機能を実装する
-    subtasks:
-      - "get_log_tail()関数を実装"
-      - "_format_log_excerpt()関数を実装"
-      - "check_log_growth()を拡張して末尾取得を統合"
-      - "エラーハンドリングを追加"
-      - "ロギングを追加"
-    files:
-      - path: "src/komon/log_watcher.py"
-        action: "update"
-        lines: 80
-    tests: []
+      - ファイル: src/komon/log_tail_extractor.py
+      - 関数: extract_log_tail(log_path, lines, max_line_length)
+      - ファイルを末尾から効率的に読み込む
+      - 指定行数を抽出
+      - 長い行を切り詰める
+      - エラーハンドリング（FileNotFoundError, PermissionError）
   
-  - id: "T2"
-    title: "Extend configuration files"
-    status: "pending"
-    priority: "high"
+  - id: T2
+    title: 通知メッセージのフォーマット関数を追加
+    status: done
+    priority: high
     estimated-hours: 0.5
-    actual-hours: null
+    depends-on:
+      - T1
+    validates:
+      - AC-002
+    description: |
+      - ファイル: scripts/main_log_monitor.py
+      - 関数: format_alert_with_tail(alert, log_path, tail_lines)
+      - 警告メッセージに末尾抜粋を追加
+      - コードブロック形式で整形
+      - ログファイルパスを明記
+  
+  - id: T3
+    title: main_log_monitor.pyの統合
+    status: done
+    priority: high
+    estimated-hours: 0.5
+    depends-on:
+      - T1
+      - T2
+    validates:
+      - AC-001
+      - AC-002
+      - AC-003
+      - AC-005
+    description: |
+      - ファイル: scripts/main_log_monitor.py
+      - 設定からtail_linesを読み込む
+      - ログ急増検出時に末尾を抽出
+      - フォーマット関数を呼び出し
+      - エラー時も通知を継続
+  
+  - id: T4
+    title: 設定ファイルの拡張
+    status: done
+    priority: medium
+    estimated-hours: 0.2
     depends-on: []
-    validates: ["AC-003"]
+    validates:
+      - AC-003
     description: |
-      設定ファイルにlog_tail_excerptセクションを追加し、
-      デフォルト値を設定する
-    subtasks:
-      - "config/settings.yml.sampleにlog_tail_excerptセクションを追加"
-      - "settings.ymlにlog_tail_excerptセクションを追加"
-      - "デフォルト値を設定（tail_lines=10）"
-    files:
-      - path: "config/settings.yml.sample"
-        action: "update"
-        lines: 15
-      - path: "settings.yml"
-        action: "update"
-        lines: 15
-    tests: []
+      - ファイル: config/settings.yml.sample
+      - log_analysis.tail_lines を追加（デフォルト: 10）
+      - log_analysis.max_line_length を追加（デフォルト: 500）
+      - コメントで説明を追加
   
-  - id: "T3"
-    title: "Write property tests"
-    status: "pending"
-    priority: "high"
+  - id: T5
+    title: プロパティテストの作成
+    status: done
+    priority: high
     estimated-hours: 0.5
-    actual-hours: null
-    depends-on: ["T1"]
-    validates: ["AC-001", "AC-002"]
+    depends-on:
+      - T1
+    validates:
+      - AC-001
+      - AC-004
     description: |
-      プロパティベーステストを作成し、
-      3つの正確性プロパティを検証する
-    subtasks:
-      - "tests/test_log_tail_excerpt_properties.pyを作成"
-      - "Property 1: 取得行数の正確性"
-      - "Property 2: 末尾取得の冪等性"
-      - "Property 3: メッセージ整形の一貫性"
-    files:
-      - path: "tests/test_log_tail_excerpt_properties.py"
-        action: "create"
-        lines: 80
-    tests:
-      - "tests/test_log_tail_excerpt_properties.py"
+      - ファイル: tests/test_log_tail_extractor_properties.py
+      - Property 1: 行数カウントの正確性
+      - Property 2: 末尾からの順序性
+      - Property 3: 長い行の切り詰め
   
-  - id: "T4"
-    title: "Write integration tests"
-    status: "pending"
-    priority: "high"
+  - id: T6
+    title: 統合テストの作成
+    status: done
+    priority: high
     estimated-hours: 0.5
-    actual-hours: null
-    depends-on: ["T1", "T2"]
-    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    depends-on:
+      - T1
+      - T2
+      - T3
+    validates:
+      - AC-001
+      - AC-002
+      - AC-003
+      - AC-005
     description: |
-      統合テストを作成し、
-      エンドツーエンドの動作とlog_watcher.pyとの統合を検証する
-    subtasks:
-      - "tests/test_log_tail_excerpt_integration.pyを作成"
-      - "test_end_to_end_log_tail_excerpt"
-      - "test_config_tail_lines"
-      - "test_integration_with_log_watcher"
-      - "test_backward_compatibility"
-      - "test_performance_impact"
-    files:
-      - path: "tests/test_log_tail_excerpt_integration.py"
-        action: "create"
-        lines: 120
-    tests:
-      - "tests/test_log_tail_excerpt_integration.py"
+      - ファイル: tests/test_log_tail_extractor_integration.py
+      - エンドツーエンドの動作確認
+      - 設定ファイルの読み込み
+      - 通知メッセージのフォーマット
+      - エラーハンドリング
+      - 大きなファイルのパフォーマンス
   
-  - id: "T5"
-    title: "Write unit tests"
-    status: "pending"
-    priority: "high"
+  - id: T7
+    title: ユニットテストの作成
+    status: done
+    priority: high
     estimated-hours: 0.5
-    actual-hours: null
-    depends-on: ["T1"]
-    validates: ["AC-001", "AC-002"]
+    depends-on:
+      - T1
+      - T2
+    validates:
+      - AC-001
+      - AC-004
+      - AC-005
     description: |
-      ユニットテストを作成し、
-      各関数の正常系・異常系・エッジケースを検証する
-    subtasks:
-      - "tests/test_log_tail_excerpt_unit.pyを作成"
-      - "get_log_tail()のテスト（4件）"
-      - "_format_log_excerpt()のテスト（3件）"
-    files:
-      - path: "tests/test_log_tail_excerpt_unit.py"
-        action: "create"
-        lines: 100
-    tests:
-      - "tests/test_log_tail_excerpt_unit.py"
+      - ファイル: tests/test_log_tail_extractor_unit.py
+      - extract_log_tail: 正常系
+      - extract_log_tail: ファイルが存在しない
+      - extract_log_tail: 読み込み権限がない
+      - extract_log_tail: ファイルが空
+      - extract_log_tail: 行数が少ない
+      - format_alert_with_tail: 正常系
+      - format_alert_with_tail: 末尾抜粋が空
+      - 設定の読み込み
   
-  - id: "T6"
-    title: "Update documentation"
-    status: "pending"
-    priority: "medium"
-    estimated-hours: 0.5
-    actual-hours: null
-    depends-on: ["T1", "T2", "T3", "T4", "T5"]
-    validates: ["AC-001", "AC-002", "AC-003"]
+  - id: T8
+    title: ドキュメント更新
+    status: done
+    priority: medium
+    estimated-hours: 0.3
+    depends-on:
+      - T1
+      - T2
+      - T3
+      - T4
+    validates: []
     description: |
-      ドキュメントを更新し、
-      新機能の説明、設定例、出力例を追加する
-    subtasks:
-      - "README.mdに機能説明を追加"
-      - "README.mdに設定例を追加"
-      - "README.mdに出力例を追加"
-      - "docs/CHANGELOG.mdに記録"
-      - "docs/EXAMPLES.mdに出力例を追加"
-    files:
-      - path: "README.md"
-        action: "update"
-        lines: 20
-      - path: "docs/CHANGELOG.md"
-        action: "update"
-        lines: 10
-      - path: "docs/EXAMPLES.md"
-        action: "update"
-        lines: 15
-    tests: []
+      - ファイル: README.md, docs/CHANGELOG.md
+      - README.mdの機能一覧に追加
+      - CHANGELOG.mdに変更内容を記録
+      - 設定例を追加
   
-  - id: "T7"
-    title: "Run all tests and check coverage"
-    status: "pending"
-    priority: "high"
-    estimated-hours: 0.5
-    actual-hours: null
-    depends-on: ["T3", "T4", "T5"]
-    validates: ["AC-004"]
+  - id: T9
+    title: 全テストの実行とカバレッジ確認
+    status: done
+    priority: high
+    estimated-hours: 0.2
+    depends-on:
+      - T5
+      - T6
+      - T7
+    validates: []
     description: |
-      全テストを実行し、カバレッジを確認する。
-      全テストがパスし、カバレッジが93%以上であることを確認する
-    subtasks:
-      - "python -m pytest tests/ -v"
-      - "bash run_coverage.sh"
-      - "カバレッジが93%以上であることを確認"
-      - "README.mdのバッジを更新（必要な場合）"
-    files:
-      - path: "README.md"
-        action: "update"
-        lines: 1
-    tests: []
-  
-  - id: "T8"
-    title: "Manual verification"
-    status: "pending"
-    priority: "high"
-    estimated-hours: 0.5
-    actual-hours: null
-    depends-on: ["T1", "T2", "T6", "T7"]
-    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
-    description: |
-      手動で動作確認を行い、
-      全ての受入基準が満たされていることを確認する
-    subtasks:
-      - "settings.ymlの確認"
-      - "ログ急増を発生させる"
-      - "Slack通知の確認"
-      - "ログ抜粋の表示確認"
-      - "tail_lines設定の変更テスト"
-    files: []
-    tests: []
+      - bash run_coverage.sh
+      - カバレッジ90%以上を確認
+      - 全テストがパスすることを確認
+
+implementation-order:
+  - T1: ログ末尾抽出モジュールの作成
+  - T7: ユニットテストの作成（T1の一部）
+  - T5: プロパティテストの作成
+  - T2: 通知メッセージのフォーマット関数
+  - T3: main_log_monitor.pyの統合
+  - T4: 設定ファイルの拡張
+  - T6: 統合テストの作成
+  - T8: ドキュメント更新
+  - T9: 全テスト実行
 
 completion-criteria:
-  - id: "CC-001"
-    description: "全テストがパス"
-    status: "pending"
-    validation: "pytest tests/ -v"
-    result: null
-  
-  - id: "CC-002"
-    description: "カバレッジ93%以上を維持"
-    status: "pending"
-    validation: "bash run_coverage.sh"
-    result: null
-  
-  - id: "CC-003"
-    description: "新規テストのカバレッジ90%以上"
-    status: "pending"
-    validation: "bash run_coverage.sh"
-    result: null
-  
-  - id: "CC-004"
-    description: "ドキュメント更新完了"
-    status: "pending"
-    validation: "manual"
-    result: null
-  
-  - id: "CC-005"
-    description: "手動動作確認完了"
-    status: "pending"
-    validation: "manual"
-    result: null
-  
-  - id: "CC-006"
-    description: "implementation-tasks.mdのステータス更新"
-    status: "pending"
-    validation: "manual"
-    result: null
-  
-  - id: "CC-007"
-    description: "CHANGELOG.mdに記録"
-    status: "pending"
-    validation: "manual"
-    result: null
-
-execution-plan:
-  parallel-tasks:
-    - ["T2"]  # T1と並行実行可能
-    - ["T3", "T5"]  # T1完了後、並行実行可能
-  
-  critical-path:
-    - "T1"  # log_watcher.py拡張
-    - "T4"  # 統合テスト
-    - "T6"  # ドキュメント更新
-    - "T7"  # 全テスト実行
-    - "T8"  # 手動確認
-  
-  total-estimated-hours: 3
-
-risks:
-  - task: "T1"
-    risk: "巨大なログファイルの読み込みパフォーマンス"
-    mitigation: "末尾のみを効率的に読み込む方式を採用、50ms以内を保証"
-    probability: "low"
-    impact: "medium"
-  
-  - task: "T1"
-    risk: "機密情報の漏洩"
-    mitigation: "ドキュメントで警告、将来的にマスキング機能を検討"
-    probability: "medium"
-    impact: "high"
-  
-  - task: "T4"
-    risk: "既存機能への影響"
-    mitigation: "統合テストで確認、機能フラグで制御"
-    probability: "low"
-    impact: "high"
+  - 全てのタスクが完了している
+  - 全テストがパスしている
+  - カバレッジが90%以上
+  - ログ急増通知に末尾抜粋が含まれる
+  - 設定で行数を変更できる
+  - 既存機能に影響がない

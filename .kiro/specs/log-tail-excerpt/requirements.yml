@@ -1,170 +1,107 @@
-# 要件定義: ログ急増時の末尾抜粋表示
-
 metadata:
-  title: "ログ急増時の末尾抜粋表示"
-  feature: "log-tail-excerpt"
-  status: "draft"
-  created: "2025-11-30"
-  updated: "2025-11-30"
+  title: ログ急増時の末尾抜粋表示 - 要件定義
+  feature: log-tail-excerpt
+  status: draft
+  created: 2025-11-30
+  updated: 2025-11-30
   version: "1.0.0"
   last_validated: null
   validation_passed: null
-  complexity: "low"
+  complexity: small
   estimated-hours: 3
   dependencies: []
 
 overview:
-  description: |
-    ログ急増を検知した際に、行数だけでなく実際のログファイルの末尾数行を
-    通知メッセージに含めることで、ユーザーが即座に問題の内容を把握できるようにする機能。
-    Slack通知にコードブロック形式で見やすく表示する。
-  background: |
-    現状のKomonは「ログが急増しました（+500行）」といった通知のみを行っている。
-    ユーザーは通知を受けた後、手動でサーバーにログインしてログファイルを確認する必要がある。
-    本機能により、通知メッセージにログの末尾抜粋を含めることで、
-    ユーザーがサーバーにログインせずに問題の概要を把握できるようにする。
+  description: ログ急増の通知時、行数だけでなく実際のログ末尾も数行添付することで、ユーザーが即座に問題の内容を把握できるようにする機能。
+
+background:
+  current-issues:
+    - ログ急増の通知では「何行増えた」という情報のみ
+    - 実際に何が起きているかを知るには、サーバーにログインしてログを確認する必要がある
+    - 緊急時の初動が遅れる可能性
+  
   goals:
-    - "ログ急増通知に末尾抜粋を自動的に含める"
-    - "表示行数を設定で調整可能にする"
-    - "既存のログ監視機能に影響を与えない"
-    - "パフォーマンスへの影響を最小限に"
+    - 通知メッセージに実際のログ内容を含める
+    - サーバーにログインせずに問題の概要を把握できる
+    - 緊急度の判断を迅速に行える
 
 acceptance-criteria:
-  - id: "AC-001"
-    title: "ログ末尾の取得"
-    priority: "high"
-    type: "functional"
+  - id: AC-001
+    title: ログ末尾の抽出
+    priority: high
     description: |
-      ログ急増を検知した時、
-      該当ログファイルの末尾N行（デフォルト10行）を取得できる
-    when: "ログ急増を検知した時"
-    then: "該当ログファイルの末尾N行を取得できる"
-    examples:
-      - input: "ログファイル: /var/log/app.log, 急増: +500行"
-        output: "末尾10行のテキスト"
-      - input: "設定: tail_lines=5"
-        output: "末尾5行のテキスト"
+      WHEN: ログ急増が検出された場合
+      THEN: 該当ログファイルの末尾N行を抽出する
+    details:
+      - デフォルトは10行
+      - 設定ファイルで行数を変更可能
+      - ファイルが存在しない場合はエラーハンドリング
   
-  - id: "AC-002"
-    title: "通知メッセージへの統合"
-    priority: "high"
-    type: "functional"
+  - id: AC-002
+    title: 通知メッセージへの追加
+    priority: high
     description: |
-      取得したログ末尾を通知メッセージに統合した時、
-      コードブロック形式で見やすく表示される
-    when: "取得したログ末尾を通知メッセージに統合した時"
-    then: "コードブロック形式で見やすく表示される"
-    examples:
-      - input: "末尾10行のテキスト"
-        output: "```\n[ログ内容]\n```"
+      WHEN: ログ急増の通知を送信する場合
+      THEN: 通知メッセージに末尾抜粋を含める
+    details:
+      - コードブロック形式で見やすく表示
+      - ログファイルパスを明記
+      - 抜粋であることを明示（「末尾10行」等）
   
-  - id: "AC-003"
-    title: "表示行数の設定"
-    priority: "high"
-    type: "functional"
+  - id: AC-003
+    title: 設定による制御
+    priority: medium
     description: |
-      settings.ymlでtail_linesを設定した時、
-      表示行数が変わる（1-50行の範囲）
-    when: "settings.ymlでtail_linesを設定した時"
-    then: "表示行数が変わる"
-    examples:
-      - input: "tail_lines: 5"
-        output: "末尾5行を表示"
-      - input: "tail_lines: 20"
-        output: "末尾20行を表示"
-      - input: "tail_lines: 0"
-        output: "抜粋表示なし"
+      WHEN: ユーザーが設定ファイルを編集した場合
+      THEN: 末尾抜粋の表示行数を変更できる
+    details:
+      - log_analysis.tail_lines で設定
+      - デフォルト値は10行
+      - 0を指定した場合は末尾抜粋を無効化
   
-  - id: "AC-004"
-    title: "既存機能への影響なし"
-    priority: "high"
-    type: "non-functional"
+  - id: AC-004
+    title: 長い行の扱い
+    priority: medium
     description: |
-      本機能を有効化した時、
-      既存のログ監視機能、通知機能に影響がない
-    when: "本機能を有効化した時"
-    then: "既存のログ監視機能、通知機能に影響がない"
-    examples:
-      - input: "tail_lines=10"
-        output: "全既存テストがパス"
+      WHEN: ログの1行が非常に長い場合
+      THEN: 適切に切り詰めて表示する
+    details:
+      - 1行あたり最大500文字
+      - 超過した場合は「... (truncated)」を追加
+      - 通知メッセージが肥大化しないようにする
   
-  - id: "AC-005"
-    title: "パフォーマンスへの影響が最小限"
-    priority: "medium"
-    type: "performance"
+  - id: AC-005
+    title: エラーハンドリング
+    priority: high
     description: |
-      ログ末尾を取得する時、
-      処理時間が50ms以内に収まる
-    when: "ログ末尾を取得する時"
-    then: "処理時間が50ms以内に収まる"
-    examples:
-      - input: "10行を取得"
-        output: "処理時間: 20ms"
+      WHEN: ログファイルの読み込みに失敗した場合
+      THEN: エラーを記録し、末尾抜粋なしで通知を継続する
+    details:
+      - ファイルが存在しない
+      - 読み込み権限がない
+      - ファイルが空
+      - これらの場合でも通知は送信される
 
 non-functional-requirements:
-  performance:
-    - "ログ末尾取得処理は50ms以内"
-    - "全体の処理時間への影響は5%以内"
-  reliability:
-    - "ログファイルが存在しない場合もエラーにならない"
-    - "アクセス権限がない場合はスキップ"
-    - "巨大なログファイルでもメモリを圧迫しない"
-  maintainability:
-    - "表示行数は設定ファイルで管理"
-    - "機能の有効/無効を簡単に切り替えられる"
-  usability:
-    - "ログ抜粋はコードブロックで見やすく表示"
-    - "長い行は適切に折り返される"
+  - id: NFR-001
+    category: performance
+    description: ログファイルの末尾読み込みは1秒以内。大きなログファイル（1GB以上）でも高速に動作
+  
+  - id: NFR-002
+    category: compatibility
+    description: 既存の通知機能に影響を与えない。設定を追加しない場合はデフォルト動作
+  
+  - id: NFR-003
+    category: security
+    description: ログに機密情報が含まれる可能性を考慮。設定で末尾抜粋を無効化できる
 
 constraints:
-  - "AlmaLinux 9専用"
-  - "Python 3.10+以上"
-  - "既存のlog_watcher.pyに依存"
-  - "ログファイルの読み取り権限が必要"
+  - ログファイルはテキスト形式のみ対応
+  - バイナリログは非対応
+  - ログローテーション中のファイルは考慮しない
 
-assumptions:
-  - "ログファイルはテキスト形式"
-  - "ログファイルは改行区切り"
-  - "Slack通知が有効になっている"
-  - "ログ急増検知機能が有効になっている"
-
-risks:
-  - risk: "巨大なログファイルの読み込み"
-    mitigation: "末尾のみを効率的に読み込む（tail -n 方式）"
-    probability: "low"
-    impact: "medium"
-  
-  - risk: "既存機能への影響"
-    mitigation: "統合テストで確認、機能フラグで制御"
-    probability: "low"
-    impact: "high"
-  
-  - risk: "機密情報の漏洩"
-    mitigation: "ログに機密情報が含まれる可能性を警告、マスキング機能は将来検討"
-    probability: "medium"
-    impact: "high"
-
-scope:
-  in-scope:
-    - "ログ末尾の取得と表示"
-    - "表示行数の設定"
-    - "コードブロック形式での表示"
-    - "エラーハンドリング"
-  
-  out-of-scope:
-    - "ログの自動マスキング（将来の拡張として検討）"
-    - "ログの検索・フィルタリング（現状の末尾表示のみ）"
-    - "複数ログファイルの同時表示（1ファイルずつ）"
-    - "ログのハイライト表示（プレーンテキストのみ）"
-
-success-metrics:
-  quantitative:
-    - "テストカバレッジ93%以上を維持"
-    - "全既存テスト（379テスト）がパス"
-    - "ログ末尾取得処理が50ms以内"
-    - "新規テスト15件を追加（プロパティ3件、統合5件、ユニット7件）"
-  
-  qualitative:
-    - "ユーザーがサーバーにログインせずに問題を把握できる"
-    - "通知の価値が向上する"
-    - "Komonの「賢いアドバイザー」としての価値が向上"
+success-criteria:
+  - ログ急増通知に末尾抜粋が含まれる
+  - 設定で行数を変更できる
+  - 既存機能に影響がない
+  - テストカバレッジ90%以上を維持

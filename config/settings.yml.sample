@@ -55,6 +55,8 @@ log_monitor_targets:  # 監視対象のログファイル（true: 監視する /
 log_analysis:
   anomaly_threshold_percent: 30     # 急増とみなす割合（前日比）
   baseline_learning_rate: 0.1       # ベースライン更新の反映率（0〜1）
+  tail_lines: 10                    # ログ急増時に表示する末尾行数（0で無効化）
+  max_line_length: 500              # 1行あたりの最大文字数（超過時は切り詰め）
 
 weekly_report:  # 週次健全性レポート設定
   enabled: true  # 週次レポートを有効にする場合は true
