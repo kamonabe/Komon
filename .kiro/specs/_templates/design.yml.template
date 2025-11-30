@@ -1,111 +1,223 @@
+# 設計書: {機能名}
+
 metadata:
-  title: {機能名} - 設計書
-  feature: {feature-name}
-  status: draft  # draft | in-progress | implemented | deprecated
-  created: YYYY-MM-DD
-  updated: YYYY-MM-DD
+  title: "{機能名}"
+  feature: "{feature-name}"
+  status: "draft"  # draft | in-progress | implemented | deprecated
+  created: "YYYY-MM-DD"
+  updated: "YYYY-MM-DD"
 
 architecture:
-  overview: システムアーキテクチャの概要を記述してください。
+  overview: |
+    {システム全体のアーキテクチャ概要。
+    どのモジュールがどのように連携するか、データフローはどうなっているか。}
+  
   components:
-  - name: {コンポーネント名1}
-    responsibility: {責務}
-    location: {ファイルパス}
-  - name: {コンポーネント名2}
-    responsibility: {責務}
-    location: {ファイルパス}
-  data-flow: データフローを記述してください。入力 → 処理 → 出力
+    - name: "{コンポーネント名1}"
+      type: "module"  # module | class | function
+      responsibility: "{このコンポーネントの責務}"
+      dependencies: ["{依存先1}", "{依存先2}"]
+    
+    - name: "{コンポーネント名2}"
+      type: "module"
+      responsibility: "{このコンポーネントの責務}"
+      dependencies: ["{依存先1}"]
+  
+  data-flow:
+    - from: "{起点}"
+      to: "{終点}"
+      description: "{データの流れの説明}"
+    
+    - from: "{起点}"
+      to: "{終点}"
+      description: "{データの流れの説明}"
+
+modules:
+  - name: "{モジュール名}"
+    path: "src/{project}/{module_name}.py"
+    description: |
+      {このモジュールの詳細な説明。
+      何を行うモジュールか、どのような機能を提供するか。}
+    
+    functions:
+      - name: "{関数名}"
+        parameters:
+          - name: "{パラメータ名}"
+            type: "{型}"
+            description: "{説明}"
+        returns:
+          type: "{戻り値の型}"
+          description: "{戻り値の説明}"
+        raises:
+          - "{例外名}: {発生条件}"
 
 correctness-properties:
-- id: P1
-  title: {プロパティのタイトル}
-  type: invariant  # invariant | postcondition | precondition
-  description: このプロパティが検証する内容を記述してください。数学的な性質や不変条件など。
-  validates:
-  - AC-001
-  - AC-002
-  test-strategy: property-based  # property-based | integration | unit
-
-- id: P2
-  title: {プロパティのタイトル}
-  type: invariant
-  description: このプロパティが検証する内容を記述してください。
-  validates:
-  - AC-002
-  - AC-003
-  test-strategy: integration
-
-- id: P3
-  title: {プロパティのタイトル}
-  type: invariant
-  description: このプロパティが検証する内容を記述してください。
-  validates:
-  - AC-003
-  test-strategy: unit
-
-implementation-details:
-  modules:
-  - name: {モジュール名}
-    file: {ファイルパス}
-    classes:
-    - {クラス名1}
-    - {クラス名2}
-    functions:
-    - {関数名1}
-    - {関数名2}
+  - id: "P1"
+    title: "{プロパティのタイトル}"
+    type: "invariant"  # invariant | idempotence | monotonicity | boundary
+    description: |
+      {このプロパティの詳細な説明。
+      どのような性質が常に成り立つべきか、数学的にどう表現されるか。}
+    validates: ["AC-001", "AC-002"]
+    test-strategy: "property-based"  # property-based | integration | unit
+    implementation:
+      framework: "hypothesis"  # hypothesis | pytest
+      strategy: "st.integers(min_value=1, max_value=10)"
+      assertion: "{検証する条件}"
   
-  configuration:
-  - key: {設定キー}
-    type: {データ型}
-    default: {デフォルト値}
-    description: {説明}
+  - id: "P2"
+    title: "{プロパティのタイトル}"
+    type: "idempotence"
+    description: |
+      {プロパティの説明}
+    validates: ["AC-003"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.text(min_size=1, max_size=20)"
+      assertion: "{検証する条件}"
   
-  error-handling:
-  - scenario: {エラーシナリオ}
-    handling: {対処方法}
-    user-message: {ユーザー向けメッセージ}
+  - id: "P3"
+    title: "{プロパティのタイトル}"
+    type: "monotonicity"
+    description: |
+      {プロパティの説明}
+    validates: ["AC-004"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.lists(...)"
+      assertion: "{検証する条件}"
+
+data-structures:
+  - name: "{データ構造名}"
+    type: "dict"  # dict | list | class | namedtuple
+    schema:
+      field1:
+        type: "str"
+        required: true
+        description: "{フィールドの説明}"
+      field2:
+        type: "int"
+        required: true
+        description: "{フィールドの説明}"
+      field3:
+        type: "float"
+        required: false
+        default: 0.0
+        description: "{フィールドの説明}"
+
+error-handling:
+  - error: "{例外名}"
+    handling: "continue"  # continue | stop | retry
+    message: "{エラーメッセージ}"
+    log-level: "debug"  # debug | info | warning | error
+  
+  - error: "{例外名}"
+    handling: "stop"
+    message: "{エラーメッセージ}"
+    log-level: "error"
+    exit-code: 1
+
+configuration:
+  - name: "{設定項目名}"
+    type: "bool"  # bool | str | int | float | dict | list
+    required: false
+    default: true
+    description: "{設定項目の説明}"
+    validation:
+      - "{検証ルール1}"
+      - "{検証ルール2}"
+  
+  - name: "{設定項目名}"
+    type: "str"
+    required: false
+    default: "normal"
+    description: "{設定項目の説明}"
+    validation:
+      - "{検証ルール}"
+
+dependencies:
+  internal:
+    - "src.{project}.{module}"
+  external:
+    - name: "{パッケージ名}"
+      version: ">=X.Y.Z"
+      purpose: "{使用目的}"
+
+testing-strategy:
+  property-tests:
+    - property: "P1"
+      file: "tests/test_{module}_properties.py"
+      function: "test_property_{name}"
+    
+    - property: "P2"
+      file: "tests/test_{module}_properties.py"
+      function: "test_property_{name}"
+  
+  integration-tests:
+    - validates: ["AC-001", "AC-002"]
+      file: "tests/test_{module}_integration.py"
+      function: "test_end_to_end_{feature}"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_{module}_integration.py"
+      function: "test_config_loading"
+  
+  unit-tests:
+    - validates: ["AC-001"]
+      file: "tests/test_{module}_unit.py"
+      function: "test_{function_name}"
+    
+    - validates: ["AC-002"]
+      file: "tests/test_{module}_unit.py"
+      function: "test_{function_name}"
+
+performance:
+  targets:
+    - metric: "{メトリクス名}"
+      target: "< 100ms"
+      measurement: "{計測方法}"
+    
+    - metric: "{メトリクス名}"
+      target: "< 10% increase"
+      measurement: "{計測方法}"
+
+security:
+  considerations:
+    - "{セキュリティ考慮事項1}"
+    - "{セキュリティ考慮事項2}"
+    - "{セキュリティ考慮事項3}"
 
 resilience:
   circuit-breaker:
     considered: true
-    decision: not-adopted  # adopted | not-adopted | delegated | not-applicable
-    rationale: 採用/非採用の理由を記述してください。
-    delegated-to: ''  # delegatedの場合、委譲先を記述
-    future-notes: 将来の検討事項があれば記述してください。
-    implementation: []
-
+    decision: "not-adopted"  # adopted | not-adopted | delegated | not-applicable
+    rationale: |
+      {採用/不採用の理由。
+      なぜこの判断をしたのか、将来どうすべきかを明記。}
+    delegated-to: "upstream-system"  # 委譲先（delegatedの場合）
+    future-notes: |
+      {将来の検討事項}
+  
   notification-throttling:
     considered: true
-    decision: not-applicable
-    rationale: 採用/非採用の理由を記述してください。
-    implementation: []
-
+    decision: "adopted"
+    rationale: |
+      {採用理由}
+    implementation:
+      - "{実装方針1}"
+      - "{実装方針2}"
+  
   baseline-reset:
     considered: true
-    decision: not-applicable
-    rationale: 採用/非採用の理由を記述してください。
+    decision: "not-applicable"
+    rationale: |
+      {不適用の理由}
     implementation: []
-
+  
   other-considerations:
-  - consideration: {検討項目}
-    decision: not-adopted
-    rationale: 採用/非採用の理由を記述してください。
-
-testing-strategy:
-  property-tests:
-  - property: P1
-    framework: hypothesis  # hypothesis | jest-fast-check
-    file: tests/test_{module}_properties.py
-  
-  integration-tests:
-  - scenario: {テストシナリオ}
-    file: tests/test_{module}_integration.py
-  
-  unit-tests:
-  - function: {関数名}
-    file: tests/test_{module}_unit.py
-
-backward-compatibility:
-  breaking-changes: []
-  migration-required: false
-  migration-guide: ''
+    - consideration: "{その他の考慮事項}"
+      decision: "adopted"
+      rationale: |
+        {判断理由}

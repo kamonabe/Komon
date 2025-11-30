@@ -4,7 +4,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/kamonabe/Komon/workflows/Tests/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/tests.yml)
 [![Spec Validation](https://github.com/kamonabe/Komon/workflows/Spec%20and%20Documentation%20Validation/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/spec-validation.yml)
-[![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](htmlcov/index.html)
+[![Test Coverage](https://img.shields.io/badge/coverage-92.7%25-brightgreen)](htmlcov/index.html)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
 
 > **English**: Komon is a lightweight system monitoring advisor for developers. It quietly watches your development environment and sends friendly notifications when resources are overused, logs spike, or updates are needed. Simple architecture makes it easy to extend with custom notifications and monitoring targets.
@@ -417,6 +417,29 @@ CPU使用率が高いです: 88.5%
 1. python: 35.2%
 2. node: 28.1%
 3. docker: 15.7%
+```
+
+#### 🔍 多重実行プロセスの検出（v1.20.0〜）
+
+cronなどによる同一スクリプトの多重起動を検出し、リソース圧迫の原因として警告します。
+
+**特徴**:
+- 同一スクリプトの多重実行を自動検出
+- スクリプト名、実行数、PIDリストを表示
+- 設定ファイルで検出閾値を調整可能（デフォルト: 3個以上）
+- 対象拡張子: .py, .sh, .rb, .pl
+
+**警告例**:
+```
+⚠️ 多重実行プロセスを検出しました:
+
+スクリプト: backup.sh
+実行数: 5個
+PID: [12345, 12346, 12347, 12348, 12349]
+
+💡 提案:
+- cron間隔の見直しを検討してください
+- ロックファイルの使用を検討してください
 ```
 
 **メモリ通知例**:

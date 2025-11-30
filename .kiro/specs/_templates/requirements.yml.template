@@ -1,47 +1,121 @@
+# 要件定義: {機能名}
+
 metadata:
-  title: {機能名} - 要件定義
-  feature: {feature-name}
-  status: draft  # draft | in-progress | implemented | deprecated
-  created: YYYY-MM-DD
-  updated: YYYY-MM-DD
-  complexity: low  # low | medium | high
-  estimated-hours: 0
+  title: "{機能名}"
+  feature: "{feature-name}"
+  status: "draft"  # draft | in-progress | implemented | deprecated
+  created: "YYYY-MM-DD"
+  updated: "YYYY-MM-DD"
+  complexity: "medium"  # low | medium | high
+  estimated-hours: 8
   dependencies: []
 
 overview:
-  description: この機能の概要を記述してください。何を実現するのか、なぜ必要なのかを明確に。
+  description: |
+    {この機能の概要を記述してください。
+    何を実現するのか、どのような価値を提供するのかを明確に。}
+  background: |
+    {なぜこの機能が必要なのか、現状の問題点は何か、
+    どのような背景があるのかを記述してください。}
+  goals:
+    - "{目標1: 何を達成したいか}"
+    - "{目標2: どのような状態を目指すか}"
+    - "{目標3: ユーザーにどんな価値を提供するか}"
 
 acceptance-criteria:
-- id: AC-001
-  title: "{受入基準のタイトル}\n**WHEN** {条件}\n**THEN** {期待される結果}"
-  priority: high  # high | medium | low
-  type: functional  # functional | non-functional | security | performance
-  user-story: ''
-  conditions: []
+  - id: "AC-001"
+    title: "{受入基準のタイトル}"
+    priority: "high"  # high | medium | low
+    type: "functional"  # functional | non-functional | security | performance
+    description: |
+      {この受入基準の詳細な説明。
+      何が満たされるべきか、どのような条件で、どのような結果が期待されるか。}
+    when: "{どのような条件・状況の時}"
+    then: "{どのような結果が得られるべきか}"
+    examples:
+      - input: "{入力例1}"
+        output: "{期待される出力1}"
+      - input: "{入力例2}"
+        output: "{期待される出力2}"
+  
+  - id: "AC-002"
+    title: "{受入基準のタイトル}"
+    priority: "high"
+    type: "functional"
+    description: |
+      {受入基準の説明}
+    when: "{条件}"
+    then: "{結果}"
+    examples:
+      - input: "{入力例}"
+        output: "{出力例}"
+  
+  - id: "AC-003"
+    title: "{受入基準のタイトル}"
+    priority: "medium"
+    type: "functional"
+    description: |
+      {受入基準の説明}
+    when: "{条件}"
+    then: "{結果}"
+    examples:
+      - input: "{入力例}"
+        output: "{出力例}"
 
-- id: AC-002
-  title: "{受入基準のタイトル}\n**WHEN** {条件}\n**THEN** {期待される結果}"
-  priority: high
-  type: functional
-  user-story: ''
-  conditions: []
-
-- id: AC-003
-  title: "{受入基準のタイトル}\n**WHEN** {条件}\n**THEN** {期待される結果}"
-  priority: medium
-  type: functional
-  user-story: ''
-  conditions: []
+non-functional-requirements:
+  performance:
+    - "{パフォーマンス要件1: 例: 処理時間が100ms以内}"
+    - "{パフォーマンス要件2: 例: メモリ使用量が50MB以内}"
+  reliability:
+    - "{信頼性要件1: 例: エラー時も処理を継続}"
+    - "{信頼性要件2: 例: データ損失がない}"
+  maintainability:
+    - "{保守性要件1: 例: 設定ファイルで管理}"
+    - "{保守性要件2: 例: 新しいパターンを簡単に追加できる}"
+  usability:
+    - "{使いやすさ要件1: 例: メッセージは日本語で分かりやすく}"
+    - "{使いやすさ要件2: 例: 詳細度を調整可能}"
 
 constraints:
-  technical:
-  - {技術的制約1}
-  - {技術的制約2}
-  business:
-  - {ビジネス制約1}
-  compatibility:
-  - {互換性要件1}
+  - "{制約1: 例: AlmaLinux 9専用}"
+  - "{制約2: 例: Python 3.10+以上}"
+  - "{制約3: 例: 特定のライブラリに依存}"
 
-out-of-scope:
-- {スコープ外の項目1}
-- {スコープ外の項目2}
+assumptions:
+  - "{前提1: 例: ユーザーは日本語話者}"
+  - "{前提2: 例: 特定のコマンドで実行される}"
+  - "{前提3: 例: データは特定の形式}"
+
+risks:
+  - risk: "{リスク1の説明}"
+    mitigation: "{対策1}"
+    probability: "low"  # low | medium | high
+    impact: "high"  # low | medium | high
+  
+  - risk: "{リスク2の説明}"
+    mitigation: "{対策2}"
+    probability: "medium"
+    impact: "medium"
+
+scope:
+  in-scope:
+    - "{スコープ内の項目1}"
+    - "{スコープ内の項目2}"
+    - "{スコープ内の項目3}"
+  
+  out-of-scope:
+    - "{スコープ外の項目1: 例: 自動実行機能（ユーザーが手動で実行）}"
+    - "{スコープ外の項目2: 例: 履歴記録（将来の拡張として検討）}"
+    - "{スコープ外の項目3: 例: リアルタイム監視（現状の定期実行を維持）}"
+
+success-metrics:
+  quantitative:
+    - "{定量的指標1: 例: テストカバレッジ95%以上を維持}"
+    - "{定量的指標2: 例: 全既存テストがパス}"
+    - "{定量的指標3: 例: 処理時間が目標値以内}"
+    - "{定量的指標4: 例: 新規テストN件を追加}"
+  
+  qualitative:
+    - "{定性的指標1: 例: ユーザーが便利と感じる}"
+    - "{定性的指標2: 例: アクションが明確になる}"
+    - "{定性的指標3: 例: ツールの価値が向上}"
