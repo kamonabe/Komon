@@ -31,6 +31,7 @@ updated: 2025-11-26
 
 ### [TASK-005] 継続実行中プロセスの検出
 **元アイデア**: [IDEA-010] 継続実行中プロセスの検出  
+**feature-name**: long-running-detector  
 **ステータス**: 🔴 TODO  
 **優先度**: Medium  
 **見積もり**: 中（4-5時間）

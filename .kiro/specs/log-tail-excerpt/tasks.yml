@@ -1,6 +1,7 @@
 metadata:
   title: ログ急増時の末尾抜粋表示 - 実装タスク
   feature: log-tail-excerpt
+  task-id: TASK-007
   status: completed
   created: 2025-11-30
   updated: 2025-11-30

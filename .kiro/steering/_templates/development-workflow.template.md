@@ -183,7 +183,34 @@ Kiroが以下を報告：
 - [ ] ユーザーが「更新完了」と返答した
 - [ ] 上記が全て完了してから次のステップに進む
 
-### 8. {{git.main_branch}}ブランチへのマージとタグ作成
+### 8. 🚨 GitHub push前の必須チェック（ステータス整合性確認）
+
+**⚠️ 重要**: このチェックをスキップするとGitHub Actionsでエラーになります。
+
+**Kiroは必ず以下を実行**：
+
+```bash
+# ステータス整合性チェック
+python scripts/check_status_consistency.py
+```
+
+**チェック内容**:
+- future-ideas.mdとimplementation-tasks.mdのステータス一致
+- tasks.ymlにtask-idまたはfeature-nameが記載されているか
+- 完了タスクのアーカイブ状況
+
+**エラーが出た場合**:
+1. **即座に修正**（push前に必ず解決）
+2. エラーメッセージに従って修正
+3. 再度チェックを実行
+4. 全てパスしてからpush
+
+**Kiroのチェックポイント**:
+- [ ] `python scripts/check_status_consistency.py` を実行した
+- [ ] エラー0件、警告0件を確認した
+- [ ] 上記が完了してからpushに進む
+
+### 9. {{git.main_branch}}ブランチへのマージとタグ作成
 
 **ユーザーが実行**：
 
@@ -194,7 +221,7 @@ git tag v1.X.X
 git push origin {{git.main_branch}} --tags
 ```
 
-### 9. 🚨 完了タスクのアーカイブ（必須作業）
+### 10. 🚨 完了タスクのアーカイブ（必須作業）
 
 **タイミング**: タグ作成直後
 
@@ -238,7 +265,7 @@ implementation-tasks.mdには直近バージョン（v1.19.0）のみ残る
 - [ ] 両ファイルの更新履歴を記録した
 - [ ] 上記が全て完了してから次のステップに進んだ
 
-### 10. GitHub Releases用の情報を準備
+### 11. GitHub Releases用の情報を準備
 
 **Kiroが自動実行**：
 
