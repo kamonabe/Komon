@@ -180,14 +180,18 @@ class StatusConsistencyChecker:
                 return
             
             # 実装前のタスクの可能性があるため、警告のみ
-            print(f"   ⚠️  tasks.yml: feature-nameが推測できません（実装前の可能性）")
+            warning_msg = f"⚠️  {task_id}: tasks.yml - feature-nameが推測できません（実装前の可能性）"
+            self.warnings.append(warning_msg)
+            print(f"   {warning_msg}")
             return
         
         tasks_yml = self.project_root / ".kiro" / "specs" / feature_name / "tasks.yml"
         
         if not tasks_yml.exists():
             # 実装前のタスクの可能性があるため、警告のみ
-            print(f"   ⚠️  tasks.yml: ファイルが見つかりません（実装前の可能性）")
+            warning_msg = f"⚠️  {task_id}: tasks.yml - {tasks_yml} が見つかりません（実装前の可能性）"
+            self.warnings.append(warning_msg)
+            print(f"   {warning_msg}")
             return
         
         try:

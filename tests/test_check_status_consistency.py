@@ -138,6 +138,7 @@ class TestStatusConsistencyChecker:
         checker._check_tasks_yml_status('TASK-001', task_info)
         
         assert len(checker.warnings) == 1
+        assert "TASK-001" in checker.warnings[0]
         assert "が見つかりません" in checker.warnings[0]
     
     def test_report_results_all_ok(self):
