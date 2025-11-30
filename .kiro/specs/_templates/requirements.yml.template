@@ -3,9 +3,12 @@
 metadata:
   title: "{機能名}"
   feature: "{feature-name}"
-  status: "draft"  # draft | in-progress | implemented | deprecated
+  status: "draft"  # draft | in-progress | completed | deprecated
   created: "YYYY-MM-DD"
   updated: "YYYY-MM-DD"
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
   complexity: "medium"  # low | medium | high
   estimated-hours: 8
   dependencies: []

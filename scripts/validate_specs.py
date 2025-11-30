@@ -21,10 +21,12 @@ class SpecValidator:
     """Spec文書の検証クラス"""
     
     REQUIRED_METADATA_FIELDS = {
-        'requirements.yml': ['title', 'feature', 'status', 'created', 'updated'],
-        'design.yml': ['title', 'feature', 'status', 'created', 'updated'],
-        'tasks.yml': ['title', 'feature', 'status', 'created', 'updated']
+        'requirements.yml': ['title', 'feature', 'status', 'created', 'updated', 'version'],
+        'design.yml': ['title', 'feature', 'status', 'created', 'updated', 'version'],
+        'tasks.yml': ['title', 'feature', 'status', 'created', 'updated', 'version']
     }
+    
+    OPTIONAL_METADATA_FIELDS = ['last_validated', 'validation_passed']
     
     REQUIRED_TOP_LEVEL_KEYS = {
         'requirements.yml': ['metadata', 'acceptance-criteria'],
@@ -127,6 +129,32 @@ class SpecValidator:
                         f"{spec_file.relative_to(self.spec_dir)}: "
                         f"metadata.{date_field} の日付フォーマットが不正です（YYYY-MM-DD形式で記述してください）"
                     )
+        
+        # バージョンフォーマット検証
+        if 'version' in metadata:
+            version_value = str(metadata['version'])
+            if not re.match(r'^\d+\.\d+\.\d+$', version_value):
+                self.errors.append(
+                    f"{spec_file.relative_to(self.spec_dir)}: "
+                    f"metadata.version のフォーマットが不正です（X.Y.Z形式で記述してください）"
+                )
+        
+        # last_validated検証（オプション）
+        if 'last_validated' in metadata and metadata['last_validated'] is not None:
+            date_value = str(metadata['last_validated'])
+            if not re.match(r'^\d{4}-\d{2}-\d{2}$', date_value):
+                self.errors.append(
+                    f"{spec_file.relative_to(self.spec_dir)}: "
+                    f"metadata.last_validated の日付フォーマットが不正です（YYYY-MM-DD形式またはnullで記述してください）"
+                )
+        
+        # validation_passed検証（オプション）
+        if 'validation_passed' in metadata and metadata['validation_passed'] is not None:
+            if not isinstance(metadata['validation_passed'], bool):
+                self.errors.append(
+                    f"{spec_file.relative_to(self.spec_dir)}: "
+                    f"metadata.validation_passed はtrue/false/nullである必要があります"
+                )
     
     def _validate_yml_top_level_keys(self, spec_file: Path, data: Dict[str, Any], spec_type: str):
         """YMLファイルのトップレベルキーを検証"""

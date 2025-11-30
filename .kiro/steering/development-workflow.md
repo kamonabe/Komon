@@ -342,21 +342,78 @@ Komonでは、**3層テスト構造**を採用し、異なる観点から品質�
 
 **ファイル命名**: `test_{module}_properties.py`
 
-**例（Komonの場合）**:
+**🚨 プロパティテストの命名規則（Kiroへの厳格な指示）**
+
+Kiroがプロパティテストを実装する際、以下の命名規則に従ってください：
+
+#### 関数名の形式
+```python
+def test_property_{N}_{property_name}(data):
+```
+
+- `{N}`: design.ymlのProperty番号（P1 → 1, P2 → 2）
+- `{property_name}`: プロパティ名をスネークケースで
+
+#### docstringの形式
+```python
+"""
+**Feature: {feature-name}, Property {N}: {プロパティのタイトル}**
+
+{プロパティの説明（design.ymlから引用）}
+
+**検証要件: AC-XXX, AC-YYY**
+"""
+```
+
+#### 完全な例
 ```python
 from hypothesis import given, strategies as st
 
 @given(st.lists(st.floats(min_value=0.0, max_value=100.0), min_size=2))
-def test_property_calculation_accuracy(data):
+def test_property_1_calculation_accuracy(data):
     """
-    任意のデータに対して、計算結果は数学的に正しい値でなければならない
+    **Feature: log-tail-excerpt, Property 1: 行数カウントの正確性**
     
-    **検証要件: AC-001**
+    任意の行数のログに対して、抽出結果の行数は指定した行数と一致する
+    
+    **検証要件: AC-001, AC-002**
     """
     result = calculate_average(data)
     expected = sum(data) / len(data)
     assert abs(result - expected) < 0.0001
 ```
+
+#### Kiroの実装フロー
+
+1. **design.ymlを確認**:
+   ```yaml
+   correctness-properties:
+     - id: "P1"
+       title: "行数カウントの正確性"
+       validates: ["AC-001", "AC-002"]
+   ```
+
+2. **関数名を生成**:
+   - `P1` → `test_property_1_line_count_accuracy`
+   - タイトル「行数カウントの正確性」→ `line_count_accuracy`
+
+3. **docstringを生成**:
+   - Feature名: `log-tail-excerpt`
+   - Property番号: `1`
+   - タイトル: `行数カウントの正確性`
+   - 検証要件: `AC-001, AC-002`
+
+4. **テストロジックを実装**:
+   - design.ymlの`implementation.strategy`を参照
+   - design.ymlの`implementation.assertion`を参照
+
+#### Kiroのチェックリスト
+
+- [ ] design.ymlの全てのプロパティに対応するテストを作成した
+- [ ] 関数名が`test_property_{N}_{property_name}`形式である
+- [ ] docstringに`**Feature: {feature-name}, Property {N}: {title}**`を記載した
+- [ ] docstringに`**検証要件: AC-XXX**`を記載した
+- [ ] design.ymlの`validates`フィールドと一致している
 
 **書くべきプロパティ**:
 - ✅ 計算結果の正確性（例: 平均値、傾き、閾値判定）
@@ -509,37 +566,52 @@ def test_external_api_call():
 
 Kiroが新機能を実装する際、以下の順序でテストを作成します：
 
-#### ステップ1: design.mdの正確性プロパティを確認
+#### ステップ1: design.ymlの正確性プロパティを確認
 
-```markdown
-## 正確性プロパティ
-
-### Property 1: 計算結果の正確性
-任意のデータに対して、計算結果は数学的に正しい値でなければならない
-
-**検証対象**: AC-001, AC-002
+```yaml
+correctness-properties:
+  - id: "P1"
+    title: "行数カウントの正確性"
+    type: "invariant"
+    description: |
+      任意の行数のログに対して、抽出結果の行数は指定した行数と一致する
+    validates: ["AC-001", "AC-002"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.lists(st.text(), min_size=1)"
+      assertion: "len(result) == requested_lines"
 ```
 
-#### ステップ2: プロパティテストを作成
+#### ステップ2: プロパティテストを作成（命名規則に従う）
 
 ```python
-# tests/test_{module}_properties.py
+# tests/test_log_tail_excerpt_properties.py
 
 from hypothesis import given, strategies as st
 
-@given(st.lists(...))
-def test_property_calculation_accuracy(data):
+@given(st.lists(st.text(), min_size=1))
+def test_property_1_line_count_accuracy(lines):
     """
-    **Feature: {feature-name}, Property 1: 計算結果の正確性**
+    **Feature: log-tail-excerpt, Property 1: 行数カウントの正確性**
     
-    任意のデータに対して、計算結果は数学的に正しい値でなければならない
+    任意の行数のログに対して、抽出結果の行数は指定した行数と一致する
     
     **検証要件: AC-001, AC-002**
     """
-    result = calculate(data)
-    # 検証ロジック...
-    assert result is not None
+    # テストロジック
+    requested_lines = 5
+    result = extract_tail(lines, requested_lines)
+    
+    # design.ymlのassertionを実装
+    assert len(result) == min(requested_lines, len(lines))
 ```
+
+**Kiroの実装ポイント**:
+- 関数名: `test_property_{N}_{property_name}` （P1 → 1, タイトルからスネークケース生成）
+- docstring: Feature名、Property番号、タイトル、検証要件を明記
+- strategy: design.ymlの`implementation.strategy`を使用
+- assertion: design.ymlの`implementation.assertion`を実装
 
 #### ステップ3: 統合テストを作成
 

@@ -4,6 +4,9 @@ metadata:
   status: completed
   created: 2025-11-22
   updated: 2025-11-22
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
 tasks:
 - id: T1
   title: "コア機能を持つ通知履歴モジュールの作成\n  - 保存・読み込み関数を持つ`src/komon/notification_history.py`を作成\n\

@@ -6,6 +6,9 @@ metadata:
   status: "draft"
   created: "2025-11-30"
   updated: "2025-11-30"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
 
 architecture:
   overview: |

@@ -4,6 +4,9 @@ metadata:
   status: completed
   created: 2025-11-24
   updated: 2025-11-24
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
 tasks:
 - id: T1
   title: "NotificationThrottleクラスの実装\n  - NotificationThrottleクラスの基本構造を作成\n  - __init__メソッドで設定を読み込み\n\

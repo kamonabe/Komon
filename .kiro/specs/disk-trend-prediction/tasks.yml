@@ -4,6 +4,9 @@ metadata:
   status: completed
   created: 2025-11-23
   updated: 2025-11-26
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
 tasks:
 - id: T1
   title: "disk_predictor.pyモジュールの基本構造を作成\n\n\n  - `src/komon/disk_predictor.py` を新規作成\n\

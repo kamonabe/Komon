@@ -7,6 +7,9 @@ metadata:
   created: "YYYY-MM-DD"
   updated: "YYYY-MM-DD"
   completed: null  # YYYY-MM-DD
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
 
 tasks:
   - id: "T1"

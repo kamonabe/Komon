@@ -4,6 +4,9 @@ metadata:
   status: completed
   created: 2025-11-26
   updated: 2025-11-26
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
 tasks:
 - id: T1
   title: "段階的メッセージモジュールの作成\n  - `src/komon/progressive_message.py`を作成\n  - `get_notification_count()`関数を実装\n\

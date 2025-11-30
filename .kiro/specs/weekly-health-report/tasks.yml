@@ -4,6 +4,9 @@ metadata:
   status: completed
   created: 2025-11-22
   updated: 2025-11-25
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
 tasks:
 - id: T1
   title: "データ収集モジュールの作成\n  - `collect_weekly_data()` 関数の実装\n  - `get_alert_history()`\

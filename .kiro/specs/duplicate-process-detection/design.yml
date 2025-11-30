@@ -4,6 +4,9 @@ metadata:
   status: draft
   created: 2025-11-29
   updated: 2025-11-29
+  version: "1.0.0"  # Specのバージョン
+  last_validated: null  # YYYY-MM-DD or null
+  validation_passed: null  # true | false | null
 
 correctness-properties:
   - id: P1
