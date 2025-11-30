@@ -2,6 +2,7 @@ import yaml
 from komon.log_watcher import LogWatcher
 from komon.log_analyzer import check_log_anomaly
 from komon.notification import send_slack_alert, send_email_alert
+from komon.log_tail_extractor import extract_log_tail
 
 
 def main():
@@ -33,16 +34,49 @@ def main():
     watcher = LogWatcher()
     diff_results = watcher.watch_logs()  # {'/var/log/messages': 50, ...}
 
+    # ログ末尾抜粋の設定を取得
+    log_analysis_cfg = config.get("log_analysis", {})
+    tail_lines = log_analysis_cfg.get("tail_lines", 10)
+    max_line_length = log_analysis_cfg.get("max_line_length", 500)
+
     alerts = []
+    alert_details = []  # (alert, log_path, tail_lines)のタプルリスト
+    
     for path, line_count in diff_results.items():
         alert = check_log_anomaly(path, line_count, config)
         if alert:
             print(f"⚠️ {alert}")
             alerts.append(alert)
+            
+            # ログ末尾を抽出（設定で有効な場合）
+            tail_content = []
+            if tail_lines > 0:
+                try:
+                    tail_content = extract_log_tail(path, tail_lines, max_line_length)
+                except Exception as e:
+                    print(f"⚠️ ログ末尾の抽出に失敗: {e}")
+                    # エラーでも通知は継続
+            
+            alert_details.append((alert, path, tail_content))
 
     # 警戒がある場合は通知
     if alerts:
-        message = "⚠️ Komon ログ警戒情報:\n" + "\n".join(f"- {a}" for a in alerts)
+        # メッセージを作成
+        message_parts = ["⚠️ Komon ログ警戒情報:"]
+        
+        for alert, log_path, tail_content in alert_details:
+            message_parts.append(f"\n- {alert}")
+            
+            # 末尾抜粋を追加
+            if tail_content:
+                message_parts.append(f"\n📄 ログファイル: {log_path}")
+                message_parts.append(f"📋 末尾 {len(tail_content)} 行:")
+                message_parts.append("```")
+                message_parts.extend(tail_content)
+                message_parts.append("```")
+        
+        message = "\n".join(message_parts)
+        
         notification_cfg = config.get("notifications", {})
         
         # ログ監視のメタデータ

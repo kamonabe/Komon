@@ -442,6 +442,69 @@ PID: [12345, 12346, 12347, 12348, 12349]
 - ロックファイルの使用を検討してください
 ```
 
+#### 📋 ログ急増時の末尾抜粋表示（v1.21.0〜）
+
+ログ急増の通知時、実際のログ内容も数行添付することで、問題の内容を即座に把握できます。
+
+**特徴**:
+- ログ急増検出時に末尾N行を自動抽出（デフォルト: 10行）
+- 通知メッセージにコードブロック形式で表示
+- 設定で表示行数を変更可能（0で無効化）
+- 長い行は自動的に切り詰め（デフォルト: 500文字）
+- 大きなログファイルでも高速動作（末尾のみ読み込み）
+
+**通知例**:
+```
+⚠️ Komon ログ警戒情報:
+
+- /var/log/messages: 前日比 +45.2% の急増の可能性
+
+📄 ログファイル: /var/log/messages
+📋 末尾 10 行:
+```
+Nov 30 10:15:23 server systemd: Starting service...
+Nov 30 10:15:24 server app: Error: Connection timeout
+Nov 30 10:15:24 server app: Retrying connection...
+Nov 30 10:15:25 server app: Error: Connection timeout
+Nov 30 10:15:25 server app: Max retries exceeded
+```
+```
+
+**設定例**:
+```yaml
+log_analysis:
+  tail_lines: 10          # 末尾抜粋の行数（0で無効化）
+  max_line_length: 500    # 1行あたりの最大文字数
+```
+
+#### 📋 ログ急増時の末尾抜粋表示（v1.21.0〜）
+
+ログ急増の通知時、実際のログ内容も数行添付することで、問題の内容を即座に把握できます。
+
+**特徴**:
+- ログ急増検出時に末尾N行を自動抽出（デフォルト: 10行）
+- 通知メッセージにコードブロック形式で表示
+- 設定で表示行数を変更可能（0で無効化）
+- 長い行は自動的に切り詰め（デフォルト: 500文字）
+- 大きなログファイルでも高速動作（末尾のみ読み込み）
+
+**通知例**:
+```
+⚠️ Komon ログ警戒情報:
+
+- /var/log/messages: 前日比 +45.2% の急増の可能性
+
+📄 ログファイル: /var/log/messages
+📋 末尾 10 行:
+```
+Nov 30 10:15:23 server systemd: Starting service...
+Nov 30 10:15:24 server app: Error: Connection timeout
+Nov 30 10:15:24 server app: Retrying connection...
+Nov 30 10:15:25 server app: Error: Connection timeout
+Nov 30 10:15:25 server app: Max retries exceeded
+```
+```
+
 **メモリ通知例**:
 ```
 ⚠️ Komon 警戒情報:
