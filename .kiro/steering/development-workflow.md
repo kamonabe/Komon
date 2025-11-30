@@ -37,10 +37,16 @@ Komonプロジェクトは**仕様駆動開発（Spec-Driven Development）**を
 ### 3. Spec作成（mainブランチ）
 **フォルダ**: `.kiro/specs/{feature-name}/`
 
-以下の3ファイルを**YML形式で**作成：
-- `requirements.yml`: 要件定義（構造化YAML）
-- `design.yml`: 設計書（正確性プロパティを含む、構造化YAML）
-- `tasks.yml`: 実装タスクリスト（構造化YAML）
+以下の3ファイルを**構造化YAML形式**で作成：
+- `requirements.yml`: 要件定義
+- `design.yml`: 設計書（正確性プロパティを含む）
+- `tasks.yml`: 実装タスクリスト
+
+**ファイル形式の詳細**:
+- **拡張子**: `.yml`
+- **内容**: 構造化YAML（辞書型、リスト型を使用）
+- **パース**: `yaml.safe_load()`で読み込み可能
+- **検証**: `scripts/validate_specs.py`で構造を検証
 
 **テンプレート**: `.kiro/specs/_templates/` を参照
 
@@ -279,7 +285,7 @@ v1.X.X - 機能名
 
 ### ✅ Kiroが自律的に進めて良いこと
 
-- requirements.yml, design.yml, tasks.yml の作成（YML形式で）
+- requirements.yml, design.yml, tasks.yml の作成（構造化YAML形式で）
 - コード実装
 - テスト作成（しっかりした品質を維持）
 - ドキュメント更新（README, CHANGELOG）

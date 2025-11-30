@@ -1,0 +1,47 @@
+metadata:
+  title: {機能名} - 要件定義
+  feature: {feature-name}
+  status: draft  # draft | in-progress | implemented | deprecated
+  created: YYYY-MM-DD
+  updated: YYYY-MM-DD
+  complexity: low  # low | medium | high
+  estimated-hours: 0
+  dependencies: []
+
+overview:
+  description: この機能の概要を記述してください。何を実現するのか、なぜ必要なのかを明確に。
+
+acceptance-criteria:
+- id: AC-001
+  title: "{受入基準のタイトル}\n**WHEN** {条件}\n**THEN** {期待される結果}"
+  priority: high  # high | medium | low
+  type: functional  # functional | non-functional | security | performance
+  user-story: ''
+  conditions: []
+
+- id: AC-002
+  title: "{受入基準のタイトル}\n**WHEN** {条件}\n**THEN** {期待される結果}"
+  priority: high
+  type: functional
+  user-story: ''
+  conditions: []
+
+- id: AC-003
+  title: "{受入基準のタイトル}\n**WHEN** {条件}\n**THEN** {期待される結果}"
+  priority: medium
+  type: functional
+  user-story: ''
+  conditions: []
+
+constraints:
+  technical:
+  - {技術的制約1}
+  - {技術的制約2}
+  business:
+  - {ビジネス制約1}
+  compatibility:
+  - {互換性要件1}
+
+out-of-scope:
+- {スコープ外の項目1}
+- {スコープ外の項目2}

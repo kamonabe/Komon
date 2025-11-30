@@ -191,12 +191,20 @@ class SpecValidator:
             )
         
         # 要件とのトレーサビリティチェック
-        tasks_with_requirements = sum(1 for task in tasks if task.get('validates'))
+        # validates フィールドまたは title 内の _要件: AC-XXX_ を確認
+        tasks_with_requirements = 0
+        for task in tasks:
+            # validates フィールドに値がある
+            if task.get('validates'):
+                tasks_with_requirements += 1
+            # title に _要件: AC-XXX_ が含まれている
+            elif task.get('title') and '_要件:' in str(task.get('title')):
+                tasks_with_requirements += 1
         
         if task_count > 0 and tasks_with_requirements < task_count * 0.5:
             self.warnings.append(
                 f"{spec_file.relative_to(self.spec_dir)}: "
-                f"多くのタスクに要件（validates）が記載されていません"
+                f"多くのタスクに要件（validates または title内の_要件:）が記載されていません"
             )
     
     def _extract_frontmatter(self, content: str) -> Dict[str, str]:

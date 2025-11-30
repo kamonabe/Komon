@@ -1,0 +1,48 @@
+metadata:
+  title: {機能名} - 実装タスク
+  feature: {feature-name}
+  status: draft  # draft | in-progress | completed
+  created: YYYY-MM-DD
+  updated: YYYY-MM-DD
+
+tasks:
+- id: T1
+  title: "{タスクタイトル}\n  - {サブタスク1}\n  - {サブタスク2}\n  - _要件: AC-001_"
+  status: pending  # pending | in-progress | done
+  priority: high  # high | medium | low
+  estimated-hours: 2
+  depends-on: []
+  validates: []
+
+- id: T2
+  title: "{タスクタイトル}\n  - {サブタスク1}\n  - {サブタスク2}\n  - _要件: AC-001, AC-002, AC-003_"
+  status: pending
+  priority: high
+  estimated-hours: 3
+  depends-on:
+  - T1
+  validates: []
+
+- id: T3
+  title: "{タスクタイトル}\n  - {サブタスク1}\n  - {サブタスク2}\n  - _要件: 全て_"
+  status: pending
+  priority: high
+  estimated-hours: 1
+  depends-on:
+  - T1
+  - T2
+  validates: []
+
+completion-criteria:
+- criterion: 全テストがパスすること
+  status: pending  # pending | completed
+- criterion: カバレッジが90%以上であること
+  status: pending
+- criterion: 既存機能に影響がないこと
+  status: pending
+- criterion: ドキュメントが更新されていること
+  status: pending
+
+notes:
+- {実装時の注意事項1}
+- {実装時の注意事項2}

@@ -1,0 +1,111 @@
+metadata:
+  title: {機能名} - 設計書
+  feature: {feature-name}
+  status: draft  # draft | in-progress | implemented | deprecated
+  created: YYYY-MM-DD
+  updated: YYYY-MM-DD
+
+architecture:
+  overview: システムアーキテクチャの概要を記述してください。
+  components:
+  - name: {コンポーネント名1}
+    responsibility: {責務}
+    location: {ファイルパス}
+  - name: {コンポーネント名2}
+    responsibility: {責務}
+    location: {ファイルパス}
+  data-flow: データフローを記述してください。入力 → 処理 → 出力
+
+correctness-properties:
+- id: P1
+  title: {プロパティのタイトル}
+  type: invariant  # invariant | postcondition | precondition
+  description: このプロパティが検証する内容を記述してください。数学的な性質や不変条件など。
+  validates:
+  - AC-001
+  - AC-002
+  test-strategy: property-based  # property-based | integration | unit
+
+- id: P2
+  title: {プロパティのタイトル}
+  type: invariant
+  description: このプロパティが検証する内容を記述してください。
+  validates:
+  - AC-002
+  - AC-003
+  test-strategy: integration
+
+- id: P3
+  title: {プロパティのタイトル}
+  type: invariant
+  description: このプロパティが検証する内容を記述してください。
+  validates:
+  - AC-003
+  test-strategy: unit
+
+implementation-details:
+  modules:
+  - name: {モジュール名}
+    file: {ファイルパス}
+    classes:
+    - {クラス名1}
+    - {クラス名2}
+    functions:
+    - {関数名1}
+    - {関数名2}
+  
+  configuration:
+  - key: {設定キー}
+    type: {データ型}
+    default: {デフォルト値}
+    description: {説明}
+  
+  error-handling:
+  - scenario: {エラーシナリオ}
+    handling: {対処方法}
+    user-message: {ユーザー向けメッセージ}
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: not-adopted  # adopted | not-adopted | delegated | not-applicable
+    rationale: 採用/非採用の理由を記述してください。
+    delegated-to: ''  # delegatedの場合、委譲先を記述
+    future-notes: 将来の検討事項があれば記述してください。
+    implementation: []
+
+  notification-throttling:
+    considered: true
+    decision: not-applicable
+    rationale: 採用/非採用の理由を記述してください。
+    implementation: []
+
+  baseline-reset:
+    considered: true
+    decision: not-applicable
+    rationale: 採用/非採用の理由を記述してください。
+    implementation: []
+
+  other-considerations:
+  - consideration: {検討項目}
+    decision: not-adopted
+    rationale: 採用/非採用の理由を記述してください。
+
+testing-strategy:
+  property-tests:
+  - property: P1
+    framework: hypothesis  # hypothesis | jest-fast-check
+    file: tests/test_{module}_properties.py
+  
+  integration-tests:
+  - scenario: {テストシナリオ}
+    file: tests/test_{module}_integration.py
+  
+  unit-tests:
+  - function: {関数名}
+    file: tests/test_{module}_unit.py
+
+backward-compatibility:
+  breaking-changes: []
+  migration-required: false
+  migration-guide: ''
