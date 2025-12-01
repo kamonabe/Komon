@@ -1,0 +1,102 @@
+---
+metadata:
+  title: 継続実行中プロセスの検出 - 要件定義
+  feature: long-running-detector
+  status: draft
+  created: 2025-12-01
+  updated: 2025-12-01
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+acceptance-criteria:
+  - id: AC-001
+    title: 長時間実行プロセスの検出
+    description: |
+      WHEN: 対象スクリプト（.py, .sh等）が指定時間以上実行されている
+      THEN: そのプロセスを長時間実行プロセスとして検出する
+    priority: must-have
+    verification: |
+      - 実行時間が閾値以上のプロセスが検出される
+      - 実行時間が閾値未満のプロセスは検出されない
+      - 複数の長時間実行プロセスが同時に検出される
+  
+  - id: AC-002
+    title: 実行時間の正確な計算
+    description: |
+      WHEN: プロセスの開始時刻を取得する
+      THEN: 現在時刻との差分から実行時間を正確に計算する
+    priority: must-have
+    verification: |
+      - 実行時間が秒単位で正確に計算される
+      - 長時間実行（数時間〜数日）でも正確に計算される
+      - タイムゾーンの影響を受けない
+  
+  - id: AC-003
+    title: 助言メッセージの表示
+    description: |
+      WHEN: 長時間実行プロセスが検出される
+      THEN: komon adviseで分かりやすい助言メッセージを表示する
+    priority: must-have
+    verification: |
+      - スクリプト名、実行時間、PIDが表示される
+      - 実行時間が人間に読みやすい形式（例: 2時間30分）
+      - cron間隔との比較提案が含まれる
+  
+  - id: AC-004
+    title: 設定による制御
+    description: |
+      WHEN: settings.ymlで閾値や対象拡張子を設定する
+      THEN: その設定に従って検出が行われる
+    priority: must-have
+    verification: |
+      - 閾値（秒）を設定できる
+      - 対象拡張子を設定できる
+      - 機能の有効/無効を切り替えられる
+  
+  - id: AC-005
+    title: 既存機能への影響なし
+    description: |
+      WHEN: 長時間実行プロセス検出機能を追加する
+      THEN: 既存のKomon機能が正常に動作する
+    priority: must-have
+    verification: |
+      - 既存の全テストがパスする
+      - 既存の助言機能が正常に動作する
+      - パフォーマンスへの影響が最小限
+
+non-functional-requirements:
+  performance:
+    - プロセス走査は1秒以内に完了すること
+    - メモリ使用量の増加は10MB以下であること
+  
+  usability:
+    - 助言メッセージは日本語で分かりやすいこと
+    - 実行時間は人間に読みやすい形式で表示すること
+  
+  maintainability:
+    - duplicate_detectorと同様の構造を持つこと
+    - テストカバレッジは90%以上を維持すること
+
+constraints:
+  - psutilライブラリを使用すること
+  - 既存のduplicate_detector.pyと同様の設計パターンを踏襲すること
+  - Linux環境（AlmaLinux 9）で動作すること
+
+assumptions:
+  - psutilでプロセス情報が取得できること
+  - プロセスの開始時刻が正確に取得できること
+  - ユーザーはcronで定期実行していること
+
+risks:
+  - risk: プロセス情報の取得に失敗する可能性
+    mitigation: エラーハンドリングを実装し、失敗しても処理を継続
+  - risk: 実行時間の計算が不正確になる可能性
+    mitigation: psutilの信頼性の高いAPIを使用
+  - risk: パフォーマンスへの影響
+    mitigation: プロセス走査を効率的に実装
+
+out-of-scope:
+  - プロセスの自動停止機能
+  - プロセスの詳細な分析（CPU使用率等）
+  - 過去の実行履歴の記録

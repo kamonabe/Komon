@@ -13,6 +13,7 @@ from komon.monitor import collect_detailed_resource_usage
 from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 from komon.notification_history import load_notification_history, format_notification
 from komon.duplicate_detector import detect_duplicate_processes
+from komon.long_running_detector import detect_long_running_processes
 
 SKIP_FILE = "data/komon_data/skip_advices.json"
 
@@ -278,6 +279,52 @@ def advise_duplicate_processes(config):
         print(f"⚠️ 多重実行プロセスの検出に失敗しました: {e}")
 
 
+def advise_long_running_processes(config):
+    """
+    長時間実行プロセスの警告を表示します。
+    """
+    print("\n⏱️  長時間実行プロセスの検出")
+    
+    # 設定から閾値と対象拡張子を取得
+    long_running_config = config.get("long_running_detection", {})
+    threshold_seconds = long_running_config.get("threshold_seconds", 3600)
+    target_extensions = long_running_config.get("target_extensions", ['.py', '.sh', '.rb', '.pl'])
+    enabled = long_running_config.get("enabled", True)
+    
+    if not enabled:
+        print("→ 長時間実行プロセスの検出は無効化されています。")
+        return
+    
+    try:
+        long_running = detect_long_running_processes(
+            threshold_seconds=threshold_seconds,
+            target_extensions=target_extensions
+        )
+        
+        if not long_running:
+            print("→ 長時間実行プロセスは検出されませんでした。")
+            return
+        
+        print("⚠️ 以下のスクリプトが長時間実行されています：\n")
+        
+        for proc in long_running:
+            script = proc['script']
+            pid = proc['pid']
+            runtime_formatted = proc['runtime_formatted']
+            
+            print(f"  • {script} (PID: {pid})")
+            print(f"    実行時間: {runtime_formatted}\n")
+        
+        print("【推奨対応】")
+        print("  - スクリプトが正常に動作しているか確認してください")
+        print("  - cron間隔がスクリプトの実行時間より短い場合は見直してください")
+        print("  - 必要に応じてプロセスを停止してください")
+    
+    except Exception as e:
+        logger.error("Failed to detect long-running processes: %s", e, exc_info=True)
+        print(f"⚠️ 長時間実行プロセスの検出に失敗しました: {e}")
+
+
 def advise_komon_update():
     def action():
         print("→ `git pull` でKomonを最新に保てます。改善が進んでいるかもしれません。")
@@ -398,6 +445,7 @@ def run_advise(history_limit: int = None):
     advise_log_trend(config)
     advise_disk_prediction()  # ディスク使用量の予測を追加
     advise_duplicate_processes(config)  # 多重実行プロセスの検出を追加
+    advise_long_running_processes(config)  # 長時間実行プロセスの検出を追加
     advise_process_breakdown(usage)
     advise_process_details(thresholds, config)
     

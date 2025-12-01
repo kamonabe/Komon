@@ -1,0 +1,105 @@
+---
+metadata:
+  title: 継続実行中プロセスの検出 - 実装タスク
+  feature: long-running-detector
+  task-id: TASK-005
+  status: completed
+  created: 2025-12-01
+  updated: 2025-12-01
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+tasks:
+  - id: T1
+    title: long_running_detector.pyモジュールの作成
+    description: |
+      長時間実行プロセスの検出ロジックを実装する
+    status: completed
+    validates:
+      - AC-001
+      - AC-002
+    subtasks:
+      - detect_long_running_processes()関数の実装
+      - _extract_script_name()関数の実装
+      - _format_duration()関数の実装
+      - エラーハンドリングの実装
+      - ログ出力の実装
+  
+  - id: T2
+    title: advise.pyの拡張
+    description: |
+      長時間実行プロセスの助言メッセージを表示する機能を追加
+    status: completed
+    validates:
+      - AC-003
+    subtasks:
+      - advise_long_running_processes()関数の追加
+      - メイン処理への統合
+      - メッセージフォーマットの実装
+  
+  - id: T3
+    title: 設定ファイルの拡張
+    description: |
+      settings.yml.sampleに長時間実行検出の設定を追加
+    status: completed
+    validates:
+      - AC-004
+    subtasks:
+      - long_running_detectionセクションの追加
+      - デフォルト値の設定
+      - コメントの追加
+  
+  - id: T4
+    title: テストケースの追加
+    description: |
+      プロパティテスト、統合テスト、ユニットテストを作成
+    status: completed
+    validates:
+      - AC-001
+      - AC-002
+      - AC-003
+      - AC-004
+      - AC-005
+    subtasks:
+      - test_long_running_detector_properties.py（プロパティテスト5件）
+      - test_long_running_detector_integration.py（統合テスト7件）
+      - test_long_running_detector_unit.py（ユニットテスト8件）
+      - 全テストの実行確認
+      - カバレッジ確認（90%以上）
+  
+  - id: T5
+    title: ドキュメント更新
+    description: |
+      README.mdとCHANGELOG.mdを更新
+    status: completed
+    validates:
+      - AC-003
+    subtasks:
+      - README.mdの機能一覧に追加
+      - CHANGELOG.mdの更新
+      - 設定例の追加
+
+dependencies:
+  - T1 → T2: モジュール作成後に統合
+  - T1 → T4: モジュール作成後にテスト
+  - T2 → T4: 統合後にテスト
+  - T3 → T4: 設定追加後にテスト
+  - T4 → T5: テスト完了後にドキュメント更新
+
+estimated-effort:
+  total: 4-5時間
+  breakdown:
+    T1: 1.5時間
+    T2: 0.5時間
+    T3: 0.5時間
+    T4: 1.5時間
+    T5: 0.5時間
+
+completion-criteria:
+  - 長時間実行プロセスが正確に検出される
+  - 実行時間が人間に読みやすい形式で表示される
+  - 設定で閾値と対象拡張子を変更できる
+  - 全テストがパスする（既存テスト含む）
+  - カバレッジが90%以上を維持する
+  - ドキュメントが更新されている

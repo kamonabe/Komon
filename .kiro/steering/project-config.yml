@@ -22,7 +22,7 @@ communication:
 versioning:
   scheme: "semver"
   initial_version: "1.0.0"
-  current_version: "1.21.0"
+  current_version: "1.22.0"
 
 testing:
   framework: "pytest"

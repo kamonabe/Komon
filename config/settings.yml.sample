@@ -126,3 +126,12 @@ duplicate_process_detection:  # 多重実行プロセス検出設定
     - .sh
     - .rb
     - .pl
+
+long_running_detection:  # 長時間実行プロセス検出設定
+  enabled: true  # 長時間実行プロセスの検出を有効にする場合は true
+  threshold_seconds: 3600  # 警告閾値（秒）デフォルト: 3600（1時間）
+  target_extensions:  # 対象とするスクリプト拡張子
+    - .py
+    - .sh
+    - .rb
+    - .pl

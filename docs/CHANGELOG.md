@@ -6,6 +6,36 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.22.0] - 2025-12-01
+
+### Added
+
+- **長時間実行プロセスの検出機能**
+  - 特定スクリプトが長時間実行されている場合に検出
+  - スクリプト名、PID、実行時間を表示
+  - 実行時間を人間に読みやすい形式で表示（例: 2時間30分）
+  - 設定で検出閾値を調整可能（デフォルト: 3600秒 = 1時間）
+  - 対象拡張子: .py, .sh, .rb, .pl
+
+- **long_running_detector.pyモジュールの追加**
+  - `detect_long_running_processes()`関数で長時間実行プロセスを検出
+  - `_format_duration()`関数で実行時間を人間に読みやすい形式に変換
+  - エラーハンドリング（プロセス終了、アクセス拒否）
+
+- **advise.pyの拡張**
+  - `advise_long_running_processes()`関数を追加
+  - 長時間実行プロセスの警告メッセージを表示
+  - 設定ファイルから閾値と対象拡張子を読み込み
+
+- **設定ファイルの拡張**
+  - `long_running_detection`セクションを追加
+  - `enabled`, `threshold_seconds`, `target_extensions`を設定可能
+
+### Developer Improvements
+
+- テストの追加: プロパティテスト5件、統合テスト7件、ユニットテスト11件
+- カバレッジ92%を維持（long_running_detector.py: 94%）
+
 ## [1.21.0] - 2025-11-30
 
 ### Added

@@ -1,0 +1,187 @@
+---
+metadata:
+  title: 継続実行中プロセスの検出 - 設計書
+  feature: long-running-detector
+  status: draft
+  created: 2025-12-01
+  updated: 2025-12-01
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+correctness-properties:
+  - id: P1
+    title: 実行時間計算の正確性
+    type: invariant
+    description: '*任意の*プロセス開始時刻について、現在時刻との差分が正確に計算されること'
+    validates:
+      - AC-002
+    test-strategy: property-based
+  
+  - id: P2
+    title: 閾値判定の正確性
+    type: invariant
+    description: '*任意の*閾値Tと実行時間Rについて、R >= Tの場合のみ長時間実行と判定されること'
+    validates:
+      - AC-001
+    test-strategy: property-based
+  
+  - id: P3
+    title: スクリプト名抽出の正確性
+    type: invariant
+    description: '*任意の*コマンドライン形式について、対象拡張子を持つスクリプト名が正しく抽出されること'
+    validates:
+      - AC-001
+    test-strategy: property-based
+  
+  - id: P4
+    title: 時間フォーマットの正確性
+    type: invariant
+    description: '*任意の*秒数について、人間に読みやすい形式（X時間Y分Z秒）に正確に変換されること'
+    validates:
+      - AC-003
+    test-strategy: property-based
+  
+  - id: P5
+    title: 設定値の検証
+    type: invariant
+    description: '*任意の*閾値設定について、正の整数のみが許可され、無効な値はデフォルト値にフォールバックすること'
+    validates:
+      - AC-004
+    test-strategy: property-based
+
+architecture:
+  components:
+    - name: long_running_detector.py
+      responsibility: 長時間実行プロセスの検出ロジック
+      interfaces:
+        - detect_long_running_processes(threshold_seconds, target_extensions) -> List[Dict]
+        - _extract_script_name(cmdline) -> Optional[str]
+        - _format_duration(seconds) -> str
+    
+    - name: advise.py (拡張)
+      responsibility: 助言メッセージの表示
+      interfaces:
+        - advise_long_running_processes() -> None
+    
+    - name: settings.yml
+      responsibility: 設定管理
+      interfaces:
+        - long_running_detection.enabled
+        - long_running_detection.threshold_seconds
+        - long_running_detection.target_extensions
+
+  data-flow: |
+    1. advise.pyが設定を読み込む
+    2. long_running_detector.detect_long_running_processes()を呼び出す
+    3. psutilでプロセス一覧を取得
+    4. 各プロセスの実行時間を計算
+    5. 閾値以上のプロセスを抽出
+    6. 助言メッセージを生成して表示
+
+implementation-details:
+  detect_long_running_processes:
+    algorithm: |
+      1. psutil.process_iter()でプロセス一覧を取得
+      2. 各プロセスについて:
+         a. cmdlineからスクリプト名を抽出
+         b. 対象拡張子でない場合はスキップ
+         c. create_time()で開始時刻を取得
+         d. 現在時刻との差分を計算
+         e. 閾値以上なら結果リストに追加
+      3. 結果リストを返す
+    
+    error-handling: |
+      - psutil.NoSuchProcess: プロセスが終了した場合はスキップ
+      - psutil.AccessDenied: 権限不足の場合はスキップ
+      - その他の例外: ログに記録して処理を継続
+  
+  _format_duration:
+    algorithm: |
+      1. 秒数を時間、分、秒に分解
+      2. 0でない単位のみを表示
+      3. 例: 7380秒 → "2時間3分"
+    
+    edge-cases:
+      - 60秒未満: "X秒"
+      - 1時間未満: "X分Y秒"
+      - 1時間以上: "X時間Y分"
+      - 1日以上: "X日Y時間"
+
+configuration:
+  settings.yml:
+    long_running_detection:
+      enabled: true
+      threshold_seconds: 3600  # 1時間
+      target_extensions:
+        - .py
+        - .sh
+        - .rb
+        - .pl
+
+testing-strategy:
+  property-tests:
+    - test_property_1_duration_calculation_accuracy
+    - test_property_2_threshold_judgment_accuracy
+    - test_property_3_script_name_extraction_accuracy
+    - test_property_4_time_format_accuracy
+    - test_property_5_config_validation
+  
+  integration-tests:
+    - test_detect_long_running_processes_with_real_processes
+    - test_advise_long_running_processes_output
+    - test_config_enabled_disabled
+    - test_error_handling_no_such_process
+    - test_error_handling_access_denied
+    - test_multiple_long_running_processes
+    - test_no_long_running_processes
+  
+  unit-tests:
+    - test_extract_script_name_python
+    - test_extract_script_name_shell
+    - test_extract_script_name_no_extension
+    - test_format_duration_seconds
+    - test_format_duration_minutes
+    - test_format_duration_hours
+    - test_format_duration_days
+    - test_format_duration_zero
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: not-adopted
+    rationale: |
+      Komonは短命なCLI/バッチツールであり、継続的な接続維持や
+      大量トラフィックを扱わない。サーキットブレイカーが必要となる
+      ケースは、Komonの呼び出し元（ジョブスケジューラ、
+      監視システム等）で実装する方が責務の分離として適切。
+    delegated-to: upstream-system
+  
+  notification-throttling:
+    considered: true
+    decision: not-applicable
+    rationale: |
+      この機能は通知を送信しないため、通知スパム防止は不要。
+      助言表示のみを行う。
+  
+  baseline-reset:
+    considered: true
+    decision: not-applicable
+    rationale: |
+      この機能はbaselineを使用しないため、
+      baseline自動リセット機能は不要。
+  
+  other-considerations:
+    - consideration: プロセス情報取得失敗時のフォールバック
+      decision: adopted
+      rationale: |
+        psutilでプロセス情報が取得できない場合でも、
+        他のプロセスの検出は継続する。
+        エラーはログに記録するが、処理は中断しない。
+    
+    - consideration: 実行時間計算の精度
+      decision: adopted
+      rationale: |
+        psutil.Process.create_time()は秒単位のタイムスタンプを返すため、
+        秒単位の精度で実行時間を計算する。
+        ミリ秒単位の精度は不要。
