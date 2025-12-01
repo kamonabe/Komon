@@ -1,7 +1,7 @@
 # Komon（顧問）
 
 [![PyPI version](https://img.shields.io/pypi/v/komon.svg)](https://pypi.org/project/komon/)
-[![Downloads](https://static.pepy.tech/badge/komon)](https://pepy.tech/project/komon)
+[![PyPI downloads](https://img.shields.io/pypi/dm/komon)](https://pypi.org/project/komon/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/kamonabe/Komon/workflows/Tests/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/tests.yml)
