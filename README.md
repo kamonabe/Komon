@@ -1,5 +1,7 @@
 # Komon（顧問）
 
+[![PyPI version](https://img.shields.io/pypi/v/komon.svg)](https://pypi.org/project/komon/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/komon.svg)](https://pypi.org/project/komon/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/kamonabe/Komon/workflows/Tests/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/tests.yml)
@@ -240,24 +242,21 @@ Komon/
 
 ---
 
-## 🚀 クイックスタート（所要時間: 約10分）
+## 🚀 クイックスタート（所要時間: 約5分）
 
 ### 前提条件
 - Linux環境（AlmaLinux 9推奨）
 - Python 3.10以上
-- Git
 
 ### 1. インストール
 
 ```bash
-# リポジトリをクローン（1分）
+# PyPIからインストール（推奨）
+pip install komon
+
+# または開発版（GitHub）
 git clone https://github.com/kamonabe/Komon.git
 cd Komon
-
-# 依存パッケージをインストール（2分）
-pip install -r requirements.txt
-
-# または開発モードでインストール
 pip install -e .
 ```
 
@@ -274,23 +273,20 @@ komon initial
 ### 3. 動作確認（1分）
 
 ```bash
-# リソース監視
-python scripts/main.py
-
-# ステータス確認
-python scripts/status.py
-
 # 対話型アドバイザー
-python scripts/advise.py
+komon advise
 
 # 通知履歴を表示
-python scripts/advise.py --history
+komon advise --history
 
 # 直近10件の通知履歴のみ表示
-python scripts/advise.py --history 10
+komon advise --history 10
 
-# 週次健全性レポート
-python scripts/weekly_report.py
+# または、スクリプトから直接実行
+python scripts/main.py      # リソース監視
+python scripts/status.py    # ステータス確認
+python scripts/advise.py    # 対話型アドバイザー
+python scripts/weekly_report.py  # 週次健全性レポート
 ```
 
 ### Slack通知の設定（オプション）
