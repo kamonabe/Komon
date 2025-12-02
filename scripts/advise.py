@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import time
+import logging
 
 import yaml
 import psutil
@@ -16,6 +17,118 @@ from komon.duplicate_detector import detect_duplicate_processes
 from komon.long_running_detector import detect_long_running_processes
 
 SKIP_FILE = "data/komon_data/skip_advices.json"
+
+logger = logging.getLogger(__name__)
+
+
+def generate_progress_bar(percent: float, width: int = 10) -> str:
+    """
+    パーセンテージをプログレスバーに変換します。
+    
+    Args:
+        percent: パーセンテージ（0-100）
+        width: バーの幅（デフォルト: 10）
+    
+    Returns:
+        プログレスバー文字列（例: "[████░░░░░░]"）
+    """
+    if percent < 0:
+        percent = 0
+    elif percent > 100:
+        percent = 100
+    
+    filled = int(percent * width / 100)
+    empty = width - filled
+    return f"[{'█' * filled}{'░' * empty}]"
+
+
+def get_status_info(value: float, thresholds: dict) -> tuple:
+    """
+    値と閾値から状態情報を取得します。
+    
+    Args:
+        value: 現在の値
+        thresholds: 閾値辞書（warning, alert, critical）
+    
+    Returns:
+        (アイコン, 状態名) のタプル
+    """
+    warning = thresholds.get("warning", 80)
+    alert = thresholds.get("alert", 90)
+    critical = thresholds.get("critical", 95)
+    
+    if value >= critical:
+        return "🔥", "危険"
+    elif value >= alert:
+        return "⚠️", "警戒"
+    elif value >= warning:
+        return "⚠️", "警告"
+    else:
+        return "✅", "正常"
+
+def display_system_status(usage: dict, thresholds: dict, verbose: bool = False):
+    """
+    現在のシステム状態を表示します。
+    
+    Args:
+        usage: リソース使用状況
+        thresholds: 閾値設定
+        verbose: 詳細表示モード
+    """
+    print("📊 現在のシステム状態")
+    
+    # CPU
+    cpu_value = usage.get("cpu", 0.0)
+    cpu_thresholds = thresholds.get("cpu", {})
+    if isinstance(cpu_thresholds, (int, float)):
+        cpu_thresholds = {"warning": cpu_thresholds, "alert": 90, "critical": 95}
+    cpu_icon, cpu_status = get_status_info(cpu_value, cpu_thresholds)
+    cpu_bar = generate_progress_bar(cpu_value)
+    cpu_warning = cpu_thresholds.get("warning", 80)
+    print(f"CPU:     {cpu_bar} {cpu_value:.1f}% / {cpu_warning}% {cpu_icon}")
+    
+    # メモリ
+    mem_value = usage.get("mem", 0.0)
+    mem_thresholds = thresholds.get("mem", {})
+    if isinstance(mem_thresholds, (int, float)):
+        mem_thresholds = {"warning": mem_thresholds, "alert": 90, "critical": 95}
+    mem_icon, mem_status = get_status_info(mem_value, mem_thresholds)
+    mem_bar = generate_progress_bar(mem_value)
+    mem_warning = mem_thresholds.get("warning", 80)
+    print(f"メモリ:  {mem_bar} {mem_value:.1f}% / {mem_warning}% {mem_icon}")
+    
+    # ディスク
+    disk_value = usage.get("disk", 0.0)
+    disk_thresholds = thresholds.get("disk", {})
+    if isinstance(disk_thresholds, (int, float)):
+        disk_thresholds = {"warning": disk_thresholds, "alert": 90, "critical": 95}
+    disk_icon, disk_status = get_status_info(disk_value, disk_thresholds)
+    disk_bar = generate_progress_bar(disk_value)
+    disk_warning = disk_thresholds.get("warning", 80)
+    print(f"ディスク: {disk_bar} {disk_value:.1f}% / {disk_warning}% {disk_icon}")
+    
+    # 詳細表示モード: 警告時は上位プロセスも表示
+    if verbose or cpu_value >= cpu_warning or mem_value >= mem_warning:
+        print("\n📌 上位プロセス:")
+        
+        # CPU上位プロセス
+        if cpu_value >= cpu_warning or verbose:
+            cpu_details = usage.get("cpu_by_process", [])
+            if cpu_details:
+                print("  CPU:")
+                for proc in cpu_details[:3]:
+                    if proc['cpu'] > 0.0:  # 0.0%のプロセスは非表示
+                        print(f"    - {proc['name']}: {proc['cpu']}%")
+        
+        # メモリ上位プロセス
+        if mem_value >= mem_warning or verbose:
+            mem_details = usage.get("mem_by_process", [])
+            if mem_details:
+                print("  メモリ:")
+                for proc in mem_details[:3]:
+                    if proc['mem'] > 0:  # 0MBのプロセスは非表示
+                        print(f"    - {proc['name']}: {proc['mem']} MB")
+
 
 def ask_yes_no(question: str) -> bool:
     while True:
@@ -401,7 +514,7 @@ def advise_notification_history(limit: int = None):
         print(f"⚠️ 通知履歴の読み込みに失敗: {e}")
 
 
-def run_advise(history_limit: int = None):
+def run_advise(history_limit: int = None, verbose: bool = False, section: str = None):
     import sys
     
     try:
@@ -428,29 +541,93 @@ def run_advise(history_limit: int = None):
     usage = collect_detailed_resource_usage()
     thresholds = load_thresholds(config)
     alerts = analyze_usage(usage, thresholds)
-
-    print("🔔 警戒情報")
+    
+    # 設定ファイルからデフォルト値を取得
+    output_config = config.get("output", {})
+    if history_limit is None:
+        history_limit = output_config.get("history_limit", 5)
+    
+    # セクション指定がある場合は該当セクションのみ表示
+    if section:
+        if section == "status":
+            display_system_status(usage, thresholds, verbose)
+        elif section == "alerts":
+            print("🔔 警戒情報")
+            if alerts:
+                for alert in alerts:
+                    print(f"- {alert}")
+            else:
+                print("（なし）")
+        elif section == "advice":
+            print("💡 改善提案")
+            advise_os_update()
+            advise_resource_usage(usage, thresholds)
+            advise_uptime(config.get("profile", {}))
+            advise_email_disabled(config)
+            advise_komon_update()
+        elif section == "log":
+            advise_log_trend(config)
+        elif section == "disk":
+            advise_disk_prediction()
+        elif section == "process":
+            advise_duplicate_processes(config)
+            advise_long_running_processes(config)
+            if verbose:
+                advise_process_breakdown(usage)
+            advise_process_details(thresholds, config)
+        elif section == "history":
+            advise_notification_history(limit=history_limit)
+        else:
+            print(f"❌ 不明なセクション: {section}")
+            print("利用可能なセクション: status, alerts, advice, log, disk, process, history")
+            sys.exit(1)
+        return
+    
+    # 全セクション表示（デフォルト）
+    # 1. システム状態を最初に表示
+    display_system_status(usage, thresholds, verbose)
+    
+    # 2. 警戒情報
+    print("\n🔔 警戒情報")
     if alerts:
         for alert in alerts:
             print(f"- {alert}")
     else:
         print("（なし）")
 
+    # 3. 改善提案
     print("\n💡 改善提案")
     advise_os_update()
-    advise_resource_usage(usage, thresholds)
+    if not verbose:
+        # 通常モードではリソース使用率の対話的な質問をスキップ
+        pass
+    else:
+        advise_resource_usage(usage, thresholds)
     advise_uptime(config.get("profile", {}))
     advise_email_disabled(config)
     advise_komon_update()
-    advise_log_trend(config)
-    advise_disk_prediction()  # ディスク使用量の予測を追加
-    advise_duplicate_processes(config)  # 多重実行プロセスの検出を追加
-    advise_long_running_processes(config)  # 長時間実行プロセスの検出を追加
-    advise_process_breakdown(usage)
-    advise_process_details(thresholds, config)
     
-    # 通知履歴を表示
+    # 4. ログ傾向分析
+    if verbose:
+        advise_log_trend(config)
+    
+    # 5. ディスク使用量の予測
+    if verbose:
+        advise_disk_prediction()
+    
+    # 6. プロセス関連
+    advise_duplicate_processes(config)
+    advise_long_running_processes(config)
+    if verbose:
+        advise_process_breakdown(usage)
+        advise_process_details(thresholds, config)
+    
+    # 7. 通知履歴を表示
     advise_notification_history(limit=history_limit)
+    
+    # フッター
+    if not verbose:
+        print("\n詳細: komon advise --verbose")
 
 
 def run():
@@ -459,14 +636,25 @@ def run():
         "--history",
         type=int,
         metavar="N",
-        default=10,
-        help="通知履歴の表示件数（デフォルト: 10件、0で全件表示）"
+        default=None,
+        help="通知履歴の表示件数（デフォルト: 設定ファイルの値、0で全件表示）"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="詳細表示モード（全ての情報を表示）"
+    )
+    parser.add_argument(
+        "--section",
+        type=str,
+        choices=["status", "alerts", "advice", "log", "disk", "process", "history"],
+        help="特定のセクションのみ表示"
     )
     args = parser.parse_args()
     
     # 0が指定された場合は全件表示（Noneを渡す）
     history_limit = None if args.history == 0 else args.history
-    run_advise(history_limit=history_limit)
+    run_advise(history_limit=history_limit, verbose=args.verbose, section=args.section)
 
 
 if __name__ == "__main__":

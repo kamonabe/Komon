@@ -49,6 +49,11 @@ log_monitor_targets:  # 監視対象のログファイル（true: 監視する /
   /var/log/nginx/error.log: true
   systemd journal: false  # systemd journal を監視する場合は true に
 
+output:  # 出力フォーマットの設定
+  default_mode: "normal"  # "normal" または "verbose"
+  history_limit: 5  # 通知履歴のデフォルト表示件数
+  show_zero_cpu: false  # CPU/メモリ0.0%のプロセスを表示するか
+
   # 任意で追加のログも指定可能（絶対パス推奨）
   # /home/user/logs/custom.log: true
 

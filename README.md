@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/kamonabe/Komon/workflows/Tests/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/tests.yml)
 [![Spec Validation](https://github.com/kamonabe/Komon/workflows/Spec%20and%20Documentation%20Validation/badge.svg)](https://github.com/kamonabe/Komon/actions/workflows/spec-validation.yml)
-[![Test Coverage](https://img.shields.io/badge/coverage-92.7%25-brightgreen)](htmlcov/index.html)
+[![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](htmlcov/index.html)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
 
 > **English**: Komon is a lightweight system monitoring advisor for developers. It quietly watches your development environment and sends friendly notifications when resources are overused, logs spike, or updates are needed. Simple architecture makes it easy to extend with custom notifications and monitoring targets.
@@ -52,6 +52,11 @@
 ```bash
 $ python scripts/advise.py
 
+📊 現在のシステム状態
+CPU:     [█░░░░░░░░░] 12.3% / 80% ✅
+メモリ:  [████░░░░░░] 45.2% / 85% ✅
+ディスク: [███████░░░] 67.8% / 90% ✅
+
 🔔 警戒情報
 （なし）
 
@@ -70,32 +75,37 @@ $ python scripts/advise.py
 💡 以下のコマンドでこれらをまとめて適用できます：
    sudo dnf upgrade -y
 
-📈 ログ傾向分析
-📊 /var/log/messages: 前日比 +45.2% の急増の可能性
-📊 /var/log/httpd/access_log: 正常範囲（前日比 +2.1%）
+🔄 多重実行プロセスの検出
+→ 多重実行プロセスは検出されませんでした。
 
-📊 ディスク使用量の予測
-✅ ディスク使用量は安定しています
-現在の使用率: 68.5%
-増加率: +0.3%/日
+⏱️  長時間実行プロセスの検出
+⚠️ 以下のスクリプトが長時間実行されています：
 
-当面は問題ありません。
+  • shellIntegration-bash.sh (PID: 12345)
+    実行時間: 1時間2分
 
-📌 CPU使用率の内訳：
-- systemd: 0.0%
-- kthreadd: 0.0%
-- pool_workqueue_: 0.0%
+【推奨対応】
+  - スクリプトが正常に動作しているか確認してください
+  - cron間隔がスクリプトの実行時間より短い場合は見直してください
+  - 必要に応じてプロセスを停止してください
 
-📌 メモリ使用率の内訳：
-- firewalld: 41.4 MB
-- python: 30.4 MB
-- polkitd: 22.7 MB
-- NetworkManager: 18.9 MB
+📜 通知履歴（最新5件）
+💿 [12:51:44] DISK: 96.7% - 警戒
+📊 [12:51:44] MEMORY: 91.3% - 警戒
+🔥 [12:51:44] CPU: 88.5% - 警戒
 
-🧐 高負荷プロセスの詳細情報（CPU使用率が高いもの）
-→ 現在、高負荷なプロセスは検出されていません。
+詳細: komon advise --verbose
+```
 
-💡 コンテキスト型アドバイス（v1.18.0〜）
+**新機能（v1.23.0〜）**:
+- 現在のシステム状態を最初に表示（プログレスバー付き）
+- 視覚的に分かりやすい表示
+- ノイズを削減（0.0%のプロセスを非表示）
+- 通知履歴のデフォルト表示件数を5件に変更
+- `--verbose` オプションで詳細表示
+- `--section` オプションで特定セクションのみ表示
+
+**コンテキスト型アドバイス（v1.18.0〜）**:
 高負荷プロセスが検出された場合、プロセスの種類に応じた具体的なアドバイスを表示します：
 
 【CPU使用率が高い場合】
@@ -215,7 +225,7 @@ Komon/
 │   ├── README.md           # 詳細ドキュメント
 │   ├── CHANGELOG.md        # 変更履歴
 │   └── SECURITY.md         # セキュリティ情報
-├── tests/                  # テストコード（93%カバレッジ、339テスト）
+├── tests/                  # テストコード（92%カバレッジ、436テスト）
 ├── data/                   # データ保存先（自動生成）
 │   ├── usage_history/      # リソース使用履歴
 │   ├── notifications/      # 通知履歴
@@ -276,11 +286,18 @@ komon initial
 # 対話型アドバイザー
 komon advise
 
-# 通知履歴を表示
-komon advise --history
+# 詳細表示モード（全ての情報を表示）
+komon advise --verbose
 
-# 直近10件の通知履歴のみ表示
-komon advise --history 10
+# 特定のセクションのみ表示
+komon advise --section status    # システム状態のみ
+komon advise --section alerts    # 警戒情報のみ
+komon advise --section process   # プロセス情報のみ
+komon advise --section history   # 通知履歴のみ
+
+# 通知履歴の表示件数を指定
+komon advise --history 10        # 直近10件のみ表示
+komon advise --history 0         # 全件表示
 
 # または、スクリプトから直接実行
 python scripts/main.py      # リソース監視
@@ -701,7 +718,7 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**テストカバレッジ: 93%** (339テスト、全てパス)
+**テストカバレッジ: 92%** (436テスト、全てパス)
 
 詳細は [tests/README.md](tests/README.md) を参照してください。
 
