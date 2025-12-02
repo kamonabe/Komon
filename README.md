@@ -106,8 +106,9 @@ CPU:     [█░░░░░░░░░] 12.3% / 80% ✅
 - `--section` オプションで特定セクションのみ表示
 
 **コンテキスト型アドバイス（v1.18.0〜）**:
-高負荷プロセスが検出された場合、プロセスの種類に応じた具体的なアドバイスを表示します：
+高負荷プロセスが検出された場合、プロセスの種類に応じた具体的なアドバイスを表示します。
 
+```bash
 【CPU使用率が高い場合】
 1. node (PID: 12345) - CPU: 45.0%, メモリ: 30.0%
    💡 開発サーバーやビルドプロセスの可能性があります
@@ -118,9 +119,9 @@ CPU:     [█░░░░░░░░░] 12.3% / 80% ✅
 3. python (PID: 34567) - CPU: 25.0%, メモリ: 20.0%
    💡 機械学習の学習プロセスやデータ処理スクリプトの可能性があります
 
-📜 通知履歴
-💾 [2025-11-22 21:01:28] MEM: 85.0 - Test alert
-📝 [2025-11-22 21:01:27] LOG: 1000.0 - Test email alert
+� 通知履歴
+� [22025-11-22 21:01:28] MEM: 85.0 - Test alert
+� [20255-11-22 21:01:27] LOG: 1000.0 - Test email alert
 💾 [2025-11-22 20:59:08] MEM: 85.0 - Test alert
 ```
 
@@ -497,13 +498,11 @@ PID: [12345, 12346, 12347, 12348, 12349]
 
 📄 ログファイル: /var/log/messages
 📋 末尾 10 行:
-```
 Nov 30 10:15:23 server systemd: Starting service...
 Nov 30 10:15:24 server app: Error: Connection timeout
 Nov 30 10:15:24 server app: Retrying connection...
 Nov 30 10:15:25 server app: Error: Connection timeout
 Nov 30 10:15:25 server app: Max retries exceeded
-```
 ```
 
 **設定例**:
@@ -511,34 +510,6 @@ Nov 30 10:15:25 server app: Max retries exceeded
 log_analysis:
   tail_lines: 10          # 末尾抜粋の行数（0で無効化）
   max_line_length: 500    # 1行あたりの最大文字数
-```
-
-#### 📋 ログ急増時の末尾抜粋表示（v1.21.0〜）
-
-ログ急増の通知時、実際のログ内容も数行添付することで、問題の内容を即座に把握できます。
-
-**特徴**:
-- ログ急増検出時に末尾N行を自動抽出（デフォルト: 10行）
-- 通知メッセージにコードブロック形式で表示
-- 設定で表示行数を変更可能（0で無効化）
-- 長い行は自動的に切り詰め（デフォルト: 500文字）
-- 大きなログファイルでも高速動作（末尾のみ読み込み）
-
-**通知例**:
-```
-⚠️ Komon ログ警戒情報:
-
-- /var/log/messages: 前日比 +45.2% の急増の可能性
-
-📄 ログファイル: /var/log/messages
-📋 末尾 10 行:
-```
-Nov 30 10:15:23 server systemd: Starting service...
-Nov 30 10:15:24 server app: Error: Connection timeout
-Nov 30 10:15:24 server app: Retrying connection...
-Nov 30 10:15:25 server app: Error: Connection timeout
-Nov 30 10:15:25 server app: Max retries exceeded
-```
 ```
 
 **メモリ通知例**:
