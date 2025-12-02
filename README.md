@@ -191,63 +191,63 @@ Komonは軽量（メモリ使用量: 約30MB）なので、ZabbixやPrometheus�
 
 ```
 Komon/
-├── src/komon/              # コアモジュール
-│   ├── monitor.py          # リソース監視
-│   ├── analyzer.py         # 閾値判定・分析
-│   ├── contextual_advisor.py  # コンテキスト型アドバイス
-│   ├── notification.py     # 通知機能
-│   ├── notification_history.py  # 通知履歴管理
-│   ├── history.py          # 履歴管理
-│   ├── log_watcher.py      # ログ監視
-│   ├── log_analyzer.py     # ログ分析
-│   ├── log_trends.py       # ログ傾向分析
-│   ├── weekly_data.py      # 週次データ収集
-│   ├── report_formatter.py # レポートフォーマット
-│   ├── settings_validator.py  # 設定検証
-│   └── cli.py              # CLIエントリーポイント
-├── scripts/                # 実行スクリプト
-│   ├── main.py             # リソース監視メイン
-│   ├── main_log_monitor.py # ログ急増監視
-│   ├── main_log_trend.py   # ログ傾向分析
-│   ├── weekly_report.py    # 週次健全性レポート
-│   ├── advise.py           # 対話型アドバイザー
-│   ├── initial.py          # 初期設定
-│   ├── status.py           # ステータス表示
-│   ├── komon_guide.py      # ガイドメニュー
-│   ├── check_coverage.py   # カバレッジ分析
-│   ├── setup_coverage_fix.sh # カバレッジ設定修正
-│   ├── generate_release_notes.py # リリースノート自動生成
+├── src/komon/                      # コアモジュール
+│   ├── monitor.py                  # リソース監視
+│   ├── analyzer.py                 # 閾値判定・分析
+│   ├── contextual_advisor.py       # コンテキスト型アドバイス
+│   ├── notification.py             # 通知機能
+│   ├── notification_history.py     # 通知履歴管理
+│   ├── history.py                  # 履歴管理
+│   ├── log_watcher.py              # ログ監視
+│   ├── log_analyzer.py             # ログ分析
+│   ├── log_trends.py               # ログ傾向分析
+│   ├── weekly_data.py              # 週次データ収集
+│   ├── report_formatter.py         # レポートフォーマット
+│   ├── settings_validator.py       # 設定検証
+│   └── cli.py                      # CLIエントリーポイント
+├── scripts/                        # 実行スクリプト
+│   ├── main.py                     # リソース監視メイン
+│   ├── main_log_monitor.py         # ログ急増監視
+│   ├── main_log_trend.py           # ログ傾向分析
+│   ├── weekly_report.py            # 週次健全性レポート
+│   ├── advise.py                   # 対話型アドバイザー
+│   ├── initial.py                  # 初期設定
+│   ├── status.py                   # ステータス表示
+│   ├── komon_guide.py              # ガイドメニュー
+│   ├── check_coverage.py           # カバレッジ分析
+│   ├── setup_coverage_fix.sh       # カバレッジ設定修正
+│   ├── generate_release_notes.py   # リリースノート自動生成
 │   ├── check_status_consistency.py # ステータス整合性チェック
-│   └── init.sh             # 初期化スクリプト
-├── config/                 # 設定ファイル
-│   └── settings.yml.sample # 設定サンプル
-├── docs/                   # ドキュメント
-│   ├── README.md           # 詳細ドキュメント
-│   ├── CHANGELOG.md        # 変更履歴
-│   └── SECURITY.md         # セキュリティ情報
-├── tests/                  # テストコード（92%カバレッジ、436テスト）
-├── data/                   # データ保存先（自動生成）
-│   ├── usage_history/      # リソース使用履歴
-│   ├── notifications/      # 通知履歴
-│   ├── komon_data/         # Komon内部データ
-│   └── logstats/           # ログ統計データ
-├── .kiro/                  # Kiro IDE設定
-│   ├── specs/              # 仕様書
-│   │   ├── komon-system.md     # システム仕様
-│   │   ├── future-ideas.md     # 将来の改善案
-│   │   ├── testing-strategy.md # テスト戦略
-│   │   └── notification-history/ # 通知履歴機能spec
-│   ├── tasks/              # タスク管理
+│   └── init.sh                     # 初期化スクリプト
+├── config/                         # 設定ファイル
+│   └── settings.yml.sample         # 設定サンプル
+├── docs/                           # ドキュメント
+│   ├── README.md                   # 詳細ドキュメント
+│   ├── CHANGELOG.md                # 変更履歴
+│   └── SECURITY.md                 # セキュリティ情報
+├── tests/                          # テストコード（92%カバレッジ、436テスト）
+├── data/                           # データ保存先（自動生成）
+│   ├── usage_history/              # リソース使用履歴
+│   ├── notifications/              # 通知履歴
+│   ├── komon_data/                 # Komon内部データ
+│   └── logstats/                   # ログ統計データ
+├── .kiro/                          # Kiro IDE設定
+│   ├── specs/                      # 仕様書
+│   │   ├── komon-system.md         # システム仕様
+│   │   ├── future-ideas.md         # 将来の改善案
+│   │   ├── testing-strategy.md     # テスト戦略
+│   │   └── notification-history/   # 通知履歴機能spec
+│   ├── tasks/                      # タスク管理
 │   │   ├── implementation-tasks.md # 実装タスクリスト（進行中・未着手）
 │   │   └── completed-tasks.md      # 完了タスクアーカイブ
-│   └── steering/           # 開発ルール
+│   └── steering/                   # 開発ルール
 │       ├── task-management.md
 │       ├── development-workflow.md
 │       └── environment-and-communication.md
-├── requirements.txt        # Python依存パッケージ
-├── setup.py                # インストール設定
-├── LICENSE                 # ライセンス
-└── version.txt             # バージョン情報
+├── requirements.txt                # Python依存パッケージ
+├── setup.py                        # インストール設定
+├── LICENSE                         # ライセンス
+└── version.txt                     # バージョン情報
 ```
 
 ---
