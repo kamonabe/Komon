@@ -2095,8 +2095,323 @@ Komonの現状では手動管理で十分。
 
 ---
 
+---
+
+### [IDEA-021] `komon advise` 出力フォーマットの改善
+
+**カテゴリ**: UX改善  
+**提案日**: 2025-12-02  
+**ステータス**: タスク化済み（TASK-012）  
+**優先度**: 高
+
+#### 背景・課題
+
+**ユーザーからのフィードバック**:
+```
+「komon advise を見た時に『で？今のCPU/Mem/Diskはいくつなの？』って思った」
+```
+
+**現状の問題点**:
+- ❌ **最も重要な情報（現在のリソース使用率）が表示されていない**
+- ❌ 過去の警告履歴ばかりが表示される
+- ❌ 「データ不足」というノイズが多い
+- ❌ 情報密度が高すぎて重要な情報が埋もれる
+- ❌ CPU/メモリ0.0%のプロセスが表示される（意味がない）
+
+**ユーザーが本当に知りたいこと**:
+1. **今、システムは大丈夫か？** ← これが最優先
+2. 何か問題があるか？
+3. 改善すべき点は？
+
+#### 改善案
+
+**1. 現在のシステム状態を最初に表示（最優先）**
+
+```
+📊 現在のシステム状態
+CPU:     [████░░░░░░] 12.3% / 80% ✅
+メモリ:  [████████░░] 45.2% / 85% ✅
+ディスク: [██████████] 67.8% / 90% ⚠️
+
+🔔 警戒情報（なし）
+
+💡 改善提案
+✅ セキュリティパッチ: なし
+✅ システムパッチ: 最新
+
+⏱️  長時間実行プロセス
+⚠️ shellIntegration-bash.sh (1時間2分)
+
+📜 通知履歴（最新3件）
+💿 [12:51:44] DISK: 96.7% - 警戒
+📊 [12:51:44] MEMORY: 91.3% - 警戒
+🔥 [12:51:44] CPU: 88.5% - 警戒
+
+詳細: komon advise --verbose
+```
+
+**プログレスバーのパターン（推奨: パターン2改）**
+
+```
+📊 現在のシステム状態
+CPU:     [████░░░░░░] 12.3% / 80% ✅
+メモリ:  [████████░░] 45.2% / 85% ✅
+ディスク: [██████████] 67.8% / 90% ⚠️
+```
+
+**メリット**:
+- 視覚的に分かりやすい（バーで直感的）
+- 閾値も明確（数値で正確に）
+- コンパクト（3行で完結）
+- 情報量が適切（多すぎず少なすぎず）
+
+**警告時の表示**:
+```
+📊 現在のシステム状態
+CPU:     [█████████░] 88.5% / 80% 🔥 危険
+  上位: python 35.2%, node 28.1%, docker 15.7%
+
+メモリ:  [██████████] 91.3% / 85% 🔥 危険
+  上位: chrome 1024MB, python 512MB, node 256MB
+
+ディスク: [██████████] 96.7% / 90% 🔥 危険
+  推奨: 不要なファイルを削除してください
+```
+
+**2. 簡潔モードと詳細モードの切り替え**
+
+```bash
+# デフォルト: 簡潔モード（重要な情報のみ）
+komon advise
+
+# 詳細モード（全情報表示）
+komon advise --verbose
+komon advise -v
+
+# 特定セクションのみ表示
+komon advise --section=security
+komon advise --section=disk
+
+# 通知履歴の件数指定
+komon advise --history 20  # 最新20件
+```
+
+**3. 「データ不足」メッセージの改善**
+
+**現状（ノイズ）**:
+```
+📈 ログ傾向分析
+📊 /var/log/messages: データ不足（初回実行）
+📊 systemd journal: データ不足（初回実行）
+📊 ディスク使用量の予測
+→ データが不足しています。7日分のデータが必要です。
+```
+
+**改善後（簡潔）**:
+```
+📈 ログ傾向分析
+→ データ収集中（7日分のデータが必要です）
+
+📊 ディスク使用量の予測
+→ データ収集中（7日分のデータが必要です）
+```
+
+または、初回実行時は表示しない。
+
+**4. 通知履歴の重複削減**
+
+**現状（重複が多い）**:
+```
+💾 [2025-12-01 12:51:49] MEM: 85.0 - Test alert
+📝 [2025-12-01 12:51:49] LOG: 1000.0 - Test email alert
+💿 [2025-12-01 12:51:44] DISK: 96.7% - ⚠️ Komon 警戒情報:...
+📊 [2025-12-01 12:51:44] MEMORY: 91.3% - ⚠️ Komon 警戒情報:...
+🔥 [2025-12-01 12:51:44] CPU: 88.5% - ⚠️ Komon 警戒情報:...
+💾 [2025-12-01 12:50:31] MEM: 85.0 - Test alert
+📝 [2025-12-01 12:50:31] LOG: 1000.0 - Test email alert
+💿 [2025-12-01 12:50:29] DISK: 96.7% - ⚠️ Komon 警戒情報:...
+📊 [2025-12-01 12:50:29] MEMORY: 91.3% - ⚠️ Komon 警戒情報:...
+🔥 [2025-12-01 12:50:29] CPU: 88.5% - ⚠️ Komon 警戒情報:...
+```
+
+**改善後（デフォルト5件）**:
+```
+📜 通知履歴（最新5件）
+💿 [12:51:44] DISK: 96.7% - 警戒
+📊 [12:51:44] MEMORY: 91.3% - 警戒
+🔥 [12:51:44] CPU: 88.5% - 警戒
+💾 [12:51:49] MEM: 85.0 - Test alert
+📝 [12:51:49] LOG: 1000.0 - Test email alert
+
+全履歴: komon advise --history
+```
+
+**5. CPU/メモリ使用率の内訳改善**
+
+**現状（0.0%が表示される）**:
+```
+📌 CPU使用率の内訳：
+- systemd: 0.0%
+- kthreadd: 0.0%
+- pool_workqueue_: 0.0%
+- kworker/R-rcu_g: 0.0%
+- kworker/R-sync_: 0.0%
+```
+
+**改善後（0.0%は非表示）**:
+```
+📌 CPU使用率の内訳：
+→ 現在、高負荷なプロセスはありません
+
+📌 メモリ使用率の内訳：
+- node: 1146.0 MB
+- node: 94.2 MB
+- node: 85.0 MB
+（上位5件のみ表示）
+```
+
+#### 実装内容
+
+**1. プログレスバー生成関数**
+
+```python
+def generate_progress_bar(percent, width=10):
+    """プログレスバーを生成"""
+    filled = int(percent / 10)  # 10%刻み
+    bar = '█' * filled + '░' * (width - filled)
+    return f"[{bar}]"
+```
+
+**2. 状態判定関数**
+
+```python
+def get_status_info(value, thresholds):
+    """状態を判定"""
+    if value < thresholds['warning']:
+        return "✅", "正常"
+    elif value < thresholds['alert']:
+        return "⚠️", "警告"
+    else:
+        return "🔥", "危険"
+```
+
+**3. 表示関数**
+
+```python
+def display_system_status(status, thresholds):
+    """システム状態を表示"""
+    print("\n📊 現在のシステム状態")
+    
+    # CPU
+    cpu_bar = generate_progress_bar(status['cpu'])
+    cpu_emoji, cpu_status = get_status_info(status['cpu'], thresholds['cpu'])
+    print(f"CPU:     {cpu_bar} {status['cpu']:.1f}% / {thresholds['cpu']['warning']}% {cpu_emoji}")
+    
+    # 警告時は詳細表示
+    if status['cpu'] >= thresholds['cpu']['warning']:
+        print(f"  上位: {', '.join(status['top_cpu_processes'])}")
+    
+    # メモリ
+    mem_bar = generate_progress_bar(status['memory'])
+    mem_emoji, mem_status = get_status_info(status['memory'], thresholds['memory'])
+    print(f"メモリ:  {mem_bar} {status['memory']:.1f}% / {thresholds['memory']['warning']}% {mem_emoji}")
+    
+    if status['memory'] >= thresholds['memory']['warning']:
+        print(f"  上位: {', '.join(status['top_mem_processes'])}")
+    
+    # ディスク
+    disk_bar = generate_progress_bar(status['disk'])
+    disk_emoji, disk_status = get_status_info(status['disk'], thresholds['disk'])
+    print(f"ディスク: {disk_bar} {status['disk']:.1f}% / {thresholds['disk']['warning']}% {disk_emoji}")
+    
+    if status['disk'] >= thresholds['disk']['warning']:
+        print(f"  推奨: 不要なファイルを削除してください")
+    
+    print()
+```
+
+**4. 設定ファイルに追加**
+
+```yaml
+# settings.yml
+output:
+  default_mode: "concise"  # concise / verbose
+  history_limit: 5         # デフォルトの履歴表示件数
+  show_zero_cpu: false     # CPU 0.0%のプロセスを表示するか
+  show_data_collection: false  # データ収集中メッセージを表示するか
+  progress_bar_width: 10   # プログレスバーの幅
+```
+
+#### 期待効果
+
+**Before（現在）**:
+```
+ユーザー: 「komon advise」
+出力: 警戒情報（なし）、改善提案、データ不足、通知履歴...
+ユーザー: 「で？今のCPU/メモリ/ディスクはいくつなの？」
+```
+
+**After（改善後）**:
+```
+ユーザー: 「komon advise」
+出力: 
+📊 現在のシステム状態
+CPU:     [████░░░░░░] 12.3% / 80% ✅
+メモリ:  [████████░░] 45.2% / 85% ✅
+ディスク: [██████████] 67.8% / 90% ⚠️
+
+ユーザー: 「OK、問題なし」
+```
+
+**効果**:
+- ✅ 「今、システムは大丈夫か？」が一目で分かる
+- ✅ 視覚的に分かりやすい（プログレスバー）
+- ✅ 閾値も明確（数値表示）
+- ✅ 情報密度が適切（重要な情報が埋もれない）
+- ✅ ノイズが減る（データ不足、0.0%プロセス）
+- ✅ 通知履歴の重複が減る（デフォルト5件）
+
+#### 実装ステップ
+
+**Phase 1: 基本実装**
+1. `src/komon/analyzer.py` に `get_current_system_status()` 関数を追加
+2. `scripts/advise.py` に `display_system_status()` 関数を追加
+3. プログレスバー生成関数を実装
+4. 出力順序を変更（システム状態を最初に）
+
+**Phase 2: オプション対応**
+1. `--verbose` オプションの実装
+2. `--section` オプションの実装
+3. `--history` オプションの実装
+4. 設定ファイル対応
+
+**Phase 3: 細かい改善**
+1. 「データ不足」メッセージの改善
+2. 0.0%プロセスの非表示
+3. 通知履歴の重複削減
+4. 色付き表示（オプション）
+
+#### 開発者コメント
+
+```
+ユーザーからの率直なフィードバックが一番価値がある。
+
+「で？今のCPU/メモリ/ディスクはいくつなの？」
+
+これは完全に正しい指摘。
+最も重要な情報が欠けていた。
+
+プログレスバー + 閾値の組み合わせは、
+視覚的にも数値的にも分かりやすい。
+
+これは優先度高で実装したい。
+```
+
+---
+
 ## 更新履歴
 
+- 2025-12-02: `komon advise` 出力フォーマットの改善アイデアを追加（IDEA-021）
 - 2025-11-27: Pythonバージョン自動チェック機能のアイデアを追加（IDEA-020）
 - 2025-11-26: State Snapshot & Diff Detection のアイデアを追加（IDEA-019）
 - 2025-11-24: IDEA-008, IDEA-014, IDEA-015, IDEA-016を実装済みに更新（v1.11.0, v1.12.0, v1.13.0, v1.15.0）
