@@ -25,7 +25,7 @@ updated: 2025-11-26
 
 ## 🔥 High Priority Tasks
 
-### [TASK-012] `komon advise` 出力フォーマットの改善
+### [TASK-017] `komon advise` 出力フォーマットの改善
 **元アイデア**: [IDEA-021] `komon advise` 出力フォーマットの改善  
 **feature-name**: advise-output-improvement  
 **ステータス**: 🔴 TODO  
@@ -322,7 +322,7 @@ cronなどによる同一スクリプトの多重起動を検出し、リソー�
 
 ## 更新履歴
 
-- 2025-12-02: TASK-012を追加（IDEA-021: `komon advise` 出力フォーマットの改善）
+- 2025-12-02: TASK-017を追加（IDEA-021: `komon advise` 出力フォーマットの改善）
 - 2025-12-01: v1.21.0の完了タスクを `completed-tasks.md` に移動（TASK-007）
 - 2025-11-29: v1.19.0の完了タスクを `completed-tasks.md` に移動（TASK-004）
 - 2025-11-29: v1.18.0の完了タスクを `completed-tasks.md` に移動（TASK-003）

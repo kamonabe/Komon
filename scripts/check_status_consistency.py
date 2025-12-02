@@ -59,17 +59,38 @@ class StatusConsistencyChecker:
         content = tasks_file.read_text(encoding='utf-8')
         completed_tasks = {}
         
-        # タスクIDとステータスを抽出
+        # タスクを個別に抽出
         # 例: ### [TASK-003] コンテキストに応じた具体的アドバイス
         #     **ステータス**: 🟢 Done
         #     **完了日**: 2025-11-27 (v1.18.0)
-        task_pattern = r'### \[([A-Z]+-\d+)\] (.+?)\n.*?\*\*ステータス\*\*: 🟢 Done.*?\*\*完了日\*\*: (\d{4}-\d{2}-\d{2}) \((v[\d.]+)\)'
         
-        for match in re.finditer(task_pattern, content, re.DOTALL):
-            task_id = match.group(1)
-            task_name = match.group(2).strip()
-            completed_date = match.group(3)
-            version = match.group(4)
+        # まず、全タスクを抽出（次のタスクまたはファイル末尾まで）
+        task_blocks = re.split(r'(?=### \[TASK-\d+\])', content)
+        
+        for block in task_blocks:
+            if not block.strip():
+                continue
+            
+            # タスクIDとタスク名を抽出
+            task_header = re.search(r'### \[([A-Z]+-\d+)\] (.+?)(?:\n|$)', block)
+            if not task_header:
+                continue
+            
+            task_id = task_header.group(1)
+            task_name = task_header.group(2).strip()
+            
+            # ステータスが🟢 Doneかチェック
+            status_match = re.search(r'\*\*ステータス\*\*: 🟢 Done', block)
+            if not status_match:
+                continue
+            
+            # 完了日を抽出
+            completed_match = re.search(r'\*\*完了日\*\*: (\d{4}-\d{2}-\d{2}) \((v[\d.]+)\)', block)
+            if not completed_match:
+                continue
+            
+            completed_date = completed_match.group(1)
+            version = completed_match.group(2)
             
             # 元アイデアIDを取得
             idea_pattern = rf'\[{task_id}\].*?\*\*元アイデア\*\*: \[([A-Z]+-\d+)\]'
