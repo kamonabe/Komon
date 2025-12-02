@@ -662,10 +662,18 @@ throttle:
 
 ## 📚 ドキュメント
 
+### ユーザー向け
+
 - [詳細ドキュメント](docs/README.md)
 - [システム仕様書](.kiro/specs/komon-system.md)
 - [変更履歴](docs/CHANGELOG.md)
 - [セキュリティガイド](docs/SECURITY.md) - 認証情報の管理、ファイルパーミッション、セキュリティベストプラクティス
+- [対象環境の詳細](docs/RECOMMENDED_RUNTIME.md) - 各ディストリビューションでの動作確認状況、インストール手順
+- [企業向け導入ガイド](docs/ENTERPRISE_GUIDE.md) - 企業環境での導入方法、複数サーバ運用、セキュリティ考慮事項
+
+### 開発者向け
+
+- [AI開発ルール](docs/AI_DEVELOPMENT_RULES.md) - AI支援開発のベストプラクティス、粒度の判断基準
 
 ---
 
@@ -701,10 +709,30 @@ bash run_coverage.sh
 
 ## 🐧 対応プラットフォーム
 
-Komonは**Linux環境での動作を前提**として開発されています。
+### 想定環境（Recommended Runtime）
 
-- **主な対象**: AlmaLinux、RHEL系、Ubuntu、Debian系など
-- **動作確認環境**: AlmaLinux 9
+Komonは以下の環境での動作を**想定**しています：
+
+- **Python**: 3.10以上（推奨: 3.11, 3.12）
+- **OS**: systemdが使えるLinux
+  - AlmaLinux 9+
+  - Rocky Linux 9+
+  - Ubuntu 22.04+
+  - Amazon Linux 2023+
+
+**重要**: これは「サポート」ではなく「想定環境」です。上記以外の環境でも動作する可能性がありますが、動作保証はしていません。
+
+### 対象外環境
+
+- Amazon Linux 2（Python 2.7標準、サポート寿命が短い）
+- CentOS 7以前（systemd未対応またはPython 3.10未対応）
+- Windows、macOS（現時点では対象外）
+
+### 詳細情報
+
+各ディストリビューションでの動作確認状況、インストール手順の差異、トラブルシューティングについては、以下のドキュメントを参照してください：
+
+📖 **[対象環境の詳細（RECOMMENDED_RUNTIME.md）](docs/RECOMMENDED_RUNTIME.md)**
 
 ### Windows / macOS について
 
