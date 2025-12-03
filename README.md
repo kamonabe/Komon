@@ -751,24 +751,44 @@ bash run_coverage.sh
 
 ## 🐧 対応プラットフォーム
 
-### 想定環境（Recommended Runtime）
+### 推奨環境（Recommended Runtime）
 
-Komonは以下の環境での動作を**想定**しています：
+Komonは**RHEL系Linux**での動作を推奨しています：
 
 - **Python**: 3.10以上（推奨: 3.11, 3.12）
-- **OS**: systemdが使えるLinux
-  - AlmaLinux 9+
-  - Rocky Linux 9+
+- **OS**: RHEL系Linux（systemd対応）
+  - **AlmaLinux 9+** ⭐ 最も推奨
+  - **Rocky Linux 9+** ⭐ 推奨
+  - **Amazon Linux 2023+** ⭐ 推奨
+  - Fedora 38+
+  - CentOS Stream 9+
+
+### ベストエフォート対応
+
+以下の環境でも動作しますが、一部機能が制限されます：
+
+- **Debian系Linux**
   - Ubuntu 22.04+
-  - Amazon Linux 2023+
+  - Debian 12+
+  - Raspberry Pi OS（Debian 12ベース）
+  
+  **制限事項**:
+  - パッケージ系のアドバイスが抑制されます（パッケージ名の違いによる誤アドバイスを防ぐため）
+  - ログパスが自動的に `/var/log/syslog` に切り替わります
 
-**重要**: これは「サポート」ではなく「想定環境」です。上記以外の環境でも動作する可能性がありますが、動作保証はしていません。
+- **その他のLinux**
+  - SUSE系、Arch系でも基本機能は動作する可能性があります
+  - ただし、OS固有のアドバイスは制限されます
 
-### 対象外環境
+**重要**: RHEL系以外では、Komonの「誤ったアドバイスをしない」という哲学に基づき、一部のアドバイスが抑制されます。
 
-- Amazon Linux 2（Python 2.7標準、サポート寿命が短い）
-- CentOS 7以前（systemd未対応またはPython 3.10未対応）
-- Windows、macOS（現時点では対象外）
+### 非対応環境
+
+- **Amazon Linux 2**（Python 2.7標準、サポート寿命が短い）
+- **CentOS 7以前**（systemd未対応またはPython 3.10未対応）
+- **Windows ネイティブ**（現時点では非対応）
+  - WSL（Windows Subsystem for Linux）では動作します
+- **macOS**（現時点では対象外）
 
 ### 詳細情報
 
@@ -776,10 +796,19 @@ Komonは以下の環境での動作を**想定**しています：
 
 📖 **[対象環境の詳細（RECOMMENDED_RUNTIME.md）](docs/RECOMMENDED_RUNTIME.md)**
 
+### OS自動判定機能
+
+Komonは実行環境のOSを自動判定し、適切なアドバイスを提供します：
+
+- `/etc/os-release` を読み取ってOSファミリを判定
+- 設定ファイル（`system.os_family`）で手動上書きも可能
+- Windows ネイティブでは起動時にエラーメッセージを表示して終了
+- WSL環境ではLinux扱いで動作
+
 ### Windows / macOS について
 
-現時点では、作者自身がWindows版やmacOS版を開発する予定はありません。
-ただし、フォークして他のプラットフォーム向けに移植していただくことは大歓迎です！
+- **Windows**: WSL（Windows Subsystem for Linux）での実行を推奨します
+- **macOS**: 現時点では対象外ですが、移植版の作成は歓迎します
 
 もし移植版を作成された場合は、ぜひお知らせください。
 READMEにリンクを掲載させていただきます。

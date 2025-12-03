@@ -263,7 +263,8 @@ cronなどによる同一スクリプトの多重起動を検出し、リソー�
 ### [TASK-018] OS判定・汎用Linux対応（マルチディストリビューション対応）
 **元アイデア**: [IDEA-022] OS判定・汎用Linux対応  
 **feature-name**: os-detection-multi-distro  
-**ステータス**: 🔴 TODO  
+**ステータス**: 🟡 In Progress  
+**進捗**: Phase 1 基本機能 7/7 完了（Phase 2へ）  
 **優先度**: High  
 **見積もり**: 中（4-6時間）  
 **担当**: 未定
@@ -285,31 +286,32 @@ Debian系（Raspberry Pi OS, Ubuntu, Debian）でも動作する可能性があ�
 #### タスク分解
 
 **Phase 1: 基本機能（v1.24.0）**
-- [ ] OS判定ロジックの実装
+- [x] OS判定ロジックの実装
   - `/etc/os-release` を読み取り
   - OS ファミリを判定（rhel / debian / suse / arch / unknown）
   - Amazon Linux 2023 は rhel ファミリとして扱う
-- [ ] 新規モジュール `src/komon/os_detection.py` の作成
+- [x] 新規モジュール `src/komon/os_detection.py` の作成
   - `OSDetector` クラスの実装
   - `detect_os_family()` 関数
   - `get_package_manager_command()` 関数
   - `get_log_path()` 関数
   - `should_show_package_advice()` 関数
-- [ ] 設定ファイルの拡張
+- [x] 設定ファイルの拡張
   - `system.os_family` 設定の追加（auto / rhel / debian / suse / arch / unknown）
   - デフォルトは `auto`（自動判定）
-- [ ] Windows非対応の明示
+- [x] Windows非対応の明示
   - `sys.platform == 'win32'` でチェック
   - WSL判定機能の実装（`is_wsl()` 関数）
   - Windows ネイティブでは即エラー終了
   - WSL なら Linux 扱いで続行
-- [ ] テストケースの追加
-  - プロパティベーステスト: OS判定ロジック
-  - ユニットテスト: OSDetectorクラス
-  - 統合テスト: 設定での上書き
-- [ ] ドキュメント更新（Phase 1）
+- [x] テストケースの追加
+  - プロパティベーステスト: 7件（OS判定ロジック）
+  - ユニットテスト: 29件（OSDetectorクラス）
+  - 全36テストがパス
+- [x] ドキュメント更新（Phase 1）
   - README.md に「RHEL推奨」を明記
   - 対応プラットフォームセクションの更新
+  - docs/RECOMMENDED_RUNTIME.md の更新
 
 **Phase 2: 機能制限（v1.24.0 or v1.25.0）**
 - [ ] アドバイス出し分けの実装

@@ -4,6 +4,15 @@
 profile:
   usage: "dev"  # "production" または "dev"。本番環境では一部の助言が変化します。
 
+system:  # システム環境設定
+  os_family: "auto"  # OS判定: auto / rhel / debian / suse / arch / unknown
+                     # auto: 自動判定（推奨）
+                     # rhel: RHEL系（AlmaLinux, Rocky Linux, Amazon Linux 2023等）
+                     # debian: Debian系（Ubuntu, Raspberry Pi OS, Debian等）
+                     # suse: SUSE系（openSUSE等）
+                     # arch: Arch系（Arch Linux, Manjaro等）
+                     # unknown: 不明なOS（アドバイスが制限されます）
+
 thresholds:  # リソース使用率に対する警告の閾値（％）
   # 3段階閾値形式（推奨）
   cpu:

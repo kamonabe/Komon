@@ -12,7 +12,7 @@ metadata:
 tasks:
   - id: "T1"
     title: "Create OS detection module"
-    status: "not_started"
+    status: "completed"
     priority: "high"
     estimated-hours: 2
     depends-on: []
@@ -60,7 +60,7 @@ tasks:
   
   - id: "T3"
     title: "Add configuration support"
-    status: "not_started"
+    status: "completed"
     priority: "high"
     estimated-hours: 0.5
     depends-on: []
@@ -109,7 +109,7 @@ tasks:
   
   - id: "T5"
     title: "Update documentation (Phase 1)"
-    status: "not_started"
+    status: "completed"
     priority: "medium"
     estimated-hours: 0.5
     depends-on: []
