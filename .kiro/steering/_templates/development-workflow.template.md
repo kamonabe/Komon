@@ -21,18 +21,78 @@
 - タスク分解を行う
 
 ### 3. Spec作成（{{git.main_branch}}ブランチ）
+
+**🚨 必須手順: Spec作成前の確認**
+
+Kiroは新しいSpecを作成する前に、**必ず以下を実行**してください：
+
+#### **ステップ1: 既存のSpecファイルの構造を確認**
+
+```bash
+# 既存のSpecディレクトリを確認
+ls {{spec.location}}contextual-advice/
+
+# requirements.ymlの形式を確認（先頭50行）
+head -50 {{spec.location}}contextual-advice/requirements.yml
+
+# テンプレートを確認
+ls {{spec.location}}_templates/
+```
+
+#### **ステップ2: ファイル形式の確認**
+
+確認ポイント：
+- [ ] ファイル拡張子は`.yml`である（`.md`ではない）
+- [ ] 内容はYAML構造化形式である（Markdownではない）
+- [ ] `metadata`, `overview`, `acceptance-criteria`などのセクションがある
+- [ ] 上記を確認してから作成を開始する
+
+#### **ステップ3: Specファイルの作成**
+
 **フォルダ**: `{{spec.location}}{feature-name}/`
 
-以下の3ファイルを**構造化YAML形式**で作成：
+以下の3ファイルを**YAML構造化形式**で作成：
 - `requirements.yml`: 要件定義
 - `design.yml`: 設計書（正確性プロパティを含む）
 - `tasks.yml`: 実装タスクリスト
 
-**ファイル形式の詳細**:
-- **拡張子**: `.yml`
-- **内容**: 構造化YAML（辞書型、リスト型を使用）
-- **パース**: `yaml.safe_load()`で読み込み可能
-- **検証**: `scripts/validate_specs.py`で構造を検証
+**ファイル形式（厳守）**:
+- ✅ **拡張子**: `.yml`（`.md`ではない）
+- ✅ **内容**: YAML構造化形式（Markdownではない）
+- ✅ **パース**: `yaml.safe_load()`で読み込み可能
+- ✅ **検証**: `scripts/validate_specs.py`で構造を検証
+- ❌ **禁止**: Markdown形式（`.md`）での作成
+
+**YAML構造の例**:
+```yaml
+# requirements.yml
+metadata:
+  title: "機能名"
+  feature: "feature-name"
+  status: "draft"
+  created: "YYYY-MM-DD"
+  ...
+
+overview:
+  description: |
+    説明文
+  background: |
+    背景
+  ...
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "タイトル"
+    priority: "high"
+    type: "functional"
+    description: |
+      説明
+    when: "条件"
+    then: "結果"
+    examples:
+      - input: "入力"
+        output: "出力"
+```
 
 **テンプレート**: `{{spec.location}}_templates/` を参照
 

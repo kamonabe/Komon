@@ -1,0 +1,286 @@
+# 要件定義: OS判定・汎用Linux対応
+
+metadata:
+  title: "OS判定・汎用Linux対応（マルチディストリビューション対応）"
+  feature: "os-detection-multi-distro"
+  status: "draft"
+  created: "2025-12-03"
+  updated: "2025-12-03"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+  complexity: "medium"
+  estimated-hours: 6
+  dependencies: []
+
+overview:
+  description: |
+    Komonは現在RHEL系Linux（AlmaLinux, Rocky Linux, Amazon Linux 2023）を想定して設計されているが、
+    Debian系（Raspberry Pi OS, Ubuntu, Debian）でも動作する可能性がある。
+    しかし、パッケージ管理コマンドやログファイルのパスが異なるため、
+    誤ったアドバイスを出してしまう危険性がある。
+    
+    本機能により、OS判定を行い、OS別に適切なアドバイスを提供することで、
+    Komonの哲学「誤ったアドバイスをしない」を維持する。
+  
+  background: |
+    現状のKomonはRHEL系を前提としており、`dnf`コマンドや`/var/log/messages`を
+    ハードコーディングしている。Debian系で実行すると、存在しないコマンドや
+    ファイルパスを提案してしまう。
+    
+    `/etc/os-release`を読み取ることで、OSファミリを判定し、
+    OS別に適切なコマンドやパスを使用できるようにする。
+  
+  goals:
+    - "OSファミリの自動判定（rhel/debian/suse/arch/unknown）"
+    - "OS別のパッケージ管理コマンド提供"
+    - "OS別のログパス提供"
+    - "Debian系でのパッケージアドバイス抑制"
+    - "Windows非対応の明示"
+    - "設定での手動上書き機能"
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "OSファミリの自動判定"
+    priority: "high"
+    type: "functional"
+    description: |
+      Komon起動時に/etc/os-releaseを読み取り、
+      OSファミリ（rhel/debian/suse/arch/unknown）を判定できる
+    when: "Komon起動時に/etc/os-releaseを読み取った時"
+    then: "OSファミリを判定できる"
+    examples:
+      - input: "ID=almalinux"
+        output: "rhel"
+      - input: "ID=ubuntu"
+        output: "debian"
+      - input: "ID=opensuse"
+        output: "suse"
+      - input: "ID=arch"
+        output: "arch"
+      - input: "ID=unknown_os"
+        output: "unknown"
+  
+  - id: "AC-002"
+    title: "Amazon Linux 2023の判定"
+    priority: "high"
+    type: "functional"
+    description: |
+      Amazon Linux 2023を検出した時、
+      rhelファミリとして分類される
+    when: "Amazon Linux 2023を検出した時"
+    then: "rhelファミリとして分類される"
+    examples:
+      - input: "ID=amzn, VERSION_ID=2023"
+        output: "rhel"
+  
+  - id: "AC-003"
+    title: "設定での手動上書き"
+    priority: "high"
+    type: "functional"
+    description: |
+      settings.ymlでsystem.os_familyを設定した時、
+      自動判定より優先される
+    when: "settings.ymlでsystem.os_familyを設定した時"
+    then: "自動判定より優先される"
+    examples:
+      - input: "os_family: rhel"
+        output: "rhel（自動判定を無視）"
+      - input: "os_family: auto"
+        output: "自動判定結果"
+  
+  - id: "AC-004"
+    title: "Windows非対応の明示"
+    priority: "high"
+    type: "functional"
+    description: |
+      Windowsネイティブ環境で実行した時、
+      即座にエラーメッセージを表示して終了する
+    when: "Windowsネイティブ環境で実行した時"
+    then: "即座にエラーメッセージを表示して終了する"
+    examples:
+      - input: "sys.platform == 'win32' and not WSL"
+        output: "❌ Komonは現在Windowsネイティブ環境では動作しません"
+  
+  - id: "AC-005"
+    title: "WSLでのLinux扱い"
+    priority: "high"
+    type: "functional"
+    description: |
+      WSL環境で実行した時、
+      Linux扱いで通常通り動作する
+    when: "WSL環境で実行した時"
+    then: "Linux扱いで通常通り動作する"
+    examples:
+      - input: "/proc/version contains 'Microsoft'"
+        output: "WSL検出、Linux扱いで続行"
+  
+  - id: "AC-006"
+    title: "RHEL系でのパッケージ管理コマンド"
+    priority: "high"
+    type: "functional"
+    description: |
+      OSファミリがrhelの時、
+      dnfコマンドを提案する
+    when: "OSファミリがrhelの時"
+    then: "dnfコマンドを提案する"
+    examples:
+      - input: "os_family=rhel, update_type=security"
+        output: "sudo dnf update --security"
+      - input: "os_family=rhel, update_type=all"
+        output: "sudo dnf update"
+  
+  - id: "AC-007"
+    title: "Debian系でのパッケージ管理コマンド"
+    priority: "high"
+    type: "functional"
+    description: |
+      OSファミリがdebianの時、
+      aptコマンドを提案する
+    when: "OSファミリがdebianの時"
+    then: "aptコマンドを提案する"
+    examples:
+      - input: "os_family=debian"
+        output: "sudo apt update && sudo apt upgrade"
+  
+  - id: "AC-008"
+    title: "unknown OSでの汎用アドバイス"
+    priority: "high"
+    type: "functional"
+    description: |
+      OSファミリがunknownの時、
+      具体的なコマンドを提案せず汎用的なアドバイスを表示する
+    when: "OSファミリがunknownの時"
+    then: "具体的なコマンドを提案せず汎用的なアドバイスを表示する"
+    examples:
+      - input: "os_family=unknown"
+        output: "ご利用OSに応じたパッケージ管理コマンドで更新を確認してください"
+  
+  - id: "AC-009"
+    title: "RHEL系でのログパス"
+    priority: "medium"
+    type: "functional"
+    description: |
+      OSファミリがrhelの時、
+      /var/log/messagesをデフォルトログパスとして使用する
+    when: "OSファミリがrhelの時"
+    then: "/var/log/messagesをデフォルトログパスとして使用する"
+    examples:
+      - input: "os_family=rhel"
+        output: "/var/log/messages"
+  
+  - id: "AC-010"
+    title: "Debian系でのログパス"
+    priority: "medium"
+    type: "functional"
+    description: |
+      OSファミリがdebianの時、
+      /var/log/syslogをデフォルトログパスとして使用する
+    when: "OSファミリがdebianの時"
+    then: "/var/log/syslogをデフォルトログパスとして使用する"
+    examples:
+      - input: "os_family=debian"
+        output: "/var/log/syslog"
+  
+  - id: "AC-011"
+    title: "Debian系でのパッケージアドバイス抑制"
+    priority: "high"
+    type: "functional"
+    description: |
+      OSファミリがdebianの時、
+      パッケージ名が異なるため、パッケージ固有のアドバイスを抑制する
+    when: "OSファミリがdebianの時"
+    then: "パッケージ固有のアドバイスを抑制する"
+    examples:
+      - input: "os_family=debian"
+        output: "should_show_package_advice() returns False"
+  
+  - id: "AC-012"
+    title: "ドキュメントでのRHEL推奨明記"
+    priority: "medium"
+    type: "documentation"
+    description: |
+      README.mdを読んだ時、
+      「RHEL系推奨」が明記されている
+    when: "README.mdを読んだ時"
+    then: "「RHEL系推奨」が明記されている"
+    examples:
+      - input: "README.md"
+        output: "## 対応プラットフォーム\n- RHEL系推奨（AlmaLinux, Rocky Linux, Amazon Linux 2023）"
+
+non-functional-requirements:
+  performance:
+    - "OS判定処理は起動時に1回のみ実行"
+    - "判定結果はキャッシュして再利用"
+    - "/etc/os-releaseの読み込みは10ms以内"
+  
+  reliability:
+    - "/etc/os-releaseが存在しない場合はunknownにフォールバック"
+    - "不正な設定値の場合は自動判定にフォールバック"
+    - "判定失敗時もKomonは動作を継続"
+  
+  maintainability:
+    - "OSファミリの定義は辞書で管理"
+    - "新しいOSファミリを簡単に追加できる"
+    - "判定ロジックは単一モジュールに集約"
+  
+  usability:
+    - "エラーメッセージは日本語で分かりやすく"
+    - "WSL使用を推奨するメッセージを表示"
+    - "OS別の制限事項をドキュメントに明記"
+
+constraints:
+  - "Linux専用（Windows非対応）"
+  - "Python 3.10+以上"
+  - "/etc/os-releaseの存在を前提（ない場合はunknown）"
+  - "既存機能への影響を最小限に"
+
+assumptions:
+  - "ユーザーは日本語話者"
+  - "/etc/os-releaseは標準的なフォーマット"
+  - "OSファミリの判定は起動時に1回で十分"
+
+risks:
+  - risk: "既存機能への影響"
+    mitigation: "統合テストで確認、段階的にロールアウト"
+    probability: "low"
+    impact: "high"
+  
+  - risk: "未知のOSでの誤判定"
+    mitigation: "unknownにフォールバック、設定で手動上書き可能"
+    probability: "medium"
+    impact: "medium"
+  
+  - risk: "Debian系での機能制限"
+    mitigation: "ドキュメントで明記、RHEL系推奨を強調"
+    probability: "low"
+    impact: "low"
+
+scope:
+  in-scope:
+    - "OSファミリの自動判定"
+    - "OS別のパッケージ管理コマンド提供"
+    - "OS別のログパス提供"
+    - "Debian系でのパッケージアドバイス抑制"
+    - "Windows非対応の明示"
+    - "設定での手動上書き"
+    - "ドキュメント更新"
+  
+  out-of-scope:
+    - "OSバージョンの詳細判定（将来の拡張）"
+    - "カスタムパッケージマネージャーのサポート"
+    - "macOSのサポート"
+    - "BSD系のサポート"
+
+success-metrics:
+  quantitative:
+    - "テストカバレッジ93%以上を維持"
+    - "全既存テストがパス"
+    - "新規テスト30件以上を追加"
+    - "OS判定処理が10ms以内"
+  
+  qualitative:
+    - "Raspberry Piでも安全に動作する"
+    - "誤ったアドバイスを出さない"
+    - "RHEL系での動作は従来通り"
+    - "ドキュメントで制限事項が明確"

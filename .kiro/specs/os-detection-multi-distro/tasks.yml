@@ -1,0 +1,205 @@
+# 実装タスクリスト: OS判定・汎用Linux対応
+
+metadata:
+  title: "OS判定・汎用Linux対応（マルチディストリビューション対応）"
+  feature: "os-detection-multi-distro"
+  task-id: "TASK-018"
+  status: "not_started"
+  created: "2025-12-03"
+  updated: "2025-12-03"
+  version: "1.0.0"
+
+tasks:
+  - id: "T1"
+    title: "Create OS detection module"
+    status: "not_started"
+    priority: "high"
+    estimated-hours: 2
+    depends-on: []
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    description: |
+      src/komon/os_detection.pyを新規作成し、
+      OSDetectorクラスとOS判定ロジックを実装する
+    subtasks:
+      - "src/komon/os_detection.pyを作成"
+      - "OSDetectorクラスを実装"
+      - "detect_os_family()を実装"
+      - "is_wsl()を実装"
+      - "check_windows()を実装"
+      - "エラーハンドリングとログ出力を追加"
+    files:
+      - path: "src/komon/os_detection.py"
+        action: "create"
+        lines: 150
+    tests:
+      - "Property test: OS Detection Consistency (PROP-001)"
+      - "Unit tests: OS detection logic"
+  
+  - id: "T2"
+    title: "Implement helper functions"
+    status: "not_started"
+    priority: "high"
+    estimated-hours: 1
+    depends-on: ["T1"]
+    validates: ["AC-006", "AC-007", "AC-009", "AC-010", "AC-011"]
+    description: |
+      OS別のヘルパー関数を実装する
+    subtasks:
+      - "get_package_manager_command()を実装"
+      - "get_log_path()を実装"
+      - "should_show_package_advice()を実装"
+    files:
+      - path: "src/komon/os_detection.py"
+        action: "update"
+        lines: 50
+    tests:
+      - "Property test: Package Manager Command Correctness (PROP-005)"
+      - "Property test: Log Path Consistency (PROP-006)"
+      - "Property test: Package Advice Suppression (PROP-007)"
+      - "Unit tests: Helper functions"
+  
+  - id: "T3"
+    title: "Add configuration support"
+    status: "not_started"
+    priority: "high"
+    estimated-hours: 0.5
+    depends-on: []
+    validates: ["AC-003"]
+    description: |
+      設定ファイルにsystem.os_family設定を追加し、
+      設定の読み込みと検証を実装する
+    subtasks:
+      - "config/settings.yml.sampleにsystem.os_familyを追加"
+      - "設定の読み込みロジックを実装"
+      - "設定値の検証を実装"
+      - "不正な値の場合はautoにフォールバック"
+    files:
+      - path: "config/settings.yml.sample"
+        action: "update"
+        lines: 10
+      - path: "src/komon/os_detection.py"
+        action: "update"
+        lines: 30
+    tests:
+      - "Property test: Configuration Override Precedence (PROP-002)"
+      - "Unit tests: Configuration handling"
+  
+  - id: "T4"
+    title: "Implement Windows/WSL detection"
+    status: "not_started"
+    priority: "high"
+    estimated-hours: 1
+    depends-on: ["T1"]
+    validates: ["AC-004", "AC-005"]
+    description: |
+      Windows/WSL検出機能を実装する
+    subtasks:
+      - "Windows native検出を実装"
+      - "WSL検出を実装"
+      - "Windows nativeの場合はエラーメッセージを表示して終了"
+      - "WSLの場合はLinux扱いで続行"
+    files:
+      - path: "src/komon/os_detection.py"
+        action: "update"
+        lines: 40
+    tests:
+      - "Property test: Windows Detection Determinism (PROP-003)"
+      - "Property test: WSL Linux Treatment (PROP-004)"
+      - "Unit tests: Windows/WSL detection"
+  
+  - id: "T5"
+    title: "Update documentation (Phase 1)"
+    status: "not_started"
+    priority: "medium"
+    estimated-hours: 0.5
+    depends-on: []
+    validates: ["AC-012"]
+    description: |
+      ドキュメントを更新し、対応プラットフォームと制限事項を明記する
+    subtasks:
+      - "README.mdに「RHEL系推奨」を追加"
+      - "README.mdに対応プラットフォームセクションを追加"
+      - "docs/RECOMMENDED_RUNTIME.mdを更新"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 20
+      - path: "docs/RECOMMENDED_RUNTIME.md"
+        action: "update"
+        lines: 30
+    tests: []
+  
+  - id: "T6"
+    title: "Integrate OS detection with advice system"
+    status: "not_started"
+    priority: "high"
+    estimated-hours: 1
+    depends-on: ["T1", "T2"]
+    validates: ["AC-006", "AC-007", "AC-008", "AC-011"]
+    description: |
+      既存のアドバイスシステムとOS判定を統合する
+    subtasks:
+      - "src/komon/contextual_advisor.pyを更新"
+      - "scripts/advise.pyを更新"
+      - "OS別のパッケージ管理コマンドを使用"
+      - "Debian系でのパッケージアドバイスを抑制"
+    files:
+      - path: "src/komon/contextual_advisor.py"
+        action: "update"
+        lines: 30
+      - path: "scripts/advise.py"
+        action: "update"
+        lines: 20
+    tests:
+      - "Integration test: OS-specific advice generation"
+      - "Integration test: Package advice suppression"
+  
+  - id: "T7"
+    title: "Implement log path switching"
+    status: "not_started"
+    priority: "medium"
+    estimated-hours: 0.5
+    depends-on: ["T1", "T2"]
+    validates: ["AC-009", "AC-010"]
+    description: |
+      ログ解析モジュールでOS別のログパスを使用する
+    subtasks:
+      - "ログ解析モジュールを更新"
+      - "get_log_path()を使用"
+      - "unknown OSではログアドバイスを抑制"
+    files:
+      - path: "src/komon/log_analyzer.py"
+        action: "update"
+        lines: 20
+    tests:
+      - "Integration test: Log path switching"
+  
+  - id: "T8"
+    title: "Final documentation updates"
+    status: "not_started"
+    priority: "medium"
+    estimated-hours: 0.5
+    depends-on: ["T5", "T6", "T7"]
+    validates: ["AC-012"]
+    description: |
+      最終的なドキュメント更新を行う
+    subtasks:
+      - "docs/RECOMMENDED_RUNTIME.mdに詳細情報を追加"
+      - "CHANGELOG.mdを更新"
+    files:
+      - path: "docs/RECOMMENDED_RUNTIME.md"
+        action: "update"
+        lines: 20
+      - path: "docs/CHANGELOG.md"
+        action: "update"
+        lines: 15
+    tests: []
+
+summary:
+  total-tasks: 8
+  estimated-total-hours: 6
+  property-tests: 7
+  unit-tests: 4
+  integration-tests: 3
+  files-to-create: 1
+  files-to-update: 8

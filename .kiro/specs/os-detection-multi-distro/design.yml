@@ -1,0 +1,392 @@
+# 設計書: OS判定・汎用Linux対応
+
+metadata:
+  title: "OS判定・汎用Linux対応（マルチディストリビューション対応）"
+  feature: "os-detection-multi-distro"
+  status: "draft"
+  created: "2025-12-03"
+  updated: "2025-12-03"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+overview:
+  summary: |
+    OS判定・汎用Linux対応機能は、Komonが異なるLinuxディストリビューションで
+    適切に動作するための基盤機能です。/etc/os-releaseを読み取ってOSファミリを判定し、
+    OS別に適切なアドバイスを提供します。
+    
+    この機能により、Komonの哲学「誤ったアドバイスをしない」を維持しながら、
+    より多くのLinux環境で安全に動作できるようになります。
+  
+  key-features:
+    - "OSファミリの自動判定（rhel/debian/suse/arch/unknown）"
+    - "OS別のパッケージ管理コマンド提供"
+    - "OS別のログパス提供"
+    - "Debian系でのパッケージアドバイス抑制"
+    - "Windows非対応の明示とWSL対応"
+    - "設定での手動上書き機能"
+
+architecture:
+  diagram: |
+    ┌─────────────────────────────────────────┐
+    │         Komon Application               │
+    ├─────────────────────────────────────────┤
+    │                                         │
+    │  ┌──────────────────────────────────┐  │
+    │  │   OSDetector                     │  │
+    │  │  - detect_os_family()            │  │
+    │  │  - is_wsl()                      │  │
+    │  │  - check_windows()               │  │
+    │  └──────────────────────────────────┘  │
+    │              │                          │
+    │              ▼                          │
+    │  ┌──────────────────────────────────┐  │
+    │  │   Configuration                  │  │
+    │  │  - system.os_family (auto/...)   │  │
+    │  └──────────────────────────────────┘  │
+    │              │                          │
+    │              ▼                          │
+    │  ┌──────────────────────────────────┐  │
+    │  │   Advice Modules                 │  │
+    │  │  - get_package_manager_command() │  │
+    │  │  - get_log_path()                │  │
+    │  │  - should_show_package_advice()  │  │
+    │  └──────────────────────────────────┘  │
+    │                                         │
+    └─────────────────────────────────────────┘
+  
+  components:
+    - name: "OSDetector"
+      description: "OS判定を行うクラス"
+      responsibilities:
+        - "OSファミリの自動判定"
+        - "WSL環境の検出"
+        - "Windows環境のチェック"
+        - "OS別のヘルパー関数提供"
+      interfaces:
+        - "detect_os_family() -> str"
+        - "is_wsl() -> bool"
+        - "check_windows() -> None"
+        - "get_package_manager_command(os_family, update_type) -> str"
+        - "get_log_path(os_family) -> str"
+        - "should_show_package_advice(os_family) -> bool"
+    
+    - name: "Configuration"
+      description: "設定ファイルの拡張"
+      responsibilities:
+        - "system.os_family設定の読み込み"
+        - "設定値の検証"
+        - "デフォルト値の提供"
+      interfaces:
+        - "config['system']['os_family']"
+    
+    - name: "Advice Modules"
+      description: "既存のアドバイスモジュールとの統合"
+      responsibilities:
+        - "OS別のアドバイス生成"
+        - "パッケージアドバイスの抑制"
+        - "ログパスの切り替え"
+      interfaces:
+        - "contextual_advisor.py"
+        - "advise.py"
+        - "log_analyzer.py"
+
+data-models:
+  os-families:
+    description: "OSファミリの定義"
+    structure:
+      rhel:
+        package_manager: "dnf"
+        log_path: "/var/log/messages"
+        show_package_advice: true
+      debian:
+        package_manager: "apt"
+        log_path: "/var/log/syslog"
+        show_package_advice: false
+      suse:
+        package_manager: "zypper"
+        log_path: "/var/log/messages"
+        show_package_advice: false
+      arch:
+        package_manager: "pacman"
+        log_path: "/var/log/pacman.log"
+        show_package_advice: false
+      unknown:
+        package_manager: null
+        log_path: null
+        show_package_advice: false
+  
+  detection-logic:
+    description: "OS判定ロジック"
+    algorithm: |
+      1. /etc/os-releaseを読み込む
+      2. ID, ID_LIKE, NAMEフィールドをチェック
+      3. キーワードマッチングでファミリを判定
+         - rhel: rhel, fedora, centos, almalinux, rocky, amzn
+         - debian: debian, ubuntu, raspbian
+         - suse: suse, opensuse
+         - arch: arch, manjaro
+      4. 見つからない場合は'unknown'
+    fallback: "FileNotFoundError時は'unknown'を返す"
+
+interfaces:
+  public-api:
+    - name: "detect_os_family"
+      signature: "() -> str"
+      description: "OSファミリを自動判定"
+      returns: "'rhel', 'debian', 'suse', 'arch', 'unknown'"
+      raises: []
+    
+    - name: "is_wsl"
+      signature: "() -> bool"
+      description: "WSL環境かどうかを判定"
+      returns: "WSLならTrue"
+      raises: []
+    
+    - name: "check_windows"
+      signature: "() -> None"
+      description: "Windows環境をチェックし、ネイティブWindowsなら即座に終了"
+      returns: "None"
+      raises: ["SystemExit (Windows native時)"]
+    
+    - name: "get_package_manager_command"
+      signature: "(os_family: str, update_type: str = 'all') -> str"
+      description: "OS別のパッケージ管理コマンドを取得"
+      parameters:
+        - "os_family: OSファミリ"
+        - "update_type: 'security' or 'all'"
+      returns: "パッケージ管理コマンド"
+      raises: []
+    
+    - name: "get_log_path"
+      signature: "(os_family: str) -> str"
+      description: "OS別のデフォルトログパスを取得"
+      parameters:
+        - "os_family: OSファミリ"
+      returns: "ログファイルパス"
+      raises: []
+    
+    - name: "should_show_package_advice"
+      signature: "(os_family: str) -> bool"
+      description: "パッケージ関連のアドバイスを表示すべきか判定"
+      parameters:
+        - "os_family: OSファミリ"
+      returns: "表示すべきならTrue"
+      raises: []
+
+correctness-properties:
+  - id: "PROP-001"
+    title: "OS Detection Consistency"
+    description: |
+      任意の有効な/etc/os-releaseファイルに対して、
+      複数回パースしても常に同じOSファミリ分類を返す
+    property: "For any valid /etc/os-release file, parsing it multiple times should always return the same OS family classification"
+    validates: ["AC-001", "AC-002"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-002"
+    title: "Configuration Override Precedence"
+    description: |
+      任意のOSファミリ設定に対して、
+      os_familyが明示的に設定されている場合（autoでない）、
+      自動判定結果に関わらず常にその値を使用する
+    property: "For any OS family setting in configuration, when os_family is explicitly set (not auto), the system should always use that value regardless of automatic detection results"
+    validates: ["AC-003"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-003"
+    title: "Windows Detection Determinism"
+    description: |
+      任意のシステムプラットフォーム値に対して、
+      sys.platform == 'win32' かつ WSLでない場合、
+      常に即座にエラーで終了する
+    property: "For any system platform value, if sys.platform == 'win32' and not WSL, the system should always exit immediately with an error"
+    validates: ["AC-004"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-004"
+    title: "WSL Linux Treatment"
+    description: |
+      任意のWSL環境に対して、
+      常にLinuxとして扱い、通常のOSファミリ判定を行う
+    property: "For any WSL environment, the system should always treat it as Linux and proceed with normal OS family detection"
+    validates: ["AC-005"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-005"
+    title: "Package Manager Command Correctness"
+    description: |
+      任意のOSファミリに対して、
+      返されるパッケージ管理コマンドは、
+      そのファミリの期待されるコマンドと一致する
+    property: "For any OS family, the returned package manager command should match the expected command for that family"
+    validates: ["AC-006", "AC-007"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-006"
+    title: "Log Path Consistency"
+    description: |
+      任意のOSファミリに対して、
+      返されるログパスは、
+      そのOSファミリの標準的なログ場所と一致する
+    property: "For any OS family, the returned log path should be consistent with the OS family's standard log location"
+    validates: ["AC-009", "AC-010"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-007"
+    title: "Package Advice Suppression"
+    description: |
+      任意の非RHELのOSファミリに対して、
+      パッケージ固有のアドバイスは抑制される
+    property: "For any non-RHEL OS family, package-specific advice should be suppressed to prevent incorrect package name suggestions"
+    validates: ["AC-011"]
+    test-strategy: "Property-based test with hypothesis"
+
+error-handling:
+  critical-errors:
+    - error: "Windows Native Detection"
+      handling: "即座に終了（sys.exit(1)）"
+      message: "❌ Komonは現在Windowsネイティブ環境では動作しません\n   WSL (Windows Subsystem for Linux) での使用を推奨します"
+      log-level: "CRITICAL"
+  
+  non-critical-errors:
+    - error: "os-release Read Failure"
+      handling: "unknownにフォールバック"
+      message: "⚠️ OS判定に失敗しました。unknownとして扱います"
+      log-level: "WARNING"
+    
+    - error: "Invalid Configuration"
+      handling: "autoにフォールバック"
+      message: "⚠️ 不正なos_family設定です。自動判定を使用します"
+      log-level: "WARNING"
+
+testing-strategy:
+  unit-tests:
+    - "OS判定ロジック（各OSファミリ）"
+    - "Amazon Linux 2023の判定"
+    - "unknown OSの判定"
+    - "/etc/os-release不在時の挙動"
+    - "設定の自動判定"
+    - "設定の手動上書き"
+    - "不正な設定値の処理"
+    - "Windows native検出"
+    - "WSL検出"
+    - "Linux native検出"
+    - "get_package_manager_command()"
+    - "get_log_path()"
+    - "should_show_package_advice()"
+  
+  property-tests:
+    - "PROP-001: OS Detection Consistency"
+    - "PROP-002: Configuration Override Precedence"
+    - "PROP-003: Windows Detection Determinism"
+    - "PROP-004: WSL Linux Treatment"
+    - "PROP-005: Package Manager Command Correctness"
+    - "PROP-006: Log Path Consistency"
+    - "PROP-007: Package Advice Suppression"
+  
+  integration-tests:
+    - "実際の/etc/os-releaseファイルでの判定"
+    - "設定ファイルとの統合"
+    - "アドバイス生成との統合"
+    - "RHEL系でのdnfコマンド生成"
+    - "Debian系でのaptコマンド生成"
+    - "unknownでの汎用アドバイス生成"
+    - "RHEL系でのパッケージアドバイス表示"
+    - "Debian系でのパッケージアドバイス抑制"
+    - "unknownでのパッケージアドバイス抑制"
+    - "RHEL系での/var/log/messages使用"
+    - "Debian系での/var/log/syslog使用"
+    - "unknownでのログアドバイス抑制"
+  
+  coverage-target: "93%以上を維持"
+
+performance:
+  requirements:
+    - "OS判定処理は起動時に1回のみ実行"
+    - "判定結果はキャッシュして再利用"
+    - "/etc/os-releaseの読み込みは10ms以内"
+  
+  optimization:
+    - "ファイル読み込みは1回のみ"
+    - "判定結果をモジュールレベルでキャッシュ"
+    - "正規表現は事前コンパイル"
+
+security:
+  considerations:
+    - "/etc/os-releaseは読み取り専用でアクセス"
+    - "ファイルが存在しない場合は安全にフォールバック"
+    - "設定値の検証を行い、不正な値を拒否"
+    - "ログに機密情報を出力しない"
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"
+    rationale: |
+      OS判定は単発の処理であり、継続的な接続を維持しない。
+      失敗時はunknownにフォールバックするだけで十分。
+  
+  notification-throttling:
+    considered: true
+    decision: "not-applicable"
+    rationale: "OS判定機能自体は通知を発行しない"
+  
+  baseline-reset:
+    considered: true
+    decision: "not-applicable"
+    rationale: "OS判定機能はbaselineを使用しない"
+  
+  other-considerations:
+    - consideration: "OS判定失敗時のフォールバック"
+      decision: "adopted"
+      rationale: |
+        /etc/os-releaseが読めない場合や判定できない場合は、
+        unknownにフォールバックして処理を継続する
+      implementation:
+        - "判定失敗時はunknownを返す"
+        - "unknownの場合は汎用的なアドバイスのみ表示"
+        - "ログに警告を記録"
+    
+    - consideration: "設定値の検証"
+      decision: "adopted"
+      rationale: "不正な設定値が指定された場合、自動判定にフォールバックする"
+      implementation:
+        - "許可された値のリストでチェック"
+        - "不正な値の場合は警告ログ"
+        - "autoにフォールバック"
+
+implementation-phases:
+  phase-1:
+    version: "v1.24.0"
+    description: "基本機能"
+    tasks:
+      - "OS判定ロジックの実装"
+      - "新規モジュール os_detection.py の作成"
+      - "設定ファイルの拡張"
+      - "Windows/WSL検出"
+      - "テストケースの追加"
+      - "ドキュメント更新（Phase 1）"
+  
+  phase-2:
+    version: "v1.24.0 or v1.25.0"
+    description: "機能制限"
+    tasks:
+      - "アドバイス出し分けの実装"
+      - "Debian系でのパッケージ系アドバイス抑制"
+      - "テストケースの追加（Phase 2）"
+  
+  phase-3:
+    version: "v1.25.0"
+    description: "細かい対応"
+    tasks:
+      - "ログパス切替の実装"
+      - "advise.pyの更新"
+      - "ドキュメント更新（Phase 3）"
+
+future-enhancements:
+  - "OSバージョンの詳細判定"
+  - "カスタムパッケージマネージャーのサポート"
+  - "OS別の詳細なログ解析"
+  - "ディストリビューション固有の最適化"
