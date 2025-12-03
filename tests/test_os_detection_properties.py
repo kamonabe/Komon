@@ -97,30 +97,48 @@ class TestOSDetectionProperties:
                 except SystemExit:
                     pytest.fail("WSL environment should not exit")
     
-    @given(st.sampled_from(['rhel', 'debian', 'suse', 'arch', 'unknown']))
-    def test_property_package_manager_command_correctness(self, os_family):
+    @given(
+        st.sampled_from(['rhel', 'debian', 'suse', 'arch', 'unknown']),
+        st.sampled_from(['security', 'all'])
+    )
+    def test_property_package_manager_command_correctness(self, os_family, update_type):
         """
         **Feature: os-detection-multi-distro, Property 5: Package Manager Command Correctness**
         
-        各OSファミリに対して、正しいパッケージ管理コマンドが返される
+        各OSファミリと更新タイプに対して、正しいパッケージ管理コマンドが返される
         
         **検証要件: AC-006, AC-007**
         """
         config = {'system': {'os_family': os_family}}
         detector = OSDetector(config)
         
-        command = detector.get_package_manager_command()
+        command = detector.get_package_manager_command(update_type)
         
         # 期待されるコマンド
         expected_commands = {
-            'rhel': 'sudo dnf update --security',
-            'debian': 'sudo apt update && sudo apt upgrade',
-            'suse': 'sudo zypper update',
-            'arch': 'sudo pacman -Syu',
-            'unknown': None
+            'rhel': {
+                'security': 'sudo dnf update --security',
+                'all': 'sudo dnf update'
+            },
+            'debian': {
+                'security': 'sudo apt update && sudo apt upgrade',
+                'all': 'sudo apt update && sudo apt upgrade'
+            },
+            'suse': {
+                'security': 'sudo zypper patch',
+                'all': 'sudo zypper update'
+            },
+            'arch': {
+                'security': 'sudo pacman -Syu',
+                'all': 'sudo pacman -Syu'
+            },
+            'unknown': {
+                'security': None,
+                'all': None
+            }
         }
         
-        assert command == expected_commands[os_family]
+        assert command == expected_commands[os_family][update_type]
     
     @given(st.sampled_from(['rhel', 'debian', 'suse', 'arch', 'unknown']))
     def test_property_log_path_consistency(self, os_family):

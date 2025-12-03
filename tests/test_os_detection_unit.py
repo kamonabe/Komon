@@ -231,14 +231,23 @@ ID_LIKE="rhel"
             # エラーで終了しない
             detector.check_windows()
     
-    def test_get_package_manager_command_rhel(self):
-        """RHEL系のパッケージ管理コマンドが正しく返されることを確認"""
+    def test_get_package_manager_command_rhel_security(self):
+        """RHEL系のセキュリティパッチコマンドが正しく返されることを確認"""
         config = {'system': {'os_family': 'rhel'}}
         detector = OSDetector(config)
         
-        result = detector.get_package_manager_command()
+        result = detector.get_package_manager_command('security')
         
         assert result == 'sudo dnf update --security'
+    
+    def test_get_package_manager_command_rhel_all(self):
+        """RHEL系の全パッケージ更新コマンドが正しく返されることを確認"""
+        config = {'system': {'os_family': 'rhel'}}
+        detector = OSDetector(config)
+        
+        result = detector.get_package_manager_command('all')
+        
+        assert result == 'sudo dnf update'
     
     def test_get_package_manager_command_debian(self):
         """Debian系のパッケージ管理コマンドが正しく返されることを確認"""
@@ -248,6 +257,24 @@ ID_LIKE="rhel"
         result = detector.get_package_manager_command()
         
         assert result == 'sudo apt update && sudo apt upgrade'
+    
+    def test_get_package_manager_command_suse_security(self):
+        """SUSE系のセキュリティパッチコマンドが正しく返されることを確認"""
+        config = {'system': {'os_family': 'suse'}}
+        detector = OSDetector(config)
+        
+        result = detector.get_package_manager_command('security')
+        
+        assert result == 'sudo zypper patch'
+    
+    def test_get_package_manager_command_suse_all(self):
+        """SUSE系の全パッケージ更新コマンドが正しく返されることを確認"""
+        config = {'system': {'os_family': 'suse'}}
+        detector = OSDetector(config)
+        
+        result = detector.get_package_manager_command('all')
+        
+        assert result == 'sudo zypper update'
     
     def test_get_package_manager_command_unknown(self):
         """不明なOSの場合、Noneが返されることを確認"""

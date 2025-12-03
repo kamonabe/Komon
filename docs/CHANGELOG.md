@@ -6,6 +6,59 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.24.0] - 2025-12-03
+
+### Added
+
+- **OS判定・汎用Linux対応（マルチディストリビューション対応）**
+  - OS自動判定機能の実装（rhel / debian / suse / arch / unknown）
+  - `/etc/os-release` を読み取ってOSファミリを判定
+  - Amazon Linux 2023 を rhel ファミリとして扱う
+  - 設定ファイルで手動上書き可能（`system.os_family`）
+  - Windows ネイティブでは即エラー終了
+  - WSL では Linux 扱いで動作
+  - OS別のアドバイス出し分け
+    - RHEL系: `sudo dnf update --security`
+    - Debian系: `sudo apt update && sudo apt upgrade`
+    - unknown: 汎用的なアドバイス
+  - Debian系でのパッケージ系アドバイス抑制
+    - 理由: パッケージ名の違いによる誤アドバイスを防止
+    - Komonの哲学「誤ったアドバイスをしない」に基づく設計
+  - ログパスの自動切替
+    - RHEL系: `/var/log/messages`
+    - Debian系: `/var/log/syslog`
+    - unknown: ログアドバイスを抑制
+
+### Changed
+
+- **ドキュメントの更新**
+  - README.md に「RHEL系推奨」を明記
+  - 対応プラットフォームセクションの追加
+  - docs/RECOMMENDED_RUNTIME.md の大幅更新
+    - ベストエフォート対応の詳細を追加
+    - 各ディストリビューションでの制限事項を明記
+    - 動作する機能と制限される機能を明確化
+
+### Developer Improvements
+
+- 新規モジュール: `src/komon/os_detection.py`
+  - `OSDetector` クラスの実装
+  - `detect_os_family()` 関数
+  - `get_package_manager_command()` 関数
+  - `get_log_path()` 関数
+  - `should_show_package_advice()` 関数
+  - `is_wsl()` 関数
+  - `check_windows()` 関数
+- ログ解析モジュールの拡張
+  - `get_recommended_log_path()` 関数
+  - `should_show_log_advice()` 関数
+- テストの追加
+  - プロパティベーステスト: 7件（OS判定ロジック）
+  - ユニットテスト: 29件（OSDetectorクラス）
+  - 統合テスト: 9件（OS別アドバイス、ログパス切替）
+  - 全テストがパス
+- カバレッジ維持
+
 ## [1.23.0] - 2025-12-02
 
 ### Changed

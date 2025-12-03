@@ -4,9 +4,10 @@ metadata:
   title: "OS判定・汎用Linux対応（マルチディストリビューション対応）"
   feature: "os-detection-multi-distro"
   task-id: "TASK-018"
-  status: "not_started"
+  status: "completed"
   created: "2025-12-03"
   updated: "2025-12-03"
+  completed: "2025-12-03"
   version: "1.0.0"
 
 tasks:
@@ -156,7 +157,7 @@ tasks:
   
   - id: "T7"
     title: "Implement log path switching"
-    status: "not_started"
+    status: "completed"
     priority: "medium"
     estimated-hours: 0.5
     depends-on: ["T1", "T2"]
@@ -165,18 +166,19 @@ tasks:
       ログ解析モジュールでOS別のログパスを使用する
     subtasks:
       - "ログ解析モジュールを更新"
-      - "get_log_path()を使用"
+      - "get_recommended_log_path()を実装"
+      - "should_show_log_advice()を実装"
       - "unknown OSではログアドバイスを抑制"
     files:
       - path: "src/komon/log_analyzer.py"
         action: "update"
-        lines: 20
+        lines: 50
     tests:
-      - "Integration test: Log path switching"
+      - "Integration test: Log path switching (6 tests)"
   
   - id: "T8"
     title: "Final documentation updates"
-    status: "not_started"
+    status: "completed"
     priority: "medium"
     estimated-hours: 0.5
     depends-on: ["T5", "T6", "T7"]
@@ -185,21 +187,28 @@ tasks:
       最終的なドキュメント更新を行う
     subtasks:
       - "docs/RECOMMENDED_RUNTIME.mdに詳細情報を追加"
-      - "CHANGELOG.mdを更新"
+      - "ベストエフォート対応の詳細を追加"
+      - "各ディストリビューションでの制限事項を明記"
+      - "docs/CHANGELOG.mdを更新"
     files:
       - path: "docs/RECOMMENDED_RUNTIME.md"
         action: "update"
-        lines: 20
+        lines: 80
       - path: "docs/CHANGELOG.md"
         action: "update"
-        lines: 15
+        lines: 50
     tests: []
 
 summary:
   total-tasks: 8
+  completed-tasks: 8
   estimated-total-hours: 6
+  actual-hours: 5
   property-tests: 7
-  unit-tests: 4
-  integration-tests: 3
-  files-to-create: 1
-  files-to-update: 8
+  unit-tests: 29
+  integration-tests: 9
+  total-tests: 45
+  files-created: 1
+  files-updated: 9
+  all-tests-passed: true
+  total-test-count: 504

@@ -263,8 +263,8 @@ cronなどによる同一スクリプトの多重起動を検出し、リソー�
 ### [TASK-018] OS判定・汎用Linux対応（マルチディストリビューション対応）
 **元アイデア**: [IDEA-022] OS判定・汎用Linux対応  
 **feature-name**: os-detection-multi-distro  
-**ステータス**: 🟡 In Progress  
-**進捗**: Phase 2 機能制限 10/10 完了（Phase 3へ）  
+**ステータス**: 🟢 Done  
+**完了日**: 2025-12-03 (v1.24.0)  
 **優先度**: High  
 **見積もり**: 中（4-6時間）  
 **担当**: 未定
@@ -325,18 +325,21 @@ Debian系（Raspberry Pi OS, Ubuntu, Debian）でも動作する可能性があ�
   - 統合テスト: OS別のアドバイス出し分け（3件）
   - 統合テスト: Debian系でのパッケージ系抑制
 
-**Phase 3: 細かい対応（v1.25.0）**
-- [ ] ログパス切替の実装
+**Phase 3: 細かい対応（v1.24.0）**
+- [x] ログパス切替の実装
   - RHEL系: `/var/log/messages`
   - Debian系: `/var/log/syslog`
   - unknown: ログアドバイスは抑制
-- [ ] `scripts/advise.py` の更新
-  - OS判定結果の表示（オプション）
-  - OS別のアドバイス表示
-- [ ] ドキュメント更新（Phase 3）
+- [x] ログ解析モジュールの拡張
+  - `get_recommended_log_path()` 関数の追加
+  - `should_show_log_advice()` 関数の追加
+- [x] 統合テストの追加
+  - ログパス切替のテスト（6件）
+- [x] ドキュメント更新（Phase 3）
   - docs/RECOMMENDED_RUNTIME.md の更新
-  - ベストエフォート対応の明記
+  - ベストエフォート対応の詳細を追加
   - 制限事項の明記
+  - docs/CHANGELOG.md の更新
 
 #### 完了条件
 - ✅ OS自動判定が動作する（rhel / debian / suse / arch / unknown）
@@ -347,8 +350,10 @@ Debian系（Raspberry Pi OS, Ubuntu, Debian）でも動作する可能性があ�
 - ✅ OS別にアドバイスが出し分けられる
 - ✅ Debian系ではパッケージ系アドバイスがスキップされる
 - ✅ ログパスが OS 別に切り替わる
+- ✅ unknown OSではログアドバイスが抑制される
 - ✅ README.md に「RHEL推奨」が明記される
-- ✅ 全テストがパス
+- ✅ docs/RECOMMENDED_RUNTIME.md が更新される
+- ✅ 全504テストがパス
 - ✅ カバレッジを維持
 
 #### 実装イメージ

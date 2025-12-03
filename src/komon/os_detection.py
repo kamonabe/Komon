@@ -27,11 +27,26 @@ class OSDetector:
     
     # OSファミリ別のパッケージ管理コマンド
     PACKAGE_MANAGERS = {
-        'rhel': 'sudo dnf update --security',
-        'debian': 'sudo apt update && sudo apt upgrade',
-        'suse': 'sudo zypper update',
-        'arch': 'sudo pacman -Syu',
-        'unknown': None
+        'rhel': {
+            'security': 'sudo dnf update --security',
+            'all': 'sudo dnf update'
+        },
+        'debian': {
+            'security': 'sudo apt update && sudo apt upgrade',
+            'all': 'sudo apt update && sudo apt upgrade'
+        },
+        'suse': {
+            'security': 'sudo zypper patch',
+            'all': 'sudo zypper update'
+        },
+        'arch': {
+            'security': 'sudo pacman -Syu',
+            'all': 'sudo pacman -Syu'
+        },
+        'unknown': {
+            'security': None,
+            'all': None
+        }
     }
     
     # OSファミリ別のログパス
@@ -173,15 +188,23 @@ class OSDetector:
             logger.error("Windows native is not supported")
             sys.exit(1)
     
-    def get_package_manager_command(self) -> Optional[str]:
+    def get_package_manager_command(self, update_type: str = 'all') -> Optional[str]:
         """
         OS別のパッケージ管理コマンドを取得
+        
+        Args:
+            update_type: 'security'（セキュリティパッチのみ）または'all'（全パッケージ）
         
         Returns:
             パッケージ管理コマンド文字列、またはNone（unknown OS）
         """
         os_family = self.detect_os_family()
-        return self.PACKAGE_MANAGERS.get(os_family)
+        commands = self.PACKAGE_MANAGERS.get(os_family, {})
+        
+        if isinstance(commands, dict):
+            return commands.get(update_type)
+        
+        return None
     
     def get_log_path(self) -> Optional[str]:
         """
