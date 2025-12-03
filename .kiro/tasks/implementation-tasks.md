@@ -260,6 +260,146 @@ cronなどによる同一スクリプトの多重起動を検出し、リソー�
 
 ---
 
+### [TASK-018] OS判定・汎用Linux対応（マルチディストリビューション対応）
+**元アイデア**: [IDEA-022] OS判定・汎用Linux対応  
+**feature-name**: os-detection-multi-distro  
+**ステータス**: 🔴 TODO  
+**優先度**: High  
+**見積もり**: 中（4-6時間）  
+**担当**: 未定
+
+#### 背景
+現在のKomonはRHEL系（AlmaLinux, Rocky Linux, Amazon Linux 2023）を想定して設計されているが、
+Debian系（Raspberry Pi OS, Ubuntu, Debian）でも動作する可能性がある。
+
+**現状の問題点**:
+- ❌ パッケージ管理コマンドが異なる（dnf vs apt）
+- ❌ ログファイルのパスが異なる（/var/log/messages vs /var/log/syslog）
+- ❌ 誤ったアドバイスを出してしまう危険性（Raspberry Piでdnfコマンドを提案等）
+
+**Komonの哲学**:
+> 「誤ったアドバイスをしない」
+
+この哲学を守るため、OS判定機能が必要。
+
+#### タスク分解
+
+**Phase 1: 基本機能（v1.24.0）**
+- [ ] OS判定ロジックの実装
+  - `/etc/os-release` を読み取り
+  - OS ファミリを判定（rhel / debian / suse / arch / unknown）
+  - Amazon Linux 2023 は rhel ファミリとして扱う
+- [ ] 新規モジュール `src/komon/os_detection.py` の作成
+  - `OSDetector` クラスの実装
+  - `detect_os_family()` 関数
+  - `get_package_manager_command()` 関数
+  - `get_log_path()` 関数
+  - `should_show_package_advice()` 関数
+- [ ] 設定ファイルの拡張
+  - `system.os_family` 設定の追加（auto / rhel / debian / suse / arch / unknown）
+  - デフォルトは `auto`（自動判定）
+- [ ] Windows非対応の明示
+  - `sys.platform == 'win32'` でチェック
+  - WSL判定機能の実装（`is_wsl()` 関数）
+  - Windows ネイティブでは即エラー終了
+  - WSL なら Linux 扱いで続行
+- [ ] テストケースの追加
+  - プロパティベーステスト: OS判定ロジック
+  - ユニットテスト: OSDetectorクラス
+  - 統合テスト: 設定での上書き
+- [ ] ドキュメント更新（Phase 1）
+  - README.md に「RHEL推奨」を明記
+  - 対応プラットフォームセクションの更新
+
+**Phase 2: 機能制限（v1.24.0 or v1.25.0）**
+- [ ] アドバイス出し分けの実装
+  - RHEL系: `sudo dnf update --security`
+  - Debian系: `sudo apt update && sudo apt upgrade`
+  - unknown: 具体的なコマンドを出さない
+- [ ] Debian系でのパッケージ系アドバイス抑制
+  - `should_show_package_advice()` の活用
+  - パッケージ名の違いによる誤アドバイスを防止
+- [ ] テストケースの追加（Phase 2）
+  - 統合テスト: OS別のアドバイス出し分け
+  - 統合テスト: Debian系でのパッケージ系抑制
+
+**Phase 3: 細かい対応（v1.25.0）**
+- [ ] ログパス切替の実装
+  - RHEL系: `/var/log/messages`
+  - Debian系: `/var/log/syslog`
+  - unknown: ログアドバイスは抑制
+- [ ] `scripts/advise.py` の更新
+  - OS判定結果の表示（オプション）
+  - OS別のアドバイス表示
+- [ ] ドキュメント更新（Phase 3）
+  - docs/RECOMMENDED_RUNTIME.md の更新
+  - ベストエフォート対応の明記
+  - 制限事項の明記
+
+#### 完了条件
+- ✅ OS自動判定が動作する（rhel / debian / suse / arch / unknown）
+- ✅ Amazon Linux 2023 が rhel ファミリとして判定される
+- ✅ 設定で OS ファミリを上書きできる（system.os_family）
+- ✅ Windows ネイティブでは即エラー終了する
+- ✅ WSL では Linux 扱いで動作する
+- ✅ OS別にアドバイスが出し分けられる
+- ✅ Debian系ではパッケージ系アドバイスがスキップされる
+- ✅ ログパスが OS 別に切り替わる
+- ✅ README.md に「RHEL推奨」が明記される
+- ✅ 全テストがパス
+- ✅ カバレッジを維持
+
+#### 実装イメージ
+
+**OS判定ロジック**:
+```python
+# src/komon/os_detection.py
+def detect_os_family():
+    """OSファミリを自動判定"""
+    try:
+        with open('/etc/os-release', 'r') as f:
+            content = f.read()
+            
+        if 'rhel' in content or 'fedora' in content or 'centos' in content:
+            return 'rhel'
+        elif 'debian' in content or 'ubuntu' in content:
+            return 'debian'
+        elif 'suse' in content:
+            return 'suse'
+        elif 'arch' in content:
+            return 'arch'
+        else:
+            return 'unknown'
+    except FileNotFoundError:
+        return 'unknown'
+```
+
+**設定例**:
+```yaml
+system:
+  os_family: auto  # auto / rhel / debian / suse / arch / unknown
+```
+
+**アドバイス出し分け**:
+```python
+# RHEL系
+"sudo dnf update --security"
+
+# Debian系
+"sudo apt update && sudo apt upgrade"
+
+# unknown
+"ご利用OSに応じたパッケージ管理コマンドで更新を確認してください"
+```
+
+#### 期待効果
+- Raspberry Pi等での誤動作防止
+- 「誤ったアドバイスをしない」という一貫性の維持
+- 将来的な他ディストリビューション対応の基盤
+- サポート範囲の明確化
+
+---
+
 ## 優先順位の判断基準
 
 **High Priority**:
@@ -288,6 +428,7 @@ cronなどによる同一スクリプトの多重起動を検出し、リソー�
 
 ## 更新履歴
 
+- 2025-12-03: TASK-018を追加（IDEA-022: OS判定・汎用Linux対応）
 - 2025-12-02: TASK-017を追加（IDEA-021: `komon advise` 出力フォーマットの改善）
 - 2025-12-02: v1.22.0の完了タスクを `completed-tasks.md` に移動（TASK-005）
 - 2025-12-01: v1.21.0の完了タスクを `completed-tasks.md` に移動（TASK-007）
