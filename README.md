@@ -34,6 +34,7 @@
 - [他の監視ツールとの関係](#-他の監視ツールとの関係)
 - [プロジェクト構造](#-プロジェクト構造)
 - [クイックスタート](#-クイックスタート)
+- [コマンドリファレンス](#-コマンドリファレンス)
 - [設定](#️-設定)
 - [定期実行](#-定期実行cron)
 - [ドキュメント](#-ドキュメント)
@@ -544,6 +545,58 @@ $ python scripts/advise.py
 
 ---
 
+## 📋 コマンドリファレンス
+
+Komonで使用できる主要なコマンドの一覧です。
+
+### 日常使用コマンド
+
+| コマンド | 説明 | 使用例 |
+|---------|------|--------|
+| `komon advise` | 対話型アドバイザー（システム状態の分析と改善提案） | `komon advise --verbose` |
+| `komon status` | 現在のシステム状態を簡潔に表示 | `komon status` |
+| `komon guide` | 使い方を対話的に案内 | `komon guide` |
+| `komon initial` | 初期設定ウィザード | `komon initial` |
+
+### 監視・レポートコマンド（cron実行用）
+
+| コマンド | 説明 | 推奨頻度 |
+|---------|------|---------|
+| `python scripts/main.py` | リソース監視（CPU/メモリ/ディスク） | 5分おき |
+| `python scripts/main_log_monitor.py` | ログ急増監視 | 5分おき |
+| `python scripts/main_log_trend.py` | ログ傾向分析（過去7日間） | 毎日3時 |
+| `python scripts/weekly_report.py` | 週次健全性レポート | 毎週月曜9時 |
+
+### 開発・メンテナンスコマンド
+
+| コマンド | 説明 | 使用タイミング |
+|---------|------|---------------|
+| `python scripts/check_coverage.py` | テストカバレッジ分析 | 開発時 |
+| `python scripts/generate_release_notes.py` | リリースノート自動生成 | リリース時 |
+| `python scripts/check_status_consistency.py` | タスク整合性チェック | push前 |
+| `python scripts/validate_specs.py` | Spec構造検証 | Spec作成時 |
+
+### adviseコマンドのオプション
+
+```bash
+# 詳細表示モード
+komon advise --verbose
+
+# 特定セクションのみ表示
+komon advise --section status    # システム状態のみ
+komon advise --section alerts    # 警戒情報のみ
+komon advise --section process   # プロセス情報のみ
+komon advise --section history   # 通知履歴のみ
+
+# 通知履歴の表示件数を指定
+komon advise --history 10        # 直近10件
+komon advise --history 0         # 全件表示
+```
+
+📖 **詳細なコマンドリファレンス**: [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md)
+
+---
+
 ## ⚙️ 設定
 
 `settings.yml`を作成して、監視項目や通知設定をカスタマイズできます。
@@ -652,6 +705,7 @@ throttle:
 
 ### ユーザー向け
 
+- [コマンドリファレンス](docs/COMMAND_REFERENCE.md) - 全コマンドの詳細説明
 - [詳細ドキュメント](docs/README.md)
 - [システム仕様書](.kiro/specs/komon-system.md)
 - [変更履歴](docs/CHANGELOG.md)
