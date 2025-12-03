@@ -15,6 +15,7 @@ from komon.log_trends import analyze_log_trend, detect_repeated_spikes
 from komon.notification_history import load_notification_history, format_notification
 from komon.duplicate_detector import detect_duplicate_processes
 from komon.long_running_detector import detect_long_running_processes
+from komon.os_detection import get_os_detector
 
 SKIP_FILE = "data/komon_data/skip_advices.json"
 
@@ -174,50 +175,106 @@ def skippable_advice(key: str, question: str, action: callable):
     else:
         record_skip(key)
 
-def advise_os_update():
-    try:
-        sec_result = subprocess.run([
-            "dnf", "updateinfo", "list", "security", "available"
-        ], capture_output=True, text=True)
-        sec_lines = sec_result.stdout.strip().splitlines()
-        sec_updates = [line for line in sec_lines if re.match(r"^RHSA-\\d{4}:", line)]
-
-        print("① セキュリティパッチの確認")
-        if sec_updates:
-            print(f"→ セキュリティ更新が {len(sec_updates)} 件あります。例：")
-            for line in sec_updates[:10]:
-                print(f"   - {line}")
-            if ask_yes_no("これらのセキュリティパッチを適用しますか？"):
-                subprocess.run(["sudo", "dnf", "upgrade", "--security", "-y"])
-                print("→ セキュリティアップデートを適用しました。再起動が必要な場合があります。")
-            else:
-                print("→ セキュリティアップデートは保留されました。")
+def advise_os_update(config: dict = None):
+    """
+    OS別のパッケージ更新アドバイスを表示します。
+    
+    Args:
+        config: 設定辞書
+    """
+    # OS判定
+    detector = get_os_detector(config)
+    os_family = detector.detect_os_family()
+    
+    # パッケージアドバイスを表示すべきか確認
+    if not detector.should_show_package_advice():
+        print("① パッケージ更新の確認")
+        
+        # unknown OSの場合は特別なメッセージ
+        if os_family == 'unknown':
+            print("→ OSファミリが不明なため、具体的なアドバイスを控えています。")
+            print("   ご利用OSに応じたパッケージ管理コマンドで更新を確認してください。")
         else:
-            print("→ セキュリティ更新はありません。")
+            # debian, suse, archなどの場合
+            print(f"→ {os_family}系OSでは、パッケージ名の違いにより")
+            print("   具体的なアドバイスを控えています。")
+            print("   ご利用OSに応じたパッケージ管理コマンドで更新を確認してください。")
+        
+        # 汎用的なコマンド例を表示
+        cmd = detector.get_package_manager_command()
+        if cmd:
+            print(f"\n💡 パッケージ更新コマンド例:")
+            print(f"   {cmd}")
+        return
+    
+    # RHEL系の場合は従来通りの詳細なアドバイス
+    if os_family == 'rhel':
+        try:
+            sec_result = subprocess.run([
+                "dnf", "updateinfo", "list", "security", "available"
+            ], capture_output=True, text=True)
+            sec_lines = sec_result.stdout.strip().splitlines()
+            sec_updates = [line for line in sec_lines if re.match(r"^RHSA-\d{4}:", line)]
 
-        print("\n② システムパッチ（セキュリティ以外）の確認")
-        result = subprocess.run(["dnf", "check-update"], capture_output=True, text=True)
-        if result.returncode == 100:
-            all_lines = result.stdout.strip().splitlines()
-            normal_updates = [
-                line for line in all_lines
-                if line and not line.startswith(("Last metadata", "Obsoleting"))
-            ]
-            if normal_updates:
-                print(f"→ セキュリティ以外の更新が {len(normal_updates)} 件あります。例：")
-                for line in normal_updates[:10]:
+            print("① セキュリティパッチの確認")
+            if sec_updates:
+                print(f"→ セキュリティ更新が {len(sec_updates)} 件あります。例：")
+                for line in sec_updates[:10]:
                     print(f"   - {line}")
-                print("\n💡 以下のコマンドでこれらをまとめて適用できます：")
-                print("   sudo dnf upgrade -y")
+                if ask_yes_no("これらのセキュリティパッチを適用しますか？"):
+                    subprocess.run(["sudo", "dnf", "upgrade", "--security", "-y"])
+                    print("→ セキュリティアップデートを適用しました。再起動が必要な場合があります。")
+                else:
+                    print("→ セキュリティアップデートは保留されました。")
             else:
-                print("→ セキュリティ以外の更新は見つかりませんでした。")
-        else:
-            print("→ パッケージは最新の状態です。")
+                print("→ セキュリティ更新はありません。")
 
-    except FileNotFoundError:
-        print("→ dnf が見つかりません。AlmaLinuxであることを確認してください。")
-    except Exception as e:
-        print(f"⚠ アップデート確認中にエラーが発生しました: {e}")
+            print("\n② システムパッチ（セキュリティ以外）の確認")
+            result = subprocess.run(["dnf", "check-update"], capture_output=True, text=True)
+            if result.returncode == 100:
+                all_lines = result.stdout.strip().splitlines()
+                normal_updates = [
+                    line for line in all_lines
+                    if line and not line.startswith(("Last metadata", "Obsoleting"))
+                ]
+                if normal_updates:
+                    print(f"→ セキュリティ以外の更新が {len(normal_updates)} 件あります。例：")
+                    for line in normal_updates[:10]:
+                        print(f"   - {line}")
+                    print("\n💡 以下のコマンドでこれらをまとめて適用できます：")
+                    print("   sudo dnf upgrade -y")
+                else:
+                    print("→ セキュリティ以外の更新は見つかりませんでした。")
+            else:
+                print("→ パッケージは最新の状態です。")
+
+        except FileNotFoundError:
+            print("→ dnf が見つかりません。RHEL系Linuxであることを確認してください。")
+        except Exception as e:
+            print(f"⚠ アップデート確認中にエラーが発生しました: {e}")
+    
+    # Debian系の場合はシンプルなアドバイス
+    elif os_family == 'debian':
+        try:
+            print("① パッケージ更新の確認")
+            print("→ Debian系Linuxでは以下のコマンドで更新を確認できます：")
+            print("   sudo apt update")
+            print("   sudo apt list --upgradable")
+            
+            if ask_yes_no("\nパッケージ更新を実行しますか？"):
+                print("\n→ パッケージ更新を実行します...")
+                subprocess.run(["sudo", "apt", "update"])
+                subprocess.run(["sudo", "apt", "upgrade", "-y"])
+                print("→ パッケージ更新が完了しました。再起動が必要な場合があります。")
+            else:
+                print("→ パッケージ更新は保留されました。")
+                print("\n💡 手動で更新する場合は以下のコマンドを実行してください：")
+                print("   sudo apt update && sudo apt upgrade -y")
+        
+        except FileNotFoundError:
+            print("→ apt が見つかりません。Debian系Linuxであることを確認してください。")
+        except Exception as e:
+            print(f"⚠ アップデート確認中にエラーが発生しました: {e}")
 
 def advise_resource_usage(usage: dict, thresholds: dict):
     # 3段階閾値形式に対応（warning値を使用）
@@ -560,7 +617,7 @@ def run_advise(history_limit: int = None, verbose: bool = False, section: str = 
                 print("（なし）")
         elif section == "advice":
             print("💡 改善提案")
-            advise_os_update()
+            advise_os_update(config)
             advise_resource_usage(usage, thresholds)
             advise_uptime(config.get("profile", {}))
             advise_email_disabled(config)
@@ -597,7 +654,7 @@ def run_advise(history_limit: int = None, verbose: bool = False, section: str = 
 
     # 3. 改善提案
     print("\n💡 改善提案")
-    advise_os_update()
+    advise_os_update(config)
     if not verbose:
         # 通常モードではリソース使用率の対話的な質問をスキップ
         pass

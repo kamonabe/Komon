@@ -264,7 +264,7 @@ cronなどによる同一スクリプトの多重起動を検出し、リソー�
 **元アイデア**: [IDEA-022] OS判定・汎用Linux対応  
 **feature-name**: os-detection-multi-distro  
 **ステータス**: 🟡 In Progress  
-**進捗**: Phase 1 基本機能 7/7 完了（Phase 2へ）  
+**進捗**: Phase 2 機能制限 10/10 完了（Phase 3へ）  
 **優先度**: High  
 **見積もり**: 中（4-6時間）  
 **担当**: 未定
@@ -314,15 +314,15 @@ Debian系（Raspberry Pi OS, Ubuntu, Debian）でも動作する可能性があ�
   - docs/RECOMMENDED_RUNTIME.md の更新
 
 **Phase 2: 機能制限（v1.24.0 or v1.25.0）**
-- [ ] アドバイス出し分けの実装
+- [x] アドバイス出し分けの実装
   - RHEL系: `sudo dnf update --security`
   - Debian系: `sudo apt update && sudo apt upgrade`
   - unknown: 具体的なコマンドを出さない
-- [ ] Debian系でのパッケージ系アドバイス抑制
+- [x] Debian系でのパッケージ系アドバイス抑制
   - `should_show_package_advice()` の活用
   - パッケージ名の違いによる誤アドバイスを防止
-- [ ] テストケースの追加（Phase 2）
-  - 統合テスト: OS別のアドバイス出し分け
+- [x] テストケースの追加（Phase 2）
+  - 統合テスト: OS別のアドバイス出し分け（3件）
   - 統合テスト: Debian系でのパッケージ系抑制
 
 **Phase 3: 細かい対応（v1.25.0）**

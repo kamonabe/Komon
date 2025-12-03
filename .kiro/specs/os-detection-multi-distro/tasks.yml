@@ -37,7 +37,7 @@ tasks:
   
   - id: "T2"
     title: "Implement helper functions"
-    status: "not_started"
+    status: "completed"
     priority: "high"
     estimated-hours: 1
     depends-on: ["T1"]
@@ -86,7 +86,7 @@ tasks:
   
   - id: "T4"
     title: "Implement Windows/WSL detection"
-    status: "not_started"
+    status: "completed"
     priority: "high"
     estimated-hours: 1
     depends-on: ["T1"]
@@ -131,7 +131,7 @@ tasks:
   
   - id: "T6"
     title: "Integrate OS detection with advice system"
-    status: "not_started"
+    status: "completed"
     priority: "high"
     estimated-hours: 1
     depends-on: ["T1", "T2"]
@@ -149,9 +149,9 @@ tasks:
         lines: 30
       - path: "scripts/advise.py"
         action: "update"
-        lines: 20
+        lines: 50
     tests:
-      - "Integration test: OS-specific advice generation"
+      - "Integration test: OS-specific advice generation (3 tests)"
       - "Integration test: Package advice suppression"
   
   - id: "T7"
