@@ -2409,8 +2409,303 @@ CPU:     [████░░░░░░] 12.3% / 80% ✅
 
 ---
 
+---
+
+### [IDEA-022] OS判定・汎用Linux対応（マルチディストリビューション対応）
+
+**カテゴリ**: 機能強化・環境対応  
+**提案日**: 2025-12-03  
+**ステータス**: アイデア段階  
+**優先度**: 高（Raspberry Pi等での誤動作防止）
+
+#### 背景・課題
+
+現在のKomonはRHEL系（AlmaLinux, Rocky Linux, Amazon Linux 2023）を想定して設計されているが、
+Debian系（Raspberry Pi OS, Ubuntu, Debian）でも動作する可能性がある。
+
+しかし、以下の問題がある：
+- **パッケージ管理コマンドが異なる**（dnf vs apt）
+- **ログファイルのパスが異なる**（/var/log/messages vs /var/log/syslog）
+- **誤ったアドバイスを出してしまう危険性**（Raspberry Piでdnfコマンドを提案等）
+
+**Komonの一貫した哲学**:
+> 「誤ったアドバイスをしない」
+
+この哲学を守るため、OS判定機能が必要。
+
+#### 改善案
+
+**1. OS自動判定機能**
+
+`/etc/os-release` を読み取り、OS ファミリを判定：
+
+```python
+def detect_os_family():
+    """OSファミリを自動判定"""
+    try:
+        with open('/etc/os-release', 'r') as f:
+            content = f.read()
+            
+        # ID または ID_LIKE から判定
+        if 'rhel' in content or 'fedora' in content or 'centos' in content:
+            return 'rhel'
+        elif 'debian' in content or 'ubuntu' in content:
+            return 'debian'
+        elif 'suse' in content:
+            return 'suse'
+        elif 'arch' in content:
+            return 'arch'
+        else:
+            return 'unknown'
+    except FileNotFoundError:
+        return 'unknown'
+```
+
+**判定結果**:
+- `rhel`: AlmaLinux, Rocky Linux, Amazon Linux 2023, RHEL, CentOS等
+- `debian`: Debian, Ubuntu, Raspberry Pi OS等
+- `suse`: openSUSE, SLES等（将来用）
+- `arch`: Arch Linux等（将来用）
+- `unknown`: 判定不能
+
+**2. 設定での上書き機能**
+
+```yaml
+system:
+  os_family: auto  # auto / rhel / debian / suse / arch / unknown
+```
+
+**動作**:
+- `auto`: 自動判定で決める（デフォルト）
+- その他: 判定結果を上書きし、Komonは指定されたOS前提で動作
+
+**理由**: 未来の"RHEL系列名変更"などに強くなり、ユーザーが正しく扱える環境なら確実に意図通り動く。
+
+**3. OS別のアドバイス出し分け**
+
+特に**セキュリティ更新系**で重要：
+
+```python
+# RHEL系
+"sudo dnf update --security"
+
+# Debian系
+"sudo apt update && sudo apt upgrade"
+
+# unknown
+"ご利用OSに応じたパッケージ管理コマンドで更新を確認してください"
+```
+
+**4. ログパスの切り替え**
+
+```python
+LOG_PATHS = {
+    'rhel': '/var/log/messages',
+    'debian': '/var/log/syslog',
+    'unknown': None  # ログアドバイスは抑制
+}
+```
+
+**5. パッケージ系アドバイスの制限**
+
+Debian系では：
+- パッケージ名の違いが大きい
+- ユーザー環境差が激しい
+- 誤ったアドバイスの危険が高い
+
+→ **「Debian系ではこの項目をスキップ」が最適**
+
+**理由**: Komonの"誤アドバイスをしない"という一貫性に合う。
+
+**6. Windows非対応の明示**
+
+```python
+if sys.platform == 'win32':
+    # WSLかどうかチェック
+    if not is_wsl():
+        print("❌ Komonは Windows ネイティブでは動作しません")
+        print("   WSL (Windows Subsystem for Linux) 経由で利用してください")
+        sys.exit(1)
+```
+
+**WSL判定**:
+```python
+def is_wsl():
+    """WSL環境かどうかを判定"""
+    try:
+        with open('/proc/version', 'r') as f:
+            return 'microsoft' in f.read().lower()
+    except:
+        return False
+```
+
+**7. README等に「RHEL推奨」を明記**
+
+```markdown
+## 対応プラットフォーム
+
+### 推奨環境
+- AlmaLinux 9+
+- Rocky Linux 9+
+- Amazon Linux 2023+
+- RHEL 9+
+
+### ベストエフォート対応
+- Debian 11/12
+- Ubuntu 22.04/24.04
+- Raspberry Pi OS
+
+**制限事項**:
+- パッケージ系アドバイスは非表示
+- ログパスが異なる場合あり
+
+### 非対応
+- Windows（WSL経由なら利用可能）
+- macOS
+```
+
+#### 実装アーキテクチャ
+
+**新規モジュール**: `src/komon/os_detection.py`
+
+```python
+class OSDetector:
+    """OS判定クラス"""
+    
+    def __init__(self, config=None):
+        self.config = config or {}
+        self.os_family = self._detect()
+    
+    def _detect(self):
+        """OS自動判定"""
+        # 設定で上書きされている場合
+        override = self.config.get('system', {}).get('os_family', 'auto')
+        if override != 'auto':
+            return override
+        
+        # 自動判定
+        return detect_os_family()
+    
+    def get_package_manager_command(self, action='update'):
+        """パッケージ管理コマンドを取得"""
+        commands = {
+            'rhel': {
+                'update': 'sudo dnf update',
+                'security': 'sudo dnf update --security',
+            },
+            'debian': {
+                'update': 'sudo apt update && sudo apt upgrade',
+                'security': 'sudo apt update && sudo apt upgrade',
+            },
+            'unknown': {
+                'update': None,
+                'security': None,
+            }
+        }
+        return commands.get(self.os_family, {}).get(action)
+    
+    def get_log_path(self):
+        """ログファイルパスを取得"""
+        paths = {
+            'rhel': '/var/log/messages',
+            'debian': '/var/log/syslog',
+            'unknown': None,
+        }
+        return paths.get(self.os_family)
+    
+    def should_show_package_advice(self):
+        """パッケージ系アドバイスを表示すべきか"""
+        # Debian系では非表示
+        return self.os_family == 'rhel'
+```
+
+#### 期待効果
+
+**1. 誤動作の防止**
+- Raspberry Piでdnfコマンドを提案しない
+- Debian系で存在しないログパスを参照しない
+
+**2. 「誤ったアドバイスをしない」の徹底**
+- 不明なOSでは具体的なコマンドを出さない
+- 確実に動作する範囲でのみアドバイス
+
+**3. 将来的な拡張性**
+- 他のディストリビューション対応の基盤
+- ユーザーの上書き設定で柔軟に対応
+
+**4. サポート範囲の明確化**
+- 「RHEL推奨」を明示
+- ベストエフォート対応の範囲を明確に
+
+#### 実装優先度と段階
+
+**Phase 1: 基本機能（v1.24.0）**
+1. OS判定ロジック追加
+2. system.os_family 設定
+3. Windows非対応の明示
+
+**Phase 2: 機能制限（v1.24.0 or v1.25.0）**
+4. アドバイス出し分け
+5. Debian系でパッケージ系抑制
+
+**Phase 3: 細かい対応（v1.25.0）**
+6. ログパス切替
+7. README更新
+
+#### テスト戦略
+
+```python
+# tests/test_os_detection.py
+
+def test_detect_rhel():
+    """RHEL系の判定テスト"""
+    # /etc/os-release をモック
+    assert detect_os_family() == 'rhel'
+
+def test_detect_debian():
+    """Debian系の判定テスト"""
+    assert detect_os_family() == 'debian'
+
+def test_override_os_family():
+    """設定での上書きテスト"""
+    config = {"system": {"os_family": "debian"}}
+    detector = OSDetector(config)
+    assert detector.os_family == "debian"
+
+def test_package_manager_command():
+    """パッケージ管理コマンドのテスト"""
+    detector = OSDetector()
+    detector.os_family = 'rhel'
+    assert 'dnf' in detector.get_package_manager_command('update')
+    
+    detector.os_family = 'debian'
+    assert 'apt' in detector.get_package_manager_command('update')
+```
+
+#### 開発者コメント
+
+```
+ChatGPTとの対話で生まれたアイデア。
+
+「Raspberry Piで動かしたらdnfコマンドを提案された」
+という事故を防ぐための機能。
+
+Komonの哲学「誤ったアドバイスをしない」を守るため、
+OS判定は必須。
+
+完全対応は難しいが、
+「分からないものには具体的なアドバイスをしない」
+という誠実な姿勢が大事。
+
+段階的に実装して、
+まずは「壊れない」ことを保証する。
+```
+
+---
+
 ## 更新履歴
 
+- 2025-12-03: OS判定・汎用Linux対応のアイデアを追加（IDEA-022）
 - 2025-12-02: `komon advise` 出力フォーマットの改善アイデアを追加（IDEA-021）
 - 2025-11-27: Pythonバージョン自動チェック機能のアイデアを追加（IDEA-020）
 - 2025-11-26: State Snapshot & Diff Detection のアイデアを追加（IDEA-019）
