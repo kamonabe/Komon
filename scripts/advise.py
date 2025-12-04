@@ -608,6 +608,7 @@ def run_advise(history_limit: int = None, verbose: bool = False, section: str = 
     if section:
         if section == "status":
             display_system_status(usage, thresholds, verbose)
+            return
         elif section == "alerts":
             print("🔔 警戒情報")
             if alerts:
@@ -615,6 +616,7 @@ def run_advise(history_limit: int = None, verbose: bool = False, section: str = 
                     print(f"- {alert}")
             else:
                 print("（なし）")
+            return
         elif section == "advice":
             print("💡 改善提案")
             advise_os_update(config)
@@ -622,23 +624,27 @@ def run_advise(history_limit: int = None, verbose: bool = False, section: str = 
             advise_uptime(config.get("profile", {}))
             advise_email_disabled(config)
             advise_komon_update()
+            return
         elif section == "log":
             advise_log_trend(config)
+            return
         elif section == "disk":
             advise_disk_prediction()
+            return
         elif section == "process":
             advise_duplicate_processes(config)
             advise_long_running_processes(config)
             if verbose:
                 advise_process_breakdown(usage)
             advise_process_details(thresholds, config)
+            return
         elif section == "history":
             advise_notification_history(limit=history_limit)
+            return
         else:
             print(f"❌ 不明なセクション: {section}")
             print("利用可能なセクション: status, alerts, advice, log, disk, process, history")
             sys.exit(1)
-        return
     
     # 全セクション表示（デフォルト）
     # 1. システム状態を最初に表示
