@@ -37,8 +37,8 @@ def main():
     if command in script_map:
         script_path = os.path.join(scripts_dir, script_map[command])
         if os.path.exists(script_path):
-            # Pythonスクリプトを実行
-            subprocess.run([sys.executable, script_path])
+            # Pythonスクリプトを実行（追加の引数も渡す）
+            subprocess.run([sys.executable, script_path] + sys.argv[2:])
         else:
             print(f"❌ スクリプトが見つかりません: {script_path}")
     else:

@@ -6,6 +6,15 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.24.2] - 2025-12-04
+
+### Fixed
+
+- **`komon` コマンドで引数が渡されない問題を修正**
+  - `komon advise --section status` 等のコマンドライン引数が正しく渡されるように修正
+  - `src/komon/cli.py` の `subprocess.run()` に `sys.argv[2:]` を追加
+  - `python scripts/advise.py --section status` は動作していたが、`komon advise --section status` では引数が無視されていた問題を解消
+
 ## [1.24.1] - 2025-12-04
 
 ### Fixed
