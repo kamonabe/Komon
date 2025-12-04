@@ -8,6 +8,10 @@
 # version.txtを更新
 echo "1.23.0" > version.txt
 
+# src/komon/__init__.pyを更新
+vim src/komon/__init__.py
+# __version__ = "1.23.0" に変更
+
 # CHANGELOGを更新
 vim docs/CHANGELOG.md
 # [Unreleased] を [1.23.0] - YYYY-MM-DD に変更
@@ -30,7 +34,7 @@ python scripts/advise.py
 ### 3. コミット＆タグ
 
 ```bash
-git add version.txt docs/CHANGELOG.md .kiro/steering/project-config.yml
+git add version.txt src/komon/__init__.py docs/CHANGELOG.md .kiro/steering/project-config.yml
 git commit -m "chore: bump version to 1.23.0"
 git push
 
@@ -63,7 +67,7 @@ python3 -m twine upload dist/*
 
 - PyPIは一度アップロードしたバージョンを削除できない
 - アップロード前に必ずテストを実行
-- version.txt、CHANGELOG.md、project-config.ymlの3ファイルを忘れずに更新
+- version.txt、src/komon/__init__.py、CHANGELOG.md、project-config.ymlの4ファイルを忘れずに更新
 
 ## 🔮 将来の自動化
 

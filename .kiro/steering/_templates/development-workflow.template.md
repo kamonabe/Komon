@@ -215,7 +215,7 @@ Kiroが以下を報告：
 **Kiroへの指示**: ユーザーがバージョン番号を決定したら、**必ず以下をリマインド**してください：
 
 ```
-📋 リリース前の必須作業（3つのファイルを更新）:
+📋 リリース前の必須作業（4つのファイルを更新）:
 
 1. version.txtを更新してください：
    version.txt を新しいバージョン番号に変更
@@ -225,7 +225,15 @@ Kiroが以下を報告：
    ↓
    1.19.0
 
-2. CHANGELOGを更新してください：
+2. src/{{project.name|lower}}/__init__.pyを更新してください：
+   __version__ を新しいバージョン番号に変更
+   
+   変更例：
+   __version__ = "1.18.1"
+   ↓
+   __version__ = "1.19.0"
+
+3. CHANGELOGを更新してください：
    {{changelog.location}} の [Unreleased] を [1.X.X] - YYYY-MM-DD に変更
 
    変更例：
@@ -235,26 +243,28 @@ Kiroが以下を報告：
    
    ## [1.X.X] - 2025-11-27
 
-3. project-config.ymlのバージョンを更新してください：
+4. project-config.ymlのバージョンを更新してください：
    .kiro/steering/project-config.yml の current_version を更新
 
    変更例：
    versioning:
      current_version: "1.X.X"
 
-4. この作業が完了したら、次のステップに進みます
+5. この作業が完了したら、次のステップに進みます
 ```
 
 **なぜ重要か**：
 - ❌ version.txtを忘れると`pip install -e .`で古いバージョンが表示される
+- ❌ __init__.pyを忘れるとパッケージのバージョンが古いまま
 - ❌ CHANGELOGを忘れると`generate_release_notes.py`が動かない
 - ❌ project-config.ymlを忘れるとステアリングルールが古いバージョンを参照する
-- ❌ 3つのファイルのバージョンが不一致になる
+- ❌ 4つのファイルのバージョンが不一致になる
 - ❌ 次のリリース時に混乱する
 
 **Kiroのチェックポイント**：
 - [ ] ユーザーがバージョン番号を決定した
 - [ ] version.txtの更新をリマインドした
+- [ ] src/{{project.name|lower}}/__init__.pyの更新をリマインドした
 - [ ] CHANGELOGの更新をリマインドした
 - [ ] project-config.ymlの更新をリマインドした
 - [ ] ユーザーが「更新完了」と返答した
