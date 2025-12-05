@@ -2703,8 +2703,458 @@ OS判定は必須。
 
 ---
 
+### [IDEA-023] Webhook通知の統一化（マルチサービス対応）
+
+**カテゴリ**: 機能強化・通知方式の標準化  
+**提案日**: 2025-12-04  
+**ステータス**: アイデア段階  
+**優先度**: 中
+
+#### 背景・課題
+
+**ChatGPTとの対話から生まれた構想**:
+
+現在のKomonは：
+- Slack専用の通知実装（`send_slack_alert()`）
+- Email専用の通知実装（`send_email_alert()`）
+- サービスごとに個別実装が必要
+
+**問題点**:
+- Discord、Teams、その他のWebhookサービスを追加するたびに個別実装が必要
+- サービス固有のリッチUI（BlockKit, Embed, AdaptiveCard等）を追うと複雑化
+- Komonの「軽量・シンプル」思想と相反する
+
+**Komonの強み**:
+- 軽さ・シンプルさ・汎用性
+- 「開発者向け軽量アドバイザー」の立ち位置
+
+#### 改善案の全体像
+
+**1. 設計思想（Design Philosophy）**
+
+✔ **共通性を最優先**
+- どの通知サービスにも依存しない「最小公約数のテキスト形式」に統一
+- サービス固有のリッチUIは追わない
+
+✔ **軽量・シンプルさを守る**
+- Komonは「開発者向け軽量アドバイザー」
+- 通知のリッチ化は追わない
+
+✔ **fork / 外部拡張は歓迎、コアには入れない**
+- Slack専用の豪華版、Discord専用のEmbed対応などは Komon-core には含めない
+- 必要な人は、fork や外部の中継スクリプトで拡張してもらう
+
+**2. 統一されたWebhook通知**
+
+**設定ファイル**:
+```yaml
+notifiers:
+  webhooks:
+    - name: "slack"
+      url: "env:KOMON_SLACK_WEBHOOK"
+      kind: "slack"
+      enabled: true
+    
+    - name: "discord"
+      url: "env:KOMON_DISCORD_WEBHOOK"
+      kind: "discord"
+      enabled: true
+    
+    - name: "teams"
+      url: "env:KOMON_TEAMS_WEBHOOK"
+      kind: "teams"
+      enabled: true
+    
+    - name: "generic"
+      url: "env:KOMON_GENERIC_WEBHOOK"
+      kind: "generic"
+      enabled: true
+```
+
+**統一インターフェース**:
+```python
+def send_webhook_notification(notification, webhook_config):
+    """統一されたWebhook通知"""
+    kind = webhook_config.get('kind', 'generic')
+    url = webhook_config['url']
+    
+    # kind に応じた最小限の整形
+    payload = format_payload(notification, kind)
+    
+    # 共通のHTTP POST
+    response = requests.post(url, json=payload, timeout=10)
+    
+    if 200 <= response.status_code < 300:
+        logger.info("Webhook sent: kind=%s", kind)
+    else:
+        logger.warning("Webhook failed: kind=%s, status=%d", 
+                      kind, response.status_code)
+```
+
+**3. メッセージフォーマット（統一されたテキスト形式）**
+
+全サービスで成立する最小限のテキスト形式：
+
+```
+[Komon][CRITICAL] host=dev-server-01
+CPU usage exceeds threshold (95%)
+
+Advice:
+- Check top processes
+- Verify batch jobs
+```
+
+**特徴**:
+- レベル（WARNING / ALERT / CRITICAL）
+- ホスト名
+- 短い説明
+- シンプルなアドバイス（任意）
+- 時刻（任意）
+
+このフォーマットは Slack / Discord / Teams 全部で成立する。
+
+**4. 成功/失敗判定の統一**
+
+- 成功判定 = HTTP status 200〜299
+- レスポンスボディは読まない（サービス差異を吸収しない）
+- エラー時は Komon の内部ログへ warning を1行出すだけ
+
+**5. やらないこと（非対応宣言）**
+
+Komon-core では以下を実装しない：
+- ❌ Slack BlockKit
+- ❌ Discord Embed
+- ❌ Teams Adaptive Card
+- ❌ ボタン・スレッド返信・引用・画像添付などサービス固有拡張
+- ❌ サービスごとの専用フォーマッター（基本としては入れない）
+
+**理由**:
+- Komonは「軽量アドバイザー」であり、「マルチチャネル通知の統合プロダクト」ではない
+- サービス固有機能を追うと、Komonが「通知プロダクト」になってしまう
+- 保守コストが増大し、Komonの軽量設計が崩れる
+
+**6. 拡張のための逃げ道（やりたい人のための設計）**
+
+Komon-core を軽く保ったまま、外部拡張は歓迎する：
+
+**外部スクリプト連携**:
+```
+Komon-core → ローカル JSON 出力
+外部プロセス → リッチ通知へ変換
+```
+
+**フォークしてサービス固有機能に対応**:
+- `komon-slack-advanced` のような サードパーティ plugin 的拡張も自由
+- Komon 本体には組み込まず、責務を明確に分離する
+
+#### 実装アーキテクチャ
+
+**新規モジュール**: `src/komon/webhook_notifier.py`
+
+```python
+class WebhookNotifier:
+    """統一されたWebhook通知クラス"""
+    
+    SUPPORTED_KINDS = {
+        'slack': SlackFormatter,
+        'discord': DiscordFormatter,
+        'teams': TeamsFormatter,
+        'generic': GenericFormatter,  # デフォルト
+    }
+    
+    def __init__(self, config):
+        self.webhooks = config.get('notifiers', {}).get('webhooks', [])
+    
+    def send(self, notification):
+        """全てのWebhookに通知を送信"""
+        for webhook in self.webhooks:
+            if not webhook.get('enabled', True):
+                continue
+            
+            try:
+                self._send_single(notification, webhook)
+            except Exception as e:
+                logger.error("Webhook failed: %s", e)
+    
+    def _send_single(self, notification, webhook):
+        """単一のWebhookに送信"""
+        kind = webhook.get('kind', 'generic')
+        url = webhook['url']
+        
+        # 環境変数展開
+        if url.startswith('env:'):
+            url = os.getenv(url[4:])
+        
+        # フォーマット
+        formatter = self.SUPPORTED_KINDS.get(kind, GenericFormatter)
+        payload = formatter.format(notification)
+        
+        # 送信
+        response = requests.post(url, json=payload, timeout=10)
+        
+        if 200 <= response.status_code < 300:
+            logger.info("Webhook sent: kind=%s", kind)
+        else:
+            logger.warning("Webhook failed: kind=%s, status=%d", 
+                          kind, response.status_code)
+```
+
+**フォーマッター**:
+```python
+class GenericFormatter:
+    """汎用フォーマッター"""
+    @staticmethod
+    def format(notification):
+        return {
+            "text": f"[Komon][{notification['level']}] {notification['message']}"
+        }
+
+class SlackFormatter:
+    """Slackフォーマッター（最小限）"""
+    @staticmethod
+    def format(notification):
+        return {
+            "text": f"[Komon][{notification['level']}] {notification['message']}"
+        }
+
+class DiscordFormatter:
+    """Discordフォーマッター（最小限）"""
+    @staticmethod
+    def format(notification):
+        return {
+            "content": f"[Komon][{notification['level']}] {notification['message']}"
+        }
+
+class TeamsFormatter:
+    """Teamsフォーマッター（最小限）"""
+    @staticmethod
+    def format(notification):
+        return {
+            "text": f"[Komon][{notification['level']}] {notification['message']}"
+        }
+```
+
+#### 移行パス（後方互換性・安全性重視）
+
+**Phase 1: 既存パターンでDiscord/Teamsを追加（v2.0.0）**
+
+既存の `send_slack_alert()` と同じ形式で実装：
+
+```python
+# 新規追加（既存のSlack通知には一切触らない）
+def send_discord_alert(message, webhook_url):
+    """Discord通知（Slack形式を踏襲）"""
+    payload = {"content": message}
+    response = requests.post(webhook_url, json=payload, timeout=10)
+    # ...
+
+def send_teams_alert(message, webhook_url):
+    """Teams通知（Slack形式を踏襲）"""
+    payload = {"text": message}
+    response = requests.post(webhook_url, json=payload, timeout=10)
+    # ...
+```
+
+設定ファイル：
+```yaml
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+  
+  discord:
+    enabled: false
+    webhook_url: "env:KOMON_DISCORD_WEBHOOK"
+  
+  teams:
+    enabled: false
+    webhook_url: "env:KOMON_TEAMS_WEBHOOK"
+```
+
+**リスク**: ほぼゼロ（既存のSlack通知に影響なし）
+
+---
+
+**Phase 2: 統一Webhookを新規追加（v2.1.0）**
+
+新方式を追加（旧方式も完全に動作）：
+
+```yaml
+# 旧方式（v1.X.X 〜 v2.0.0）- まだ動作する
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+  discord:
+    enabled: false
+    webhook_url: "env:KOMON_DISCORD_WEBHOOK"
+
+# 新方式（v2.1.0）- 推奨
+notifiers:
+  webhooks:
+    - name: "slack"
+      url: "env:KOMON_SLACK_WEBHOOK"
+      kind: "slack"
+      enabled: true
+    
+    - name: "discord"
+      url: "env:KOMON_DISCORD_WEBHOOK"
+      kind: "discord"
+      enabled: false
+```
+
+**動作**:
+- 新方式が設定されていれば、新方式を使用
+- 新方式が未設定なら、旧方式を使用（フォールバック）
+- 両方設定されている場合は、新方式を優先
+
+**リスク**: 低（旧方式がフォールバック）
+
+---
+
+**Phase 3: 旧方式に非推奨警告（v2.2.0）**
+
+旧形式の設定に警告を表示：
+
+```
+⚠️ 警告: 旧形式の通知設定は非推奨です
+   新形式への移行をお願いします
+   詳細: docs/MIGRATION.md
+   
+   旧形式は v3.0.0 で削除されます
+```
+
+**動作**: まだ動作する（警告のみ）
+
+---
+
+**Phase 4: 旧方式を削除（v3.0.0）**
+
+個別実装を削除：
+- `send_slack_alert()` を削除
+- `send_discord_alert()` を削除
+- `send_teams_alert()` を削除
+- 旧形式の設定は動作しない
+- 移行ガイド（`docs/MIGRATION.md`）を必ず用意
+
+**動作**: 新方式のみ
+
+#### 期待効果
+
+**1. 拡張性の向上**
+- Discord、Teams、その他のWebhookサービスを簡単に追加できる
+- 新しいサービスは `kind` を追加するだけ
+
+**2. 保守性の向上**
+- 通知ロジックが統一される
+- サービス固有の複雑さを排除
+
+**3. Komonらしさの維持**
+- 軽量・シンプルな設計を維持
+- 「通知プロダクト」にならない明確な線引き
+
+**4. 拡張の自由度**
+- リッチ通知が欲しい人は外部で拡張できる
+- Komon-core は軽く保てる
+
+**5. 安全性の確保**
+- 段階的な実装で既存機能への影響を最小化
+- 各Phaseで検証してから次に進む
+- 問題があれば即座にロールバック可能
+- ユーザーに十分な移行期間を提供
+
+#### 実装優先度
+
+**今すぐやる必要はない**:
+- 現在の Slack 通知で十分動作している
+- 他のサービスへの要望が出てから実装
+
+**でも設計は今詰めておく価値がある**:
+- 将来の拡張性を確保
+- 「どう実装するか」の方針が明確になる
+
+#### 実装ステップ（もし実装するなら）
+
+**ステップ1**: future-ideas.mdに記録（✅ 完了）
+
+**ステップ2**: Phase 1の実装（v2.0.0）
+- Specを作成（requirements.yml, design.yml, tasks.yml）
+- `send_discord_alert()` を実装（Slack形式を踏襲）
+- `send_teams_alert()` を実装（Slack形式を踏襲）
+- 設定ファイルに `discord`, `teams` セクションを追加
+- テストを追加（モック使用）
+- **既存のSlack通知には一切触らない**
+
+**ステップ3**: Phase 1の検証
+- Discord/Teamsが実際に動作するか確認
+- 既存のSlack通知に影響がないか確認
+- 問題があれば修正
+
+**ステップ4**: Phase 2の実装（v2.1.0）
+- `WebhookNotifier` クラスを実装
+- `kind` ごとのフォーマッターを実装
+- 新形式の設定を追加
+- 旧形式との共存ロジックを実装（フォールバック）
+- テストを追加（モック使用）
+
+**ステップ5**: Phase 2の検証
+- 統一Webhookが実際に動作するか確認
+- 旧形式のフォールバックが動作するか確認
+- 実戦で使ってみて、問題がないか検証
+
+**ステップ6**: Phase 3の実装（v2.2.0）
+- 旧形式に非推奨警告を追加
+- 移行ガイド（`docs/MIGRATION.md`）を作成
+- ドキュメント更新
+
+**ステップ7**: 移行期間（v2.2.0 〜 v2.9.0）
+- 既存ユーザーに移行を促す
+- 旧形式も動作する（互換性維持）
+- 十分な移行期間を確保
+
+**ステップ8**: Phase 4の実装（v3.0.0）
+- 旧形式のサポート終了
+- `send_slack_alert()`, `send_discord_alert()`, `send_teams_alert()` を削除
+- 統一Webhookのみに
+
+#### 開発者コメント
+
+```
+ChatGPTとの対話で生まれた構想。
+
+「Slack / Discord / Teams を統一的に扱いたい」
+「でもKomonの軽量さは守りたい」
+
+この2つを両立する設計。
+
+完璧を目指すより「小さく動くもの」から。
+まずは基本機能を実装して、
+実際に使ってみて、
+体験から出た穴や改修項目を洗い出す。
+
+リッチ通知は Komon-core の範囲外。
+必要な人は外部で拡張してもらう。
+
+この線引きが、Komonの「軽量・シンプル」を守る鍵。
+```
+
+#### 関連する既存機能
+
+このアイデアは、以下の既存機能と連携します：
+- Slack通知（`notification.py`）
+- Email通知（`notification.py`）
+- 通知履歴（`notification_history.py`）
+
+新規に必要な機能：
+- 統一Webhook通知（`webhook_notifier.py`）
+- フォーマッター（`formatters.py`）
+- 設定検証（`settings_validator.py`）
+
+---
+
 ## 更新履歴
 
+- 2025-12-04: Webhook通知の統一化のアイデアを追加（IDEA-023）
 - 2025-12-03: OS判定・汎用Linux対応のアイデアを追加（IDEA-022）
 - 2025-12-02: `komon advise` 出力フォーマットの改善アイデアを追加（IDEA-021）
 - 2025-11-27: Pythonバージョン自動チェック機能のアイデアを追加（IDEA-020）
