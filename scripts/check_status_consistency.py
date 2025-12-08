@@ -2,11 +2,12 @@
 """
 ステータス整合性チェックスクリプト
 
-4つのファイルのステータス整合性を自動チェック：
-1. .kiro/specs/future-ideas.md - アイデアのステータス
-2. .kiro/tasks/implementation-tasks.md - 実装タスクのステータス
-3. .kiro/specs/{feature-name}/tasks.yml - Spec別タスクのステータス
-4. .kiro/tasks/completed-tasks.md - 完了タスクのアーカイブ
+5つのファイルのステータス整合性を自動チェック：
+1. .kiro/specs/future-ideas.md - 未実装アイデアのステータス
+2. .kiro/specs/implemented-ideas.md - 実装済みアイデアのステータス
+3. .kiro/tasks/implementation-tasks.md - 実装タスクのステータス
+4. .kiro/specs/{feature-name}/tasks.yml - Spec別タスクのステータス
+5. .kiro/tasks/completed-tasks.md - 完了タスクのアーカイブ
 
 使い方:
     python scripts/check_status_consistency.py
@@ -154,40 +155,69 @@ class StatusConsistencyChecker:
         print()
     
     def _check_future_ideas_status(self, task_id: str, task_info: Dict):
-        """future-ideas.mdのステータスをチェック"""
-        ideas_file = self.project_root / ".kiro" / "specs" / "future-ideas.md"
-        
-        if not ideas_file.exists():
-            self.warnings.append(f"⚠️  {task_id}: future-ideas.md が見つかりません")
-            return
-        
-        content = ideas_file.read_text(encoding='utf-8')
+        """future-ideas.md または implemented-ideas.md のステータスをチェック"""
         idea_id = task_info.get('idea_id')
         
         if not idea_id:
             self.warnings.append(f"⚠️  {task_id}: 元アイデアIDが見つかりません")
             return
         
+        # 完了タスクの場合、まず implemented-ideas.md をチェック
+        implemented_file = self.project_root / ".kiro" / "specs" / "implemented-ideas.md"
+        future_file = self.project_root / ".kiro" / "specs" / "future-ideas.md"
+        
+        # implemented-ideas.md をチェック
+        if implemented_file.exists():
+            content = implemented_file.read_text(encoding='utf-8')
+            result = self._check_idea_status_in_file(
+                content, idea_id, task_info, "implemented-ideas.md"
+            )
+            if result is not None:
+                return  # 見つかった
+        
+        # future-ideas.md をチェック（まだ移動していない可能性）
+        if future_file.exists():
+            content = future_file.read_text(encoding='utf-8')
+            result = self._check_idea_status_in_file(
+                content, idea_id, task_info, "future-ideas.md"
+            )
+            if result is not None:
+                return  # 見つかった
+        
+        # どちらにも見つからない
+        self.errors.append(f"❌ {task_id}: {idea_id} が future-ideas.md にも implemented-ideas.md にも見つかりません")
+        print(f"   ❌ アイデアファイル: {idea_id} が見つかりません")
+    
+    def _check_idea_status_in_file(
+        self, content: str, idea_id: str, task_info: Dict, filename: str
+    ) -> Optional[bool]:
+        """指定されたファイル内でアイデアのステータスをチェック
+        
+        Returns:
+            True: ステータスが一致
+            False: ステータスが不一致
+            None: アイデアが見つからない
+        """
         # アイデアのステータスを検索
         # 例: **ステータス**: ✅ 実装済み (v1.18.0)
         idea_pattern = rf'\[{idea_id}\].*?\*\*ステータス\*\*: (.*?)(?:\n|$)'
         match = re.search(idea_pattern, content, re.DOTALL)
         
         if not match:
-            self.errors.append(f"❌ {task_id}: future-ideas.mdに{idea_id}が見つかりません")
-            print(f"   ❌ future-ideas.md: {idea_id} が見つかりません")
-            return
+            return None  # 見つからない
         
         status = match.group(1).strip()
         expected_status = f"✅ 実装済み ({task_info['version']})"
         
         if status == expected_status:
-            print(f"   ✅ future-ideas.md: {status}")
+            print(f"   ✅ {filename}: {status}")
+            return True
         else:
-            self.errors.append(f"❌ {task_id}: future-ideas.mdのステータスが不一致")
+            self.errors.append(f"❌ {task_info.get('name', 'Unknown')}: {filename}のステータスが不一致")
             self.errors.append(f"   期待: {expected_status}")
             self.errors.append(f"   実際: {status}")
-            print(f"   ❌ future-ideas.md: {status} (期待: {expected_status})")
+            print(f"   ❌ {filename}: {status} (期待: {expected_status})")
+            return False
     
     def _check_tasks_yml_status(self, task_id: str, task_info: Dict):
         """tasks.ymlのステータスをチェック"""

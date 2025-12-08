@@ -143,7 +143,7 @@ done
 - [ ] **completed-tasks.md**もチェックした（重要！）
 - [ ] 次の空き番号を確認した
 - [ ] タスク番号の重複がないことを確認した
-- [ ] future-ideas.mdのステータスを更新した
+- [ ] future-ideas.mdのステータスを更新した（未実装 → 実装決定）
 
 ### なぜ重要か
 
@@ -184,11 +184,15 @@ done
 3. **タスクを作成**
    - 空き番号を使用
    - implementation-tasks.mdに追加
-   - future-ideas.mdのステータスを更新
+   - future-ideas.mdのステータスを更新（未実装アイデアから実装決定へ）
 
 4. **確認**
    - タスク番号の重複がないことを確認
    - CIチェックを実行（`python scripts/check_status_consistency.py`）
+
+5. **実装完了後のアイデア管理**
+   - 実装完了したら future-ideas.md に ✅ 実装済み マークを付ける
+   - 次のバージョンリリース時に implemented-ideas.md に移動
 
 ### サブタスク完了時（即座に実行）
 

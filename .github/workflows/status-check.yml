@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - '.kiro/specs/future-ideas.md'
+      - '.kiro/specs/implemented-ideas.md'
       - '.kiro/tasks/implementation-tasks.md'
       - '.kiro/specs/*/tasks.yml'
       - '.kiro/tasks/completed-tasks.md'
@@ -14,6 +15,7 @@ on:
       - main
     paths:
       - '.kiro/specs/future-ideas.md'
+      - '.kiro/specs/implemented-ideas.md'
       - '.kiro/tasks/implementation-tasks.md'
       - '.kiro/specs/*/tasks.yml'
       - '.kiro/tasks/completed-tasks.md'

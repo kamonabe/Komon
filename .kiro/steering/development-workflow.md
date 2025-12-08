@@ -465,6 +465,12 @@ v1.X.X - 機能名
 
 - **アイデアの実装判断**
   - future-ideas.md → implementation-tasks.md への移行
+  
+- **実装完了後のアイデア管理**
+  - 実装済みアイデアは future-ideas.md に ✅ 実装済み マークを付ける
+  - 次のバージョンリリース時に implemented-ideas.md に移動
+  - 見送りアイデアは rejected-ideas.md に移動
+  - 研究プロジェクトは research-projects.md で管理
 
 ## テスト品質の基準
 
@@ -903,7 +909,10 @@ class TestScriptsImport:
 ```
 .kiro/
 ├── specs/
-│   ├── future-ideas.md              # アイデア管理
+│   ├── future-ideas.md              # アイデア管理（未実装）
+│   ├── implemented-ideas.md         # 実装済みアイデアのアーカイブ
+│   ├── research-projects.md         # 研究プロジェクト
+│   ├── rejected-ideas.md            # 見送りアイデア
 │   ├── {feature-name}/              # 機能別Spec
 │   │   ├── requirements.md
 │   │   ├── design.md

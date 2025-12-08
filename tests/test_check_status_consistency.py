@@ -63,7 +63,7 @@ class TestStatusConsistencyChecker:
         assert len(checker.warnings) == 0
     
     def test_check_future_ideas_status_file_not_found(self):
-        """future-ideas.mdが存在しない場合"""
+        """future-ideas.md と implemented-ideas.md が両方存在しない場合"""
         from check_status_consistency import StatusConsistencyChecker
         
         checker = StatusConsistencyChecker()
@@ -79,8 +79,10 @@ class TestStatusConsistencyChecker:
         
         checker._check_future_ideas_status('TASK-001', task_info)
         
-        assert len(checker.warnings) == 1
-        assert "future-ideas.md が見つかりません" in checker.warnings[0]
+        assert len(checker.errors) == 1
+        assert "IDEA-001" in checker.errors[0]
+        assert "future-ideas.md" in checker.errors[0]
+        assert "implemented-ideas.md" in checker.errors[0]
     
     def test_check_future_ideas_status_no_idea_id(self):
         """元アイデアIDがない場合"""
