@@ -2707,7 +2707,7 @@ OS判定は必須。
 
 **カテゴリ**: 機能強化・通知方式の標準化  
 **提案日**: 2025-12-04  
-**ステータス**: アイデア段階  
+**ステータス**: タスク化済み（TASK-019, 020, 021, 022）  
 **優先度**: 中
 
 #### 背景・課題
@@ -2936,7 +2936,7 @@ class TeamsFormatter:
 
 #### 移行パス（後方互換性・安全性重視）
 
-**Phase 1: 既存パターンでDiscord/Teamsを追加（v2.0.0）**
+**Phase 1: 既存パターンでDiscord/Teamsを追加（v1.25.0）**
 
 既存の `send_slack_alert()` と同じ形式で実装：
 
@@ -2975,12 +2975,12 @@ notifications:
 
 ---
 
-**Phase 2: 統一Webhookを新規追加（v2.1.0）**
+**Phase 2: 統一Webhookを新規追加（v1.26.0）**
 
 新方式を追加（旧方式も完全に動作）：
 
 ```yaml
-# 旧方式（v1.X.X 〜 v2.0.0）- まだ動作する
+# 旧方式（v1.X.X 〜 v1.25.0）- まだ動作する
 notifications:
   slack:
     enabled: true
@@ -2989,7 +2989,7 @@ notifications:
     enabled: false
     webhook_url: "env:KOMON_DISCORD_WEBHOOK"
 
-# 新方式（v2.1.0）- 推奨
+# 新方式（v1.26.0）- 推奨
 notifiers:
   webhooks:
     - name: "slack"
@@ -3012,7 +3012,7 @@ notifiers:
 
 ---
 
-**Phase 3: 旧方式に非推奨警告（v2.2.0）**
+**Phase 3: 旧方式に非推奨警告（v1.27.0）**
 
 旧形式の設定に警告を表示：
 
@@ -3021,14 +3021,14 @@ notifiers:
    新形式への移行をお願いします
    詳細: docs/MIGRATION.md
    
-   旧形式は v3.0.0 で削除されます
+   旧形式は v2.0.0 で削除されます
 ```
 
 **動作**: まだ動作する（警告のみ）
 
 ---
 
-**Phase 4: 旧方式を削除（v3.0.0）**
+**Phase 4: 旧方式を削除（v2.0.0）**
 
 個別実装を削除：
 - `send_slack_alert()` を削除
@@ -3077,7 +3077,7 @@ notifiers:
 
 **ステップ1**: future-ideas.mdに記録（✅ 完了）
 
-**ステップ2**: Phase 1の実装（v2.0.0）
+**ステップ2**: Phase 1の実装（v1.25.0）
 - Specを作成（requirements.yml, design.yml, tasks.yml）
 - `send_discord_alert()` を実装（Slack形式を踏襲）
 - `send_teams_alert()` を実装（Slack形式を踏襲）
@@ -3090,7 +3090,7 @@ notifiers:
 - 既存のSlack通知に影響がないか確認
 - 問題があれば修正
 
-**ステップ4**: Phase 2の実装（v2.1.0）
+**ステップ4**: Phase 2の実装（v1.26.0）
 - `WebhookNotifier` クラスを実装
 - `kind` ごとのフォーマッターを実装
 - 新形式の設定を追加
@@ -3102,17 +3102,17 @@ notifiers:
 - 旧形式のフォールバックが動作するか確認
 - 実戦で使ってみて、問題がないか検証
 
-**ステップ6**: Phase 3の実装（v2.2.0）
+**ステップ6**: Phase 3の実装（v1.27.0）
 - 旧形式に非推奨警告を追加
 - 移行ガイド（`docs/MIGRATION.md`）を作成
 - ドキュメント更新
 
-**ステップ7**: 移行期間（v2.2.0 〜 v2.9.0）
+**ステップ7**: 移行期間（v1.27.0 〜 v1.99.0）
 - 既存ユーザーに移行を促す
 - 旧形式も動作する（互換性維持）
 - 十分な移行期間を確保
 
-**ステップ8**: Phase 4の実装（v3.0.0）
+**ステップ8**: Phase 4の実装（v2.0.0）
 - 旧形式のサポート終了
 - `send_slack_alert()`, `send_discord_alert()`, `send_teams_alert()` を削除
 - 統一Webhookのみに
@@ -3154,6 +3154,7 @@ ChatGPTとの対話で生まれた構想。
 
 ## 更新履歴
 
+- 2025-12-08: IDEA-023をタスク化（TASK-019, 020, 021, 022）、バージョン番号を修正
 - 2025-12-04: Webhook通知の統一化のアイデアを追加（IDEA-023）
 - 2025-12-03: OS判定・汎用Linux対応のアイデアを追加（IDEA-022）
 - 2025-12-02: `komon advise` 出力フォーマットの改善アイデアを追加（IDEA-021）

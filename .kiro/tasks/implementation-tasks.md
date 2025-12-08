@@ -305,6 +305,255 @@ system:
 
 ---
 
+### [TASK-019] Webhook通知統一化 Phase 1: Discord/Teams対応
+**元アイデア**: [IDEA-023] Webhook通知の統一化（Phase 1）  
+**ステータス**: 🔴 TODO  
+**優先度**: Medium  
+**見積もり**: 小（2-3時間）  
+**対象バージョン**: v1.25.0
+
+#### 背景
+既存のSlack通知と同じ形式で、Discord/Teams通知を追加する。既存のSlack通知には一切触らず、新規機能として追加することでリスクを最小化。
+
+#### タスク分解
+- [ ] `src/komon/notification.py` の拡張
+  - `send_discord_alert()` 関数の追加（Slack形式を踏襲）
+  - `send_teams_alert()` 関数の追加（Slack形式を踏襲）
+  - エラーハンドリングとログ出力
+- [ ] 設定ファイルの拡張
+  - `discord` セクションの追加
+  - `teams` セクションの追加
+  - 環境変数対応（`KOMON_DISCORD_WEBHOOK`, `KOMON_TEAMS_WEBHOOK`）
+- [ ] テストケースの追加
+  - ユニットテスト: Discord通知のテスト（モック使用）
+  - ユニットテスト: Teams通知のテスト（モック使用）
+  - 統合テスト: 既存のSlack通知に影響がないことを確認
+- [ ] ドキュメント更新
+  - README.md: Discord/Teams通知の設定方法を追加
+  - docs/EXAMPLES.md: 設定例を追加
+
+#### 完了条件
+- ✅ Discord通知が動作する
+- ✅ Teams通知が動作する
+- ✅ 既存のSlack通知に影響がない
+- ✅ 全テストがパス
+- ✅ カバレッジを維持
+
+#### 実装イメージ
+
+**Discord通知**:
+```python
+def send_discord_alert(message, webhook_url):
+    """Discord通知（Slack形式を踏襲）"""
+    payload = {"content": message}
+    response = requests.post(webhook_url, json=payload, timeout=10)
+    response.raise_for_status()
+```
+
+**Teams通知**:
+```python
+def send_teams_alert(message, webhook_url):
+    """Teams通知（Slack形式を踏襲）"""
+    payload = {"text": message}
+    response = requests.post(webhook_url, json=payload, timeout=10)
+    response.raise_for_status()
+```
+
+**設定例**:
+```yaml
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+  
+  discord:
+    enabled: false
+    webhook_url: "env:KOMON_DISCORD_WEBHOOK"
+  
+  teams:
+    enabled: false
+    webhook_url: "env:KOMON_TEAMS_WEBHOOK"
+```
+
+---
+
+### [TASK-020] Webhook通知統一化 Phase 2: 統一Webhook実装
+**元アイデア**: [IDEA-023] Webhook通知の統一化（Phase 2）  
+**ステータス**: 🔴 TODO  
+**優先度**: Medium  
+**見積もり**: 中（4-5時間）  
+**対象バージョン**: v1.26.0  
+**依存**: TASK-019完了後
+
+#### 背景
+新しい統一Webhook方式を追加。旧方式（個別関数）も完全に動作し、フォールバックとして機能する。
+
+#### タスク分解
+- [ ] `src/komon/webhook_notifier.py` モジュールの作成
+  - `WebhookNotifier` クラスの実装
+  - `send()` メソッドの実装
+  - `kind` ごとのフォーマッター選択ロジック
+- [ ] `src/komon/formatters.py` モジュールの作成
+  - `GenericFormatter` クラスの実装
+  - `SlackFormatter` クラスの実装
+  - `DiscordFormatter` クラスの実装
+  - `TeamsFormatter` クラスの実装
+- [ ] 設定ファイルの拡張
+  - `notifiers.webhooks` セクションの追加
+  - 旧形式との共存ロジック（フォールバック）
+- [ ] 既存コードの拡張
+  - 新形式が設定されていれば新方式を使用
+  - 新形式が未設定なら旧方式を使用（フォールバック）
+- [ ] テストケースの追加
+  - ユニットテスト: `WebhookNotifier` のテスト
+  - ユニットテスト: 各フォーマッターのテスト
+  - 統合テスト: 新旧形式の共存テスト
+  - 統合テスト: フォールバックのテスト
+- [ ] ドキュメント更新
+  - README.md: 新形式の設定方法を追加
+  - docs/EXAMPLES.md: 新形式の設定例を追加
+
+#### 完了条件
+- ✅ 統一Webhookが動作する
+- ✅ 旧形式のフォールバックが動作する
+- ✅ 新旧形式が共存できる
+- ✅ 全テストがパス
+- ✅ カバレッジを維持
+
+#### 実装イメージ
+
+**統一Webhook**:
+```python
+class WebhookNotifier:
+    def __init__(self, webhooks):
+        self.webhooks = webhooks
+    
+    def send(self, notification):
+        for webhook in self.webhooks:
+            if not webhook.get('enabled', True):
+                continue
+            
+            formatter = self._get_formatter(webhook['kind'])
+            payload = formatter.format(notification)
+            
+            response = requests.post(webhook['url'], json=payload, timeout=10)
+            response.raise_for_status()
+```
+
+**設定例**:
+```yaml
+# 新方式（v1.26.0）- 推奨
+notifiers:
+  webhooks:
+    - name: "slack"
+      url: "env:KOMON_SLACK_WEBHOOK"
+      kind: "slack"
+      enabled: true
+    
+    - name: "discord"
+      url: "env:KOMON_DISCORD_WEBHOOK"
+      kind: "discord"
+      enabled: false
+
+# 旧方式（v1.X.X 〜 v1.25.0）- まだ動作する
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+```
+
+---
+
+### [TASK-021] Webhook通知統一化 Phase 3: 非推奨警告
+**元アイデア**: [IDEA-023] Webhook通知の統一化（Phase 3）  
+**ステータス**: 🔴 TODO  
+**優先度**: Low  
+**見積もり**: 小（1-2時間）  
+**対象バージョン**: v1.27.0  
+**依存**: TASK-020完了後
+
+#### 背景
+旧形式の設定に非推奨警告を表示し、ユーザーに新形式への移行を促す。旧形式はまだ動作する。
+
+#### タスク分解
+- [ ] 非推奨警告の実装
+  - 旧形式の設定を検知
+  - 警告メッセージの表示
+  - ログへの記録
+- [ ] 移行ガイドの作成
+  - `docs/MIGRATION.md` の作成
+  - 旧形式から新形式への移行手順
+  - 設定例の提供
+- [ ] ドキュメント更新
+  - README.md: 非推奨警告の説明を追加
+  - docs/CHANGELOG.md: 非推奨化を記録
+
+#### 完了条件
+- ✅ 旧形式の設定で警告が表示される
+- ✅ 旧形式はまだ動作する
+- ✅ 移行ガイドが完成している
+- ✅ 全テストがパス
+
+#### 実装イメージ
+
+**警告メッセージ**:
+```
+⚠️ 警告: 旧形式の通知設定は非推奨です
+   新形式への移行をお願いします
+   詳細: docs/MIGRATION.md
+   
+   旧形式は v2.0.0 で削除されます
+```
+
+---
+
+### [TASK-022] Webhook通知統一化 Phase 4: 旧方式削除
+**元アイデア**: [IDEA-023] Webhook通知の統一化（Phase 4）  
+**ステータス**: 🔴 TODO  
+**優先度**: Low  
+**見積もり**: 小（1-2時間）  
+**対象バージョン**: v2.0.0  
+**依存**: TASK-021完了後、十分な移行期間（v1.27.0 〜 v1.99.0）
+
+#### 背景
+旧形式のサポートを終了し、統一Webhookのみに移行する。これは破壊的変更（MAJOR）。
+
+#### タスク分解
+- [ ] 旧方式の削除
+  - `send_slack_alert()` 関数の削除
+  - `send_discord_alert()` 関数の削除
+  - `send_teams_alert()` 関数の削除
+  - 旧形式の設定サポートの削除
+- [ ] エラーメッセージの実装
+  - 旧形式の設定を検知した場合のエラー表示
+  - 移行ガイドへの誘導
+- [ ] テストケースの更新
+  - 旧方式のテストを削除
+  - 統一Webhookのテストのみに
+- [ ] ドキュメント更新
+  - README.md: 旧形式の記述を削除
+  - docs/MIGRATION.md: v2.0.0への移行手順を追加
+  - docs/CHANGELOG.md: 破壊的変更を記録
+
+#### 完了条件
+- ✅ 旧方式が完全に削除されている
+- ✅ 統一Webhookのみが動作する
+- ✅ 旧形式の設定でエラーが表示される
+- ✅ 移行ガイドが完成している
+- ✅ 全テストがパス
+
+#### 実装イメージ
+
+**エラーメッセージ**:
+```
+❌ エラー: 旧形式の通知設定は v2.0.0 で削除されました
+   
+   新形式への移行が必要です
+   詳細: docs/MIGRATION.md
+```
+
+---
+
 ## 優先順位の判断基準
 
 **High Priority**:
@@ -333,6 +582,7 @@ system:
 
 ## 更新履歴
 
+- 2025-12-08: TASK-019, 020, 021, 022を追加（IDEA-023: Webhook通知の統一化、4フェーズに分割）
 - 2025-12-03: v1.23.0の完了タスクを `completed-tasks.md` に移動（TASK-017）
 - 2025-12-03: TASK-018を追加（IDEA-022: OS判定・汎用Linux対応）
 - 2025-12-02: TASK-017を追加（IDEA-021: `komon advise` 出力フォーマットの改善）
