@@ -8,6 +8,7 @@
 
 - [基本的な使い方](#-基本的な使い方)
 - [リソース監視の出力例](#-リソース監視の出力例)
+- [ネットワーク疎通チェックの出力例](#-ネットワーク疎通チェックの出力例)
 - [ログ傾向分析の出力例](#-ログ傾向分析の出力例)
 - [ディスク使用量予測の出力例](#-ディスク使用量予測の出力例)
 - [週次健全性レポートの出力例](#-週次健全性レポートの出力例)
@@ -162,6 +163,134 @@ $ komon advise
 
 🧐 高負荷プロセスの詳細情報（CPU使用率が高いもの）
 → 現在、高負荷なプロセスは検出されていません。
+```
+
+---
+
+## 🌐 ネットワーク疎通チェックの出力例
+
+### 基本的な使い方
+
+```bash
+# 全部チェック（リソース・ログ + ネットワーク）
+$ komon advise --with-net
+
+# ネットワークチェックのみ
+$ komon advise --net-only
+
+# pingのみ
+$ komon advise --ping-only
+
+# httpのみ
+$ komon advise --http-only
+```
+
+### 正常な状態
+
+```bash
+$ komon advise --net-only
+
+🌐 ネットワーク疎通チェック
+
+【Ping疎通確認】
+✅ 127.0.0.1 (ローカルホスト): OK
+✅ 8.8.8.8 (Google DNS): OK
+
+【HTTP疎通確認】
+✅ https://api.example.com/health (APIヘルスチェック): OK (200)
+✅ https://www.google.com (外部接続確認): OK (200)
+
+すべての疎通チェックが正常です。
+```
+
+### 接続障害を検出
+
+```bash
+$ komon advise --net-only
+
+🌐 ネットワーク疎通チェック
+
+【Ping疎通確認】
+✅ 127.0.0.1 (ローカルホスト): OK
+❌ 8.8.8.8 (Google DNS): NG (タイムアウト)
+
+【HTTP疎通確認】
+❌ https://api.example.com/health (APIヘルスチェック): NG (接続エラー)
+✅ https://www.google.com (外部接続確認): OK (200)
+
+⚠️ 一部の疎通チェックに失敗しています。
+ネットワーク接続を確認してください。
+```
+
+### 状態変化の通知（Slack）
+
+**正常→異常の通知**:
+```
+🌐 ネットワーク疎通異常を検知
+
+【Ping】
+❌ 8.8.8.8 (Google DNS): タイムアウト
+
+【HTTP】
+❌ https://api.example.com/health: 接続エラー
+
+ネットワーク接続を確認してください。
+```
+
+**異常→正常の通知**:
+```
+🌐 ネットワーク疎通が復旧しました
+
+【Ping】
+✅ 8.8.8.8 (Google DNS): 復旧
+
+【HTTP】
+✅ https://api.example.com/health: 復旧
+
+ネットワーク接続が正常に戻りました。
+```
+
+### cron設定例
+
+```bash
+# 基本（推奨・デフォルト）
+*/5 * * * * /usr/local/bin/komon
+
+# 便利に使いたい人
+*/5 * * * * /usr/local/bin/komon --with-net
+
+# こだわり運用（上級者向け）
+*/5  * * * * komon                 # リソース＆ログ
+*/15 * * * * komon --net-only      # ネットワークだけ
+```
+
+### 設定例
+
+```yaml
+network_check:
+  enabled: false  # デフォルトは無効（opt-in）
+  
+  ping:
+    targets:
+      - host: "127.0.0.1"
+        description: "ローカルホスト"
+      - host: "8.8.8.8"
+        description: "Google DNS"
+    timeout: 3
+    
+  http:
+    targets:
+      - url: "https://api.example.com/health"
+        description: "APIヘルスチェック"
+        method: "GET"
+      - url: "https://www.google.com"
+        description: "外部接続確認"
+        method: "HEAD"
+    timeout: 10
+    
+  state:
+    retention_hours: 24  # 24時間でNG状態を削除
+    file_path: "data/network_state.json"
 ```
 
 ---

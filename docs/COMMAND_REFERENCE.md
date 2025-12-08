@@ -32,10 +32,17 @@ komon advise --section status    # システム状態のみ
 komon advise --section alerts    # 警戒情報のみ
 komon advise --section process   # プロセス情報のみ
 komon advise --section history   # 通知履歴のみ
+komon advise --section network   # ネットワーク疎通のみ
 
 # 通知履歴の表示件数を指定
 komon advise --history 10        # 直近10件のみ表示
 komon advise --history 0         # 全件表示
+
+# ネットワーク疎通チェック（v1.25.0+）
+komon advise --with-net          # 全部（リソース・ログ + ping + http）
+komon advise --net-only          # ネットワークチェックのみ（ping + http）
+komon advise --ping-only         # pingチェックのみ
+komon advise --http-only         # httpチェックのみ
 ```
 
 **表示内容**:
@@ -46,6 +53,7 @@ komon advise --history 0         # 全件表示
 - 長時間実行プロセスの検出
 - ディスク使用量の予測
 - 通知履歴（最新5件、または指定件数）
+- ネットワーク疎通チェック（opt-in、v1.25.0+）
 
 **オプション**:
 - `--verbose`: 全ての情報を詳細表示
@@ -56,7 +64,12 @@ komon advise --history 0         # 全件表示
   - `process`: プロセス情報
   - `prediction`: ディスク予測
   - `history`: 通知履歴
+  - `network`: ネットワーク疎通（v1.25.0+）
 - `--history <N>`: 通知履歴の表示件数（0で全件）
+- `--with-net`: リソース・ログ + ネットワークチェック（v1.25.0+）
+- `--net-only`: ネットワークチェックのみ（v1.25.0+）
+- `--ping-only`: pingチェックのみ（v1.25.0+）
+- `--http-only`: httpチェックのみ（v1.25.0+）
 
 **使用例**:
 ```bash
@@ -68,6 +81,15 @@ komon advise --verbose
 
 # 通知履歴だけ確認
 komon advise --section history --history 20
+
+# ネットワーク疎通も含めて確認（v1.25.0+）
+komon advise --with-net
+
+# ネットワーク疎通だけ確認（v1.25.0+）
+komon advise --net-only
+
+# pingだけ確認（v1.25.0+）
+komon advise --ping-only
 ```
 
 ---
@@ -645,5 +667,5 @@ komon guide     # 使い方が分からない時
 
 ---
 
-このドキュメントは、Komon v1.23.0時点の情報です。
+このドキュメントは、Komon v1.25.0時点の情報です。
 最新情報は[GitHub](https://github.com/kamonabe/Komon)を参照してください。

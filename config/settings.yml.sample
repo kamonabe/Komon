@@ -149,3 +149,35 @@ long_running_detection:  # 長時間実行プロセス検出設定
     - .sh
     - .rb
     - .pl
+
+network_check:  # ネットワーク疎通チェック設定（opt-in機能）
+  enabled: false  # デフォルトは無効（CLI引数で有効化）
+  
+  ping:
+    targets:
+      - host: "127.0.0.1"
+        description: "ローカルホスト（例）"
+      # 実際の監視対象を追加してください
+      # - host: "8.8.8.8"
+      #   description: "Google DNS"
+      # - host: "192.168.1.1"
+      #   description: "デフォルトゲートウェイ"
+    timeout: 3  # タイムアウト（秒）
+    
+  http:
+    targets:
+      - url: "https://komon-example.com"
+        description: "例示URL（実在しない - 必ず差し替えてください）"
+        method: "GET"
+      # 実際の監視対象を追加してください
+      # - url: "https://api.example.com/health"
+      #   description: "APIヘルスチェック"
+      #   method: "GET"
+      # - url: "https://www.google.com"
+      #   description: "外部接続確認"
+      #   method: "HEAD"
+    timeout: 10  # タイムアウト（秒）
+    
+  state:
+    retention_hours: 24  # NG状態の保持期間（時間）
+    file_path: "data/network_state.json"  # 状態ファイルのパス

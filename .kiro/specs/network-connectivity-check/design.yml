@@ -1,0 +1,376 @@
+# 設計書: ネットワーク疎通チェック機能（ping/http）
+
+metadata:
+  title: "ネットワーク疎通チェック機能（ping/http）"
+  feature: "network-connectivity-check"
+  status: "completed"
+  created: "2025-12-08"
+  updated: "2025-12-08"
+  version: "1.0.0"
+  last_validated: "2025-12-08"
+  validation_passed: true
+
+overview:
+  summary: |
+    ネットワーク疎通チェック機能は、REST API実行前の事前条件確認や
+    外部通信不可時の早期気づきのための軽量チェック機能です。
+    
+    Komonの「アドバイザ（診断補助）」の範囲内で、軽量性を最優先し、
+    opt-in設計により既存ユーザーへの影響をゼロに保ちます。
+  
+  key-features:
+    - "ping疎通チェック（ICMPエコー）"
+    - "http疎通チェック（GET/HEAD/POST）"
+    - "状態変化時のみ通知（正常→異常、異常→正常）"
+    - "NG状態のretention（24時間で自動削除）"
+    - "opt-in設計（デフォルトは無効）"
+    - "CLI引数での柔軟な有効化"
+
+architecture:
+  diagram: |
+    ┌─────────────────────────────────────────┐
+    │         Komon Application               │
+    ├─────────────────────────────────────────┤
+    │                                         │
+    │  ┌──────────────────────────────────┐  │
+    │  │   advise.py (CLI)                │  │
+    │  │  - --with-net                    │  │
+    │  │  - --net-only                    │  │
+    │  │  - --ping-only                   │  │
+    │  │  - --http-only                   │  │
+    │  └──────────────────────────────────┘  │
+    │              │                          │
+    │              ▼                          │
+    │  ┌──────────────────────────────────┐  │
+    │  │   Configuration                  │  │
+    │  │  - network_check.enabled         │  │
+    │  │  - network_check.ping.targets    │  │
+    │  │  - network_check.http.targets    │  │
+    │  └──────────────────────────────────┘  │
+    │              │                          │
+    │              ▼                          │
+    │  ┌──────────────────────────────────┐  │
+    │  │   Network Check Modules          │  │
+    │  │  ┌────────────────────────────┐  │  │
+    │  │  │ ping_check.py              │  │  │
+    │  │  │  - check_ping()            │  │  │
+    │  │  └────────────────────────────┘  │  │
+    │  │  ┌────────────────────────────┐  │  │
+    │  │  │ http_check.py              │  │  │
+    │  │  │  - check_http()            │  │  │
+    │  │  └────────────────────────────┘  │  │
+    │  │  ┌────────────────────────────┐  │  │
+    │  │  │ state_manager.py           │  │  │
+    │  │  │  - NetworkStateManager     │  │  │
+    │  │  │  - load_state()            │  │  │
+    │  │  │  - save_state()            │  │  │
+    │  │  │  - has_state_changed()     │  │  │
+    │  │  │  - cleanup_old_states()    │  │  │
+    │  │  └────────────────────────────┘  │  │
+    │  └──────────────────────────────────┘  │
+    │              │                          │
+    │              ▼                          │
+    │  ┌──────────────────────────────────┐  │
+    │  │   Notification System            │  │
+    │  │  - format_notification_message() │  │
+    │  └──────────────────────────────────┘  │
+    │                                         │
+    └─────────────────────────────────────────┘
+  
+  components:
+    - name: "ping_check"
+      description: "ping疎通チェックモジュール"
+      responsibilities:
+        - "ICMPエコーリクエストの送信"
+        - "タイムアウト処理"
+        - "エラーハンドリング"
+      interfaces:
+        - "check_ping(host: str, timeout: int = 3) -> dict"
+    
+    - name: "http_check"
+      description: "http疎通チェックモジュール"
+      responsibilities:
+        - "HTTP/HTTPSリクエストの送信"
+        - "GET/HEAD/POSTメソッド対応"
+        - "タイムアウト処理"
+        - "エラーハンドリング"
+      interfaces:
+        - "check_http(url: str, method: str = 'GET', timeout: int = 10) -> dict"
+    
+    - name: "NetworkStateManager"
+      description: "ネットワーク状態管理クラス"
+      responsibilities:
+        - "NG状態のみ保持（OK状態は保持しない）"
+        - "状態ファイルの読み書き"
+        - "状態変化の検知"
+        - "retention（寿命）付き自動削除"
+      interfaces:
+        - "load_state() -> dict"
+        - "save_state(state: dict) -> None"
+        - "has_state_changed(target: str, current_status: str) -> bool"
+        - "cleanup_old_states(retention_hours: int) -> None"
+        - "format_notification_message(target: str, check_type: str, status: str, previous_status: str) -> str"
+
+data-models:
+  check-result:
+    description: "疎通チェック結果"
+    structure:
+      success: "bool - 疎通成功/失敗"
+      status_code: "int | None - HTTPステータスコード（httpのみ）"
+      error: "str | None - エラーメッセージ"
+      timestamp: "str - チェック実行時刻"
+  
+  state-file:
+    description: "状態ファイル（data/network_state.json）"
+    structure:
+      targets:
+        target_key:
+          status: "str - 'NG' のみ保持"
+          timestamp: "str - NG状態になった時刻"
+          error: "str - エラーメッセージ"
+    example: |
+      {
+        "targets": {
+          "ping:8.8.8.8": {
+            "status": "NG",
+            "timestamp": "2025-12-08T10:00:00",
+            "error": "Request timeout"
+          },
+          "http:https://api.example.com": {
+            "status": "NG",
+            "timestamp": "2025-12-08T10:05:00",
+            "error": "Connection refused"
+          }
+        }
+      }
+
+interfaces:
+  public-api:
+    - name: "check_ping"
+      signature: "(host: str, timeout: int = 3) -> dict"
+      description: "ping疎通チェックを実行"
+      parameters:
+        - "host: チェック対象ホスト"
+        - "timeout: タイムアウト秒数（デフォルト3秒）"
+      returns: "{'success': bool, 'error': str | None, 'timestamp': str}"
+      raises: []
+    
+    - name: "check_http"
+      signature: "(url: str, method: str = 'GET', timeout: int = 10) -> dict"
+      description: "http疎通チェックを実行"
+      parameters:
+        - "url: チェック対象URL"
+        - "method: HTTPメソッド（GET/HEAD/POST）"
+        - "timeout: タイムアウト秒数（デフォルト10秒）"
+      returns: "{'success': bool, 'status_code': int | None, 'error': str | None, 'timestamp': str}"
+      raises: []
+    
+    - name: "NetworkStateManager.has_state_changed"
+      signature: "(target: str, current_status: str) -> bool"
+      description: "状態変化を検知"
+      parameters:
+        - "target: チェック対象（例: 'ping:8.8.8.8'）"
+        - "current_status: 現在の状態（'OK' or 'NG'）"
+      returns: "状態変化があればTrue"
+      raises: []
+    
+    - name: "NetworkStateManager.cleanup_old_states"
+      signature: "(retention_hours: int) -> None"
+      description: "古いNG状態を削除"
+      parameters:
+        - "retention_hours: 保持時間（デフォルト24時間）"
+      returns: "None"
+      raises: []
+
+correctness-properties:
+  - id: "PROP-001"
+    title: "Ping Check Determinism"
+    description: |
+      任意の有効なホストに対して、
+      複数回pingチェックを実行しても、
+      同じ結果（成功/失敗）を返す
+    property: "For any valid host, running ping check multiple times should return consistent results"
+    validates: ["AC-001"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-002"
+    title: "HTTP Check Determinism"
+    description: |
+      任意の有効なURLに対して、
+      複数回httpチェックを実行しても、
+      同じ結果（成功/失敗）を返す
+    property: "For any valid URL, running http check multiple times should return consistent results"
+    validates: ["AC-002"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-003"
+    title: "State Change Detection Correctness"
+    description: |
+      任意の状態遷移に対して、
+      状態変化の検知が正しく動作する
+    property: "For any state transition, state change detection should work correctly"
+    validates: ["AC-003"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-004"
+    title: "Retention Cleanup Correctness"
+    description: |
+      任意のretention時間に対して、
+      古いNG状態が正しく削除される
+    property: "For any retention period, old NG states should be correctly removed"
+    validates: ["AC-004"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-005"
+    title: "CLI Argument Handling"
+    description: |
+      任意のCLI引数に対して、
+      正しいモードでネットワークチェックが実行される
+    property: "For any CLI argument, network check should run in the correct mode"
+    validates: ["AC-005"]
+    test-strategy: "Integration test"
+
+error-handling:
+  non-critical-errors:
+    - error: "Ping Timeout"
+      handling: "NG状態として記録、処理継続"
+      message: "⚠️ ping疎通エラー: {host} - タイムアウト"
+      log-level: "WARNING"
+    
+    - error: "HTTP Connection Error"
+      handling: "NG状態として記録、処理継続"
+      message: "⚠️ http疎通エラー: {url} - 接続失敗"
+      log-level: "WARNING"
+    
+    - error: "State File Read Error"
+      handling: "空の状態として扱う、処理継続"
+      message: "⚠️ 状態ファイルの読み込みに失敗、空の状態として扱います"
+      log-level: "WARNING"
+
+testing-strategy:
+  unit-tests:
+    - "ping_check.py: 正常系・異常系（10件）"
+    - "http_check.py: 正常系・異常系（10件）"
+    - "state_manager.py: 状態管理ロジック（15件）"
+  
+  integration-tests:
+    - "CLI引数の動作確認（8件）"
+    - "設定ファイルの読み込み"
+    - "通知ポリシーの動作確認"
+    - "状態変化の検知"
+  
+  coverage-target: "92%以上を維持"
+
+performance:
+  requirements:
+    - "ping疎通チェックは3秒以内に完了"
+    - "http疎通チェックは10秒以内に完了"
+    - "状態ファイルの読み書きは10ms以内"
+  
+  optimization:
+    - "並列実行は避ける（軽量性優先）"
+    - "タイムアウトを短く設定"
+    - "状態ファイルはJSON形式で軽量に"
+
+security:
+  considerations:
+    - "状態ファイルは読み取り専用でアクセス"
+    - "URLは検証してから使用"
+    - "ログに機密情報を出力しない"
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"
+    rationale: |
+      ネットワークチェックは単発の処理であり、
+      継続的な接続を維持しない。
+      タイムアウト処理で十分。
+  
+  notification-throttling:
+    considered: true
+    decision: "adopted"
+    rationale: |
+      状態変化時のみ通知することで、
+      通知スパムを防止する。
+    implementation:
+      - "OK → NG: 通知"
+      - "NG → OK: 復旧通知"
+      - "NG → NG: 通知なし（ログのみ）"
+      - "OK → OK: 通知なし"
+  
+  baseline-reset:
+    considered: true
+    decision: "adopted"
+    rationale: |
+      NG状態は24時間で自動削除することで、
+      古い状態が残り続けないようにする。
+    implementation:
+      - "retention_hours: 24（デフォルト）"
+      - "cleanup_old_states()で自動削除"
+  
+  other-considerations:
+    - consideration: "ネットワークエラー時のフォールバック"
+      decision: "adopted"
+      rationale: "ネットワークエラーが発生しても処理を継続する"
+      implementation:
+        - "エラーをログに記録"
+        - "NG状態として保存"
+        - "処理は継続"
+
+implementation-phases:
+  phase-1:
+    version: "v1.25.0"
+    description: "基本モジュール実装"
+    tasks:
+      - "src/komon/net/ ディレクトリの作成"
+      - "ping_check.py の実装"
+      - "http_check.py の実装"
+      - "state_manager.py の実装"
+  
+  phase-2:
+    version: "v1.25.0"
+    description: "CLI引数の拡張"
+    tasks:
+      - "scripts/advise.py の拡張"
+      - "--with-net オプションの追加"
+      - "--net-only オプションの追加"
+      - "--ping-only オプションの追加"
+      - "--http-only オプションの追加"
+  
+  phase-3:
+    version: "v1.25.0"
+    description: "設定ファイルの拡張"
+    tasks:
+      - "config/settings.yml.sample の拡張"
+      - "network_check セクションの追加"
+      - "enabled: false をデフォルトに設定"
+  
+  phase-4:
+    version: "v1.25.0"
+    description: "通知ポリシーの実装"
+    tasks:
+      - "状態変化検知ロジックの実装"
+      - "通知メッセージのフォーマット"
+  
+  phase-5:
+    version: "v1.25.0"
+    description: "テストケースの追加"
+    tasks:
+      - "ユニットテスト: 35件"
+      - "統合テスト: 8件"
+  
+  phase-6:
+    version: "v1.25.0"
+    description: "ドキュメント更新"
+    tasks:
+      - "README.md の更新"
+      - "docs/EXAMPLES.md の更新"
+      - "docs/CHANGELOG.md の更新"
+      - "docs/COMMAND_REFERENCE.md の更新"
+
+future-enhancements:
+  - "TCP/UDPポートスキャン"
+  - "DNS解決チェック"
+  - "SSL証明書チェック"
+  - "ネットワーク速度測定"

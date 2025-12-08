@@ -16,6 +16,7 @@ from komon.notification_history import load_notification_history, format_notific
 from komon.duplicate_detector import detect_duplicate_processes
 from komon.long_running_detector import detect_long_running_processes
 from komon.os_detection import get_os_detector
+from komon.net import check_ping, check_http, NetworkStateManager
 
 SKIP_FILE = "data/komon_data/skip_advices.json"
 
@@ -551,6 +552,80 @@ def advise_disk_prediction():
         print(f"⚠️ 予測計算中にエラーが発生しました: {e}")
 
 
+def advise_network_check(config: dict):
+    """
+    ネットワーク疎通チェックを実行し、状態変化時に通知します。
+    
+    Args:
+        config: 設定辞書
+    """
+    network_config = config.get("network_check", {})
+    
+    if not network_config.get("enabled", False):
+        logger.debug("Network check is disabled")
+        return
+    
+    print("\n🌐 ネットワーク疎通チェック")
+    
+    # 状態マネージャーの初期化
+    state_config = network_config.get("state", {})
+    state_file = state_config.get("file_path", "data/network_state.json")
+    retention_hours = state_config.get("retention_hours", 24)
+    state_manager = NetworkStateManager(state_file, retention_hours)
+    
+    has_issues = False
+    
+    # Pingチェック
+    ping_config = network_config.get("ping", {})
+    ping_targets = ping_config.get("targets", [])
+    ping_timeout = ping_config.get("timeout", 3)
+    
+    for target in ping_targets:
+        host = target.get("host")
+        description = target.get("description", host)
+        
+        if not host:
+            continue
+        
+        is_ok = check_ping(host, timeout=ping_timeout)
+        state_change = state_manager.check_state_change("ping", host, is_ok)
+        
+        if state_change == "ok_to_ng":
+            print(f"❌ Ping失敗: {description} ({host})")
+            has_issues = True
+        elif state_change == "ng_to_ok":
+            print(f"✅ Ping復旧: {description} ({host})")
+    
+    # HTTPチェック
+    http_config = network_config.get("http", {})
+    http_targets = http_config.get("targets", [])
+    http_timeout = http_config.get("timeout", 10)
+    
+    for target in http_targets:
+        url = target.get("url")
+        description = target.get("description", url)
+        method = target.get("method", "GET")
+        
+        if not url:
+            continue
+        
+        is_ok = check_http(url, timeout=http_timeout, method=method)
+        state_change = state_manager.check_state_change("http", url, is_ok)
+        
+        if state_change == "ok_to_ng":
+            print(f"❌ HTTP失敗: {description} ({url})")
+            has_issues = True
+        elif state_change == "ng_to_ok":
+            print(f"✅ HTTP復旧: {description} ({url})")
+    
+    if not has_issues:
+        ng_count = state_manager.get_ng_count()
+        if ng_count > 0:
+            print(f"⚠️ 継続中の問題: {ng_count}件")
+        else:
+            print("✅ 全て正常")
+
+
 def advise_notification_history(limit: int = None):
     """
     通知履歴を表示します。
@@ -571,7 +646,7 @@ def advise_notification_history(limit: int = None):
         print(f"⚠️ 通知履歴の読み込みに失敗: {e}")
 
 
-def run_advise(history_limit: int = None, verbose: bool = False, section: str = None):
+def run_advise(history_limit: int = None, verbose: bool = False, section: str = None, net_mode: str = None):
     import sys
     
     try:
@@ -641,9 +716,12 @@ def run_advise(history_limit: int = None, verbose: bool = False, section: str = 
         elif section == "history":
             advise_notification_history(limit=history_limit)
             return
+        elif section == "network":
+            advise_network_check(config)
+            return
         else:
             print(f"❌ 不明なセクション: {section}")
-            print("利用可能なセクション: status, alerts, advice, log, disk, process, history")
+            print("利用可能なセクション: status, alerts, advice, log, disk, process, history, network")
             sys.exit(1)
     
     # 全セクション表示（デフォルト）
@@ -685,7 +763,32 @@ def run_advise(history_limit: int = None, verbose: bool = False, section: str = 
         advise_process_breakdown(usage)
         advise_process_details(thresholds, config)
     
-    # 7. 通知履歴を表示
+    # 7. ネットワークチェック（net_modeに応じて）
+    if net_mode:
+        # 設定を一時的に上書き
+        network_config = config.get("network_check", {}).copy()
+        
+        if net_mode == "with_net":
+            # 全部（リソース・ログ + ping + http）
+            network_config["enabled"] = True
+        elif net_mode == "net_only":
+            # ネットワークチェックのみ（ping + http）
+            network_config["enabled"] = True
+        elif net_mode == "ping_only":
+            # pingチェックのみ
+            network_config["enabled"] = True
+            network_config["http"] = {"targets": []}  # httpを無効化
+        elif net_mode == "http_only":
+            # httpチェックのみ
+            network_config["enabled"] = True
+            network_config["ping"] = {"targets": []}  # pingを無効化
+        
+        # 一時的な設定で実行
+        temp_config = config.copy()
+        temp_config["network_check"] = network_config
+        advise_network_check(temp_config)
+    
+    # 8. 通知履歴を表示
     advise_notification_history(limit=history_limit)
     
     # フッター
@@ -710,14 +813,51 @@ def run():
     parser.add_argument(
         "--section",
         type=str,
-        choices=["status", "alerts", "advice", "log", "disk", "process", "history"],
+        choices=["status", "alerts", "advice", "log", "disk", "process", "history", "network"],
         help="特定のセクションのみ表示"
+    )
+    parser.add_argument(
+        "--with-net",
+        action="store_true",
+        help="全部（リソース・ログ + ping + http）"
+    )
+    parser.add_argument(
+        "--net-only",
+        action="store_true",
+        help="ネットワークチェックのみ（ping + http）"
+    )
+    parser.add_argument(
+        "--ping-only",
+        action="store_true",
+        help="pingチェックのみ"
+    )
+    parser.add_argument(
+        "--http-only",
+        action="store_true",
+        help="httpチェックのみ"
     )
     args = parser.parse_args()
     
     # 0が指定された場合は全件表示（Noneを渡す）
     history_limit = None if args.history == 0 else args.history
-    run_advise(history_limit=history_limit, verbose=args.verbose, section=args.section)
+    
+    # ネットワークチェックオプションの処理
+    net_mode = None
+    if args.with_net:
+        net_mode = "with_net"
+    elif args.net_only:
+        net_mode = "net_only"
+    elif args.ping_only:
+        net_mode = "ping_only"
+    elif args.http_only:
+        net_mode = "http_only"
+    
+    run_advise(
+        history_limit=history_limit,
+        verbose=args.verbose,
+        section=args.section,
+        net_mode=net_mode
+    )
 
 
 if __name__ == "__main__":

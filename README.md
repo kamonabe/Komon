@@ -323,6 +323,70 @@ Slack通知を使う場合は、Webhook URLを取得してください：
 
 ### 主な機能
 
+#### 🌐 ネットワーク疎通チェック（v1.25.0〜）
+
+外部サービスやAPIへの疎通を定期的に確認し、接続障害を早期検知します。
+
+**特徴**:
+- Pingチェック（ICMP）とHTTPチェック（GET/POST）に対応
+- 複数のターゲットを同時監視
+- 状態変化時のみ通知（正常→異常、異常→正常）
+- 通知スパム防止機能（同一アラートの抑制）
+- opt-in設計（デフォルト無効、CLI引数で有効化）
+
+**使用例**:
+```bash
+# ネットワークチェックを有効化して実行
+komon advise --with-net
+
+# ネットワークチェックのみ実行
+komon advise --net-only
+
+# Pingチェックのみ実行
+komon advise --ping-only
+
+# HTTPチェックのみ実行
+komon advise --http-only
+
+# 特定セクションのみ表示
+komon advise --section network
+```
+
+**設定例**:
+```yaml
+network_check:
+  enabled: false  # デフォルトは無効（opt-in）
+  ping:
+    enabled: true
+    targets:
+      - host: "8.8.8.8"
+        name: "Google DNS"
+      - host: "1.1.1.1"
+        name: "Cloudflare DNS"
+    timeout: 2
+    count: 3
+  http:
+    enabled: true
+    targets:
+      - url: "https://api.example.com/health"
+        name: "API Health Check"
+        method: "GET"
+        timeout: 5
+        expected_status: 200
+```
+
+**通知例**:
+```
+🌐 ネットワーク疎通チェック
+
+⚠️ 接続障害を検出しました:
+- Google DNS (8.8.8.8): Ping失敗
+- API Health Check: HTTP 503 (期待値: 200)
+
+✅ 正常な接続:
+- Cloudflare DNS (1.1.1.1): Ping成功
+```
+
 #### 📊 ディスク使用量の増加トレンド予測（v1.16.0〜）
 
 過去7日分のディスク使用率データから線形回帰により将来の使用量を予測し、ディスク容量が90%に到達する予測日を算出します。
@@ -590,10 +654,17 @@ komon advise --section status    # システム状態のみ
 komon advise --section alerts    # 警戒情報のみ
 komon advise --section process   # プロセス情報のみ
 komon advise --section history   # 通知履歴のみ
+komon advise --section network   # ネットワーク疎通チェックのみ
 
 # 通知履歴の表示件数を指定
 komon advise --history 10        # 直近10件
 komon advise --history 0         # 全件表示
+
+# ネットワークチェックオプション
+komon advise --with-net          # 通常のチェック + ネットワークチェック
+komon advise --net-only          # ネットワークチェックのみ
+komon advise --ping-only         # Pingチェックのみ
+komon advise --http-only         # HTTPチェックのみ
 ```
 
 📖 **詳細なコマンドリファレンス**: [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md)

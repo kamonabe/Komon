@@ -6,6 +6,58 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+### Added
+
+- **ネットワーク疎通チェック機能（ping/http）**
+  - REST API実行前の事前条件確認や外部通信不可時の早期気づきのため、ネットワーク疎通の軽量チェック機能を追加
+  - ping疎通チェック（ICMPエコー）
+  - http疎通チェック（GET/HEAD/POSTメソッド対応）
+  - 状態変化時のみ通知（正常→異常、異常→正常）
+  - NG状態のretention（24時間で自動削除）
+  - CLI引数で有効化（opt-in設計）
+    - `--with-net`: 全部（リソース・ログ + ping + http）
+    - `--net-only`: ネットワークチェックのみ
+    - `--ping-only`: pingのみ
+    - `--http-only`: httpのみ
+  - デフォルト動作は従来通り（ネットワークチェックなし）
+  - 設定ファイルで有効/無効、対象ホスト/URL、タイムアウトを設定可能
+
+### New Modules
+
+- `src/komon/net/__init__.py` - ネットワークチェックモジュール
+- `src/komon/net/ping_check.py` - ping疎通チェック
+- `src/komon/net/http_check.py` - http疎通チェック
+- `src/komon/net/state_manager.py` - ネットワーク状態管理
+
+### Configuration
+
+- `settings.yml`に`network_check`セクションを追加
+  - `enabled`: ネットワークチェックの有効/無効（デフォルト: false）
+  - `ping.targets`: ping対象ホストのリスト
+  - `http.targets`: http対象URLのリスト
+  - `state.retention_hours`: NG状態の保持時間（デフォルト: 24時間）
+
+### Changed
+
+- `scripts/advise.py` - ネットワークチェックを統合
+  - `advise_network_check()` 関数を追加
+  - CLI引数（`--with-net`, `--net-only`, `--ping-only`, `--http-only`）を追加
+  - `--section=network` オプションのサポートを追加
+
+### Developer Improvements
+
+- **テストの追加**
+  - ユニットテスト: 35件（ping_check, http_check, state_manager）
+  - 統合テスト: 8件（CLI引数、設定ファイル、通知ポリシー）
+  - 全545テストがパス、カバレッジ92%を維持
+
+### Benefits
+
+- **事前条件確認**: REST API実行前にネットワーク疎通を確認
+- **早期気づき**: 外部通信不可時に早期に気づける
+- **軽量性**: Komonの「軽量」思想を維持（opt-in設計）
+- **状態変化のみ通知**: 通知疲れを防止
+
 ## [1.24.2] - 2025-12-04
 
 ### Fixed

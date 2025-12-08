@@ -1,0 +1,211 @@
+# 要件定義: ネットワーク疎通チェック機能（ping/http）
+
+metadata:
+  title: "ネットワーク疎通チェック機能（ping/http）"
+  feature: "network-connectivity-check"
+  status: "completed"
+  created: "2025-12-08"
+  updated: "2025-12-08"
+  version: "1.0.0"
+  last_validated: "2025-12-08"
+  validation_passed: true
+  complexity: "medium"
+  estimated-hours: 8
+  dependencies: []
+
+overview:
+  description: |
+    REST API実行前の事前条件確認や外部通信不可時の早期気づきのため、
+    ネットワーク疎通の軽量チェック機能を追加する。
+    
+    Komonの「アドバイザ（診断補助）」の範囲内で、軽量性を最優先し、
+    デフォルト動作は従来通り（チェックしない）を維持する。
+  
+  background: |
+    現状のKomonはリソース監視とログ解析に特化しているが、
+    ネットワーク疎通の問題を検知できない。
+    
+    REST API実行前の事前条件確認や、外部通信不可時の早期気づきのため、
+    軽量なネットワーク疎通チェック機能が必要。
+  
+  goals:
+    - "ping疎通チェック機能の追加"
+    - "http疎通チェック機能の追加"
+    - "状態変化時のみ通知（正常→異常、異常→正常）"
+    - "NG状態のretention（寿命）付き自動削除"
+    - "opt-in設計（デフォルトは無効）"
+    - "CLI引数での有効化"
+    - "軽量性の維持"
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "ping疎通チェックの実装"
+    priority: "high"
+    type: "functional"
+    description: |
+      指定されたホストに対してping疎通チェックを実行し、
+      結果を返すことができる
+    when: "ping疎通チェックを実行した時"
+    then: "疎通結果（成功/失敗）を返す"
+    examples:
+      - input: "host=127.0.0.1, timeout=3"
+        output: "success=True"
+      - input: "host=999.999.999.999, timeout=3"
+        output: "success=False"
+  
+  - id: "AC-002"
+    title: "http疎通チェックの実装"
+    priority: "high"
+    type: "functional"
+    description: |
+      指定されたURLに対してhttp疎通チェックを実行し、
+      結果を返すことができる
+    when: "http疎通チェックを実行した時"
+    then: "疎通結果（成功/失敗）とステータスコードを返す"
+    examples:
+      - input: "url=https://www.google.com, method=HEAD, timeout=10"
+        output: "success=True, status_code=200"
+      - input: "url=https://invalid-domain-12345.com, timeout=10"
+        output: "success=False"
+  
+  - id: "AC-003"
+    title: "状態変化の検知"
+    priority: "high"
+    type: "functional"
+    description: |
+      前回の状態と今回の状態を比較し、
+      状態変化（OK→NG、NG→OK）を検知できる
+    when: "状態を比較した時"
+    then: "状態変化を検知できる"
+    examples:
+      - input: "previous=None, current=NG"
+        output: "changed=True (初回NG)"
+      - input: "previous=OK, current=NG"
+        output: "changed=True (OK→NG)"
+      - input: "previous=NG, current=OK"
+        output: "changed=True (NG→OK)"
+      - input: "previous=NG, current=NG"
+        output: "changed=False (NG継続)"
+  
+  - id: "AC-004"
+    title: "NG状態のretention"
+    priority: "high"
+    type: "functional"
+    description: |
+      NG状態は指定された時間（デフォルト24時間）で自動削除され、
+      古いNG状態が残り続けないようにする
+    when: "NG状態が24時間経過した時"
+    then: "自動的に削除される"
+    examples:
+      - input: "ng_time=25時間前"
+        output: "deleted=True"
+      - input: "ng_time=23時間前"
+        output: "deleted=False"
+  
+  - id: "AC-005"
+    title: "CLI引数での有効化"
+    priority: "high"
+    type: "functional"
+    description: |
+      CLI引数でネットワークチェックを有効化できる
+    when: "CLI引数を指定した時"
+    then: "ネットワークチェックが実行される"
+    examples:
+      - input: "komon --with-net"
+        output: "リソース・ログ + ping + http"
+      - input: "komon --net-only"
+        output: "ping + http のみ"
+      - input: "komon --ping-only"
+        output: "ping のみ"
+      - input: "komon --http-only"
+        output: "http のみ"
+      - input: "komon"
+        output: "ネットワークチェックなし（従来通り）"
+  
+  - id: "AC-006"
+    title: "設定ファイルでの有効化"
+    priority: "high"
+    type: "functional"
+    description: |
+      設定ファイルでネットワークチェックを有効化できる
+    when: "settings.ymlでenabled=trueに設定した時"
+    then: "ネットワークチェックが実行される"
+    examples:
+      - input: "network_check.enabled=true"
+        output: "ネットワークチェック実行"
+      - input: "network_check.enabled=false"
+        output: "ネットワークチェックスキップ"
+
+non-functional-requirements:
+  performance:
+    - "ping疎通チェックは3秒以内に完了"
+    - "http疎通チェックは10秒以内に完了"
+    - "状態ファイルの読み書きは10ms以内"
+  
+  reliability:
+    - "ネットワークエラーが発生しても処理を継続"
+    - "状態ファイルが破損していても処理を継続"
+    - "タイムアウト処理を実装"
+  
+  maintainability:
+    - "ping/httpチェックは独立したモジュールに分離"
+    - "状態管理は専用クラスで実装"
+    - "テストカバレッジ92%以上を維持"
+  
+  usability:
+    - "エラーメッセージは日本語で分かりやすく"
+    - "状態変化時のみ通知（スパム防止）"
+    - "opt-in設計（デフォルトは無効）"
+
+constraints:
+  - "Linux専用（Windows非対応）"
+  - "Python 3.10+以上"
+  - "既存機能への影響を最小限に"
+  - "軽量性を最優先"
+
+assumptions:
+  - "ユーザーは日本語話者"
+  - "pingコマンドが利用可能"
+  - "requestsライブラリが利用可能"
+
+risks:
+  - risk: "ネットワークチェックの遅延"
+    mitigation: "タイムアウトを短く設定、並列実行は避ける"
+    probability: "low"
+    impact: "medium"
+  
+  - risk: "誤検知（一時的なネットワーク障害）"
+    mitigation: "retention機能で古いNG状態を削除"
+    probability: "medium"
+    impact: "low"
+
+scope:
+  in-scope:
+    - "ping疎通チェック"
+    - "http疎通チェック（GET/HEAD/POST）"
+    - "状態変化の検知"
+    - "NG状態のretention"
+    - "CLI引数での有効化"
+    - "設定ファイルでの有効化"
+    - "通知メッセージのフォーマット"
+    - "ドキュメント更新"
+  
+  out-of-scope:
+    - "TCP/UDPポートスキャン"
+    - "DNS解決チェック"
+    - "SSL証明書チェック"
+    - "ネットワーク速度測定"
+    - "複雑なリトライロジック"
+
+success-metrics:
+  quantitative:
+    - "テストカバレッジ92%以上を維持"
+    - "全545テストがパス（43件追加）"
+    - "ping疎通チェックが3秒以内に完了"
+    - "http疎通チェックが10秒以内に完了"
+  
+  qualitative:
+    - "REST API実行前の事前条件確認が可能"
+    - "外部通信不可時の早期気づき"
+    - "既存ユーザーへの影響ゼロ（opt-in設計）"
+    - "Komonの軽量性を維持"

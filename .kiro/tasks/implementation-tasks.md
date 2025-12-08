@@ -557,10 +557,10 @@ notifications:
 ### [TASK-023] ネットワーク疎通チェック機能（ping/http）
 **元アイデア**: [IDEA-024] ネットワーク疎通チェック機能（ping/http）  
 **feature-name**: network-connectivity-check  
-**ステータス**: 🔴 TODO  
+**ステータス**: 🟢 Done  
+**完了日**: 2025-12-08 (v1.25.0)  
 **優先度**: Medium  
-**見積もり**: 中（6-8時間）  
-**対象バージョン**: v1.25.0
+**見積もり**: 中（6-8時間）
 
 #### 背景
 REST API実行前の事前条件確認や外部通信不可時の早期気づきのため、ネットワーク疎通の軽量チェック機能を追加。Komonの「アドバイザ（診断補助）」の範囲内で、軽量性を最優先。
@@ -574,25 +574,25 @@ REST API実行前の事前条件確認や外部通信不可時の早期気づき
 #### タスク分解
 
 **Phase 1: 基本モジュール実装**
-- [ ] `src/komon/net/` ディレクトリの作成
-- [ ] `src/komon/net/__init__.py` の作成
-- [ ] `src/komon/net/ping_check.py` の実装
+- [x] `src/komon/net/` ディレクトリの作成
+- [x] `src/komon/net/__init__.py` の作成
+- [x] `src/komon/net/ping_check.py` の実装
   - `check_ping()` 関数の実装
   - タイムアウト処理
   - エラーハンドリング
-- [ ] `src/komon/net/http_check.py` の実装
+- [x] `src/komon/net/http_check.py` の実装
   - `check_http()` 関数の実装
   - GET/HEAD/POSTメソッド対応
   - タイムアウト処理
   - エラーハンドリング
-- [ ] `src/komon/net/state_manager.py` の実装
+- [x] `src/komon/net/state_manager.py` の実装
   - `NetworkStateManager` クラスの実装
   - NG状態のみ保持（OK状態は保持しない）
   - retention（寿命）付き自動削除
   - 状態ファイルの読み書き
 
 **Phase 2: CLI引数の拡張**
-- [ ] `scripts/advise.py` の拡張
+- [x] `scripts/advise.py` の拡張
   - `--with-net` オプションの追加（全部：リソース・ログ + ping + http）
   - `--net-only` オプションの追加（ping + http のみ）
   - `--ping-only` オプションの追加（ping のみ）
@@ -600,7 +600,7 @@ REST API実行前の事前条件確認や外部通信不可時の早期気づき
   - デフォルト動作は従来通り（ネットワークチェックなし）
 
 **Phase 3: 設定ファイルの拡張**
-- [ ] `config/settings.yml.sample` の拡張
+- [x] `config/settings.yml.sample` の拡張
   - `network_check` セクションの追加
   - `ping.targets` の設定（デフォルト: 127.0.0.1）
   - `http.targets` の設定（デフォルト: https://komon-example.com）
@@ -608,44 +608,45 @@ REST API実行前の事前条件確認や外部通信不可時の早期気づき
   - `enabled: false` をデフォルトに設定
 
 **Phase 4: 通知ポリシーの実装**
-- [ ] 状態変化検知ロジックの実装
+- [x] 状態変化検知ロジックの実装
   - OK → NG：通知
   - NG → OK：復旧通知
   - NG → NG：通知なし（ログのみ）
   - OK → OK：通知なし
-- [ ] 通知メッセージのフォーマット
+- [x] 通知メッセージのフォーマット
   - ping失敗時のメッセージ
   - http失敗時のメッセージ
   - 復旧時のメッセージ
 
 **Phase 5: テストケースの追加**
-- [ ] ユニットテスト: `test_ping_check.py`（10件）
+- [x] ユニットテスト: `test_ping_check.py`（10件）
   - 正常系（ping成功）
   - 異常系（ping失敗、タイムアウト）
   - エラーハンドリング
-- [ ] ユニットテスト: `test_http_check.py`（10件）
+- [x] ユニットテスト: `test_http_check.py`（10件）
   - 正常系（http成功、各メソッド）
   - 異常系（http失敗、タイムアウト）
   - エラーハンドリング
-- [ ] ユニットテスト: `test_state_manager.py`（15件）
+- [x] ユニットテスト: `test_state_manager.py`（15件）
   - 状態の保存・読み込み
   - retention による自動削除
   - 状態変化の検知
-- [ ] 統合テスト: `test_network_check_integration.py`（8件）
+- [x] 統合テスト: `test_network_check_integration.py`（8件）
   - CLI引数の動作確認
   - 設定ファイルの読み込み
   - 通知ポリシーの動作確認
 
 **Phase 6: ドキュメント更新**
-- [ ] README.md の更新
+- [x] README.md の更新
   - ネットワークチェック機能の説明
   - CLI引数の使い方
   - 設定例
-- [ ] docs/EXAMPLES.md の更新
+- [x] docs/EXAMPLES.md の更新
   - 基本的な使い方
   - cron設定例
   - 上級者向け設定例
-- [ ] docs/CHANGELOG.md の更新
+- [x] docs/CHANGELOG.md の更新
+- [x] `.kiro/tasks/implementation-tasks.md` の更新
 
 #### 完了条件
 - ✅ ping疎通チェックが動作する
@@ -655,8 +656,8 @@ REST API実行前の事前条件確認や外部通信不可時の早期気づき
 - ✅ 状態変化時のみ通知される
 - ✅ NG状態のretentionが動作する
 - ✅ 設定ファイルで有効/無効を切り替えられる
-- ✅ 全テストがパス（43件追加）
-- ✅ カバレッジを維持
+- ✅ 全545テストがパス（43件追加）
+- ✅ カバレッジ92%を維持
 - ✅ ドキュメントが更新されている
 
 #### 実装イメージ
@@ -761,6 +762,7 @@ network_check:
 
 ## 更新履歴
 
+- 2025-12-08: TASK-023を完了に更新（v1.25.0）
 - 2025-12-08: TASK-023を追加（IDEA-024: ネットワーク疎通チェック機能）
 - 2025-12-08: TASK-019, 020, 021, 022を追加（IDEA-023: Webhook通知の統一化、4フェーズに分割）
 - 2025-12-03: v1.23.0の完了タスクを `completed-tasks.md` に移動（TASK-017）

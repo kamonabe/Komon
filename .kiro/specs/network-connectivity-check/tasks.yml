@@ -1,0 +1,238 @@
+# 実装タスクリスト: ネットワーク疎通チェック機能（ping/http）
+
+metadata:
+  title: "ネットワーク疎通チェック機能（ping/http）"
+  feature: "network-connectivity-check"
+  task-id: "TASK-023"
+  status: "completed"
+  created: "2025-12-08"
+  updated: "2025-12-08"
+  completed: "2025-12-08"
+  version: "1.25.0"
+
+tasks:
+  - id: "T1"
+    title: "Create basic network check modules"
+    status: "completed"
+    priority: "high"
+    estimated-hours: 2
+    depends-on: []
+    validates: ["AC-001", "AC-002"]
+    description: |
+      src/komon/net/ディレクトリを作成し、
+      ping_check.py、http_check.py、state_manager.pyを実装する
+    subtasks:
+      - "src/komon/net/ ディレクトリを作成"
+      - "src/komon/net/__init__.py を作成"
+      - "src/komon/net/ping_check.py を実装"
+      - "src/komon/net/http_check.py を実装"
+      - "src/komon/net/state_manager.py を実装"
+      - "エラーハンドリングとログ出力を追加"
+    files:
+      - path: "src/komon/net/__init__.py"
+        action: "create"
+        lines: 10
+      - path: "src/komon/net/ping_check.py"
+        action: "create"
+        lines: 80
+      - path: "src/komon/net/http_check.py"
+        action: "create"
+        lines: 90
+      - path: "src/komon/net/state_manager.py"
+        action: "create"
+        lines: 200
+    tests:
+      - "Unit tests: ping_check.py (10 tests)"
+      - "Unit tests: http_check.py (10 tests)"
+      - "Unit tests: state_manager.py (15 tests)"
+  
+  - id: "T2"
+    title: "Extend configuration file"
+    status: "completed"
+    priority: "high"
+    estimated-hours: 0.5
+    depends-on: []
+    validates: ["AC-006"]
+    description: |
+      設定ファイルにnetwork_checkセクションを追加し、
+      デフォルトは無効（enabled: false）に設定する
+    subtasks:
+      - "config/settings.yml.sampleにnetwork_checkセクションを追加"
+      - "ping.targetsの設定を追加"
+      - "http.targetsの設定を追加"
+      - "state.retention_hoursの設定を追加"
+      - "enabled: falseをデフォルトに設定"
+    files:
+      - path: "config/settings.yml.sample"
+        action: "update"
+        lines: 40
+    tests: []
+  
+  - id: "T3"
+    title: "Extend CLI arguments and integrate with advise.py"
+    status: "completed"
+    priority: "high"
+    estimated-hours: 2
+    depends-on: ["T1", "T2"]
+    validates: ["AC-005"]
+    description: |
+      scripts/advise.pyを拡張し、
+      CLI引数でネットワークチェックを有効化できるようにする
+    subtasks:
+      - "scripts/advise.pyにインポートを追加"
+      - "advise_network_check()関数を実装"
+      - "argparseに新しいオプションを追加（--with-net, --net-only, --ping-only, --http-only）"
+      - "run_advise()関数でnet_modeに応じた設定上書きと呼び出しを実装"
+      - "--section=network オプションのサポートを追加"
+    files:
+      - path: "scripts/advise.py"
+        action: "update"
+        lines: 150
+    tests:
+      - "Integration test: CLI arguments (8 tests)"
+  
+  - id: "T4"
+    title: "Implement notification policy"
+    status: "completed"
+    priority: "high"
+    estimated-hours: 1
+    depends-on: ["T1"]
+    validates: ["AC-003", "AC-004"]
+    description: |
+      状態変化時のみ通知するポリシーを実装し、
+      NG状態のretention機能を実装する
+    subtasks:
+      - "NetworkStateManager.format_notification_message()メソッドを追加"
+      - "状態変化時の通知メッセージをフォーマット"
+      - "OK → NG: 通知"
+      - "NG → OK: 復旧通知"
+      - "NG → NG: 通知なし（ログのみ）"
+      - "retention機能の実装（24時間で自動削除）"
+    files:
+      - path: "src/komon/net/state_manager.py"
+        action: "update"
+        lines: 50
+    tests:
+      - "Unit tests: notification policy (included in state_manager tests)"
+  
+  - id: "T5"
+    title: "Add test cases"
+    status: "completed"
+    priority: "high"
+    estimated-hours: 2
+    depends-on: ["T1", "T2", "T3", "T4"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    description: |
+      ユニットテストと統合テストを追加する
+    subtasks:
+      - "tests/test_ping_check.py を作成（10件）"
+      - "tests/test_http_check.py を作成（10件）"
+      - "tests/test_state_manager.py を作成（15件）"
+      - "tests/test_network_check_integration.py を作成（8件）"
+      - "全545テストがパスすることを確認"
+      - "カバレッジ92%を維持"
+    files:
+      - path: "tests/test_ping_check.py"
+        action: "create"
+        lines: 150
+      - path: "tests/test_http_check.py"
+        action: "create"
+        lines: 150
+      - path: "tests/test_state_manager.py"
+        action: "create"
+        lines: 250
+      - path: "tests/test_network_check_integration.py"
+        action: "create"
+        lines: 200
+    tests:
+      - "Unit tests: 35 tests"
+      - "Integration tests: 8 tests"
+      - "Total: 43 tests added"
+  
+  - id: "T6"
+    title: "Update documentation"
+    status: "completed"
+    priority: "medium"
+    estimated-hours: 1
+    depends-on: ["T1", "T2", "T3", "T4", "T5"]
+    validates: []
+    description: |
+      ドキュメントを更新し、ネットワークチェック機能の使い方を説明する
+    subtasks:
+      - "README.mdにネットワークチェック機能の説明を追加"
+      - "docs/EXAMPLES.mdに詳細な使用例を追加"
+      - "docs/CHANGELOG.mdを更新（v1.25.0）"
+      - "docs/COMMAND_REFERENCE.mdに新しいコマンドオプションを追加"
+      - ".kiro/tasks/implementation-tasks.mdのTASK-023を完了状態に更新"
+      - ".kiro/specs/future-ideas.mdのIDEA-024を「✅ 実装済み (v1.25.0)」に更新"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 50
+      - path: "docs/EXAMPLES.md"
+        action: "update"
+        lines: 100
+      - path: "docs/CHANGELOG.md"
+        action: "update"
+        lines: 50
+      - path: "docs/COMMAND_REFERENCE.md"
+        action: "update"
+        lines: 30
+      - path: ".kiro/tasks/implementation-tasks.md"
+        action: "update"
+        lines: 10
+      - path: ".kiro/specs/future-ideas.md"
+        action: "update"
+        lines: 5
+    tests: []
+
+completion-criteria:
+  - criterion: "ping疎通チェックが動作する"
+    status: "completed"
+    validated-by: ["AC-001"]
+  
+  - criterion: "http疎通チェックが動作する"
+    status: "completed"
+    validated-by: ["AC-002"]
+  
+  - criterion: "状態変化時のみ通知される"
+    status: "completed"
+    validated-by: ["AC-003"]
+  
+  - criterion: "NG状態のretentionが動作する"
+    status: "completed"
+    validated-by: ["AC-004"]
+  
+  - criterion: "CLI引数での有効化が動作する"
+    status: "completed"
+    validated-by: ["AC-005"]
+  
+  - criterion: "設定ファイルでの有効化が動作する"
+    status: "completed"
+    validated-by: ["AC-006"]
+  
+  - criterion: "全545テストがパス（43件追加）"
+    status: "completed"
+    validated-by: []
+  
+  - criterion: "カバレッジ92%を維持"
+    status: "completed"
+    validated-by: []
+  
+  - criterion: "ドキュメントが更新されている"
+    status: "completed"
+    validated-by: []
+
+summary:
+  total-tasks: 6
+  completed-tasks: 6
+  estimated-total-hours: 8
+  actual-hours: 8
+  unit-tests: 35
+  integration-tests: 8
+  total-tests: 43
+  files-created: 8
+  files-updated: 7
+  all-tests-passed: true
+  total-test-count: 545
+  coverage: "92%"
