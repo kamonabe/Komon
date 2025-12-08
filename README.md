@@ -236,7 +236,10 @@ Komon/
 ├── .kiro/                          # Kiro IDE設定
 │   ├── specs/                      # 仕様書
 │   │   ├── komon-system.md         # システム仕様
-│   │   ├── future-ideas.md         # 将来の改善案
+│   │   ├── future-ideas.md         # 未実装アイデア
+│   │   ├── implemented-ideas.md    # 実装済みアイデア
+│   │   ├── research-projects.md    # 研究プロジェクト
+│   │   ├── rejected-ideas.md       # 見送りアイデア
 │   │   ├── testing-strategy.md     # テスト戦略
 │   │   └── notification-history/   # 通知履歴機能spec
 │   ├── tasks/                      # タスク管理
