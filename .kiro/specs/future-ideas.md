@@ -3152,8 +3152,333 @@ ChatGPTとの対話で生まれた構想。
 
 ---
 
+---
+
+### [IDEA-024] ネットワーク疎通チェック機能（ping/http）
+
+**カテゴリ**: 機能追加  
+**提案日**: 2025-12-08  
+**ステータス**: アイデア段階  
+**優先度**: 中
+
+#### 背景・課題
+
+**ユーザーからの要望**:
+- REST API実行前の事前条件確認
+- 外部通信不可時の早期気づき
+- ネットワーク疎通の軽量チェック
+
+**Komonの立ち位置**:
+- 監視ツール化は目指さない
+- あくまで「アドバイザ（診断補助）」の範囲
+- 軽量性を最優先
+
+#### 改善案の全体像
+
+**1. 基本方針（重要）**
+
+✔ **デフォルト動作は従来通り**
+- `komon` 単体実行ではネットワークチェックしない
+- ネットワークチェックはすべて opt-in（引数 or 設定で有効化）
+
+✔ **軽量性を最優先**
+- ping/http は最小限の処理のみ
+- 外部に迷惑をかけない（デフォのhttp宛先は実在しない例示URL）
+
+✔ **アラートは状態変化時だけ**
+- 正常→異常、異常→正常のみ通知
+- 状態管理は NGのみ保持 + retention（寿命）付き
+
+✔ **既存の 5分 cron はそのまま維持**
+- 互換性100%
+
+**2. 実装ロードマップ（順序）**
+
+**① ネットワークチェックのモジュール化**
+```
+komon/net/ping_check.py
+komon/net/http_check.py
+```
+- ping と http を、それぞれ独立の関数として構築
+
+**② komon advise にフックを追加**
+- 既存の advise（システム・ログ診断）に以下を追加：
+  - `--with-net`: 全部（リソース・ログ + ping + http）
+  - `--net-only`: ping + http
+  - `--ping-only`: pingのみ
+  - `--http-only`: httpのみ
+
+**③ CLI 引数の拡張（opt-inのみ）**
+```bash
+komon                # 従来どおり（ネットワークチェックなし）
+komon --with-net     # 全部（リソース・ログ + ping + http）
+komon --net-only     # ping + http
+komon --ping-only    # pingのみ
+komon --http-only    # httpのみ
+```
+
+**④ 状態ファイル（NGのみ保持）の実装**
+```json
+{
+  "net.http:https://example.com": {
+    "first_detected_at": "2025-12-08T12:00:00Z"
+  }
+}
+```
+- retention 超過した古いNGは自動削除
+
+**⑤ 通知ポリシー（状態変化時のみ）**
+- OK → NG：通知
+- NG → OK：復旧通知
+- NG → NG：通知なし（ログのみ）
+- OK → OK：通知なし
+
+**⑥ デフォルト例（ユーザー任意設定）**
+- pingデフォルト例：127.0.0.1（外部に迷惑かけない）
+- httpデフォルト例：https://komon-example.com（実在しないため、必ずエラーになり"例として差し替える"ことが明確）
+
+**3. cron の取り扱い（複雑化を避ける思想）**
+
+**基本（推奨・デフォルト）**:
+```bash
+*/5 * * * * /usr/local/bin/komon  # 従来どおり
+```
+
+**便利に使いたい人**:
+```bash
+*/5 * * * * /usr/local/bin/komon --with-net
+```
+
+**こだわり運用（上級者向け）**:
+```bash
+*/5  * * * * komon                 # リソース＆ログ
+*/15 * * * * komon --net-only      # ネットワークだけ
+```
+
+**4. 設定ファイル例**
+
+```yaml
+network_check:
+  enabled: false  # デフォルトは無効
+  
+  ping:
+    targets:
+      - host: "127.0.0.1"
+        description: "ローカルホスト（例）"
+    timeout: 3
+    
+  http:
+    targets:
+      - url: "https://komon-example.com"
+        description: "例示URL（実在しない）"
+        method: "GET"
+    timeout: 10
+    
+  state:
+    retention_hours: 24  # 24時間でNG状態を削除
+    file_path: "/var/lib/komon/state.json"
+```
+
+#### 実装イメージ
+
+**ping実装**:
+```python
+# komon/net/ping_check.py
+import subprocess
+
+def check_ping(host, timeout=3):
+    """ping疎通チェック"""
+    try:
+        result = subprocess.run(
+            ['ping', '-c', '1', '-W', str(timeout), host],
+            capture_output=True,
+            timeout=timeout + 1
+        )
+        return result.returncode == 0
+    except Exception as e:
+        logger.error("Ping failed: %s", e)
+        return False
+```
+
+**http実装**:
+```python
+# komon/net/http_check.py
+import requests
+
+def check_http(url, timeout=10, method='GET'):
+    """HTTP疎通チェック"""
+    try:
+        response = requests.request(
+            method,
+            url,
+            timeout=timeout
+        )
+        return 200 <= response.status_code < 400
+    except Exception as e:
+        logger.error("HTTP check failed: %s", e)
+        return False
+```
+
+**状態管理**:
+```python
+# komon/net/state_manager.py
+import json
+from datetime import datetime, timedelta
+
+class NetworkStateManager:
+    """ネットワークチェックの状態管理（NGのみ保持）"""
+    
+    def __init__(self, state_file, retention_hours=24):
+        self.state_file = state_file
+        self.retention_hours = retention_hours
+        self.state = self._load()
+    
+    def _load(self):
+        """状態ファイルを読み込み"""
+        try:
+            with open(self.state_file, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+    
+    def _save(self):
+        """状態ファイルに保存"""
+        with open(self.state_file, 'w') as f:
+            json.dump(self.state, f, indent=2)
+    
+    def check_and_update(self, check_id, is_ok):
+        """状態をチェックして更新"""
+        now = datetime.now().isoformat()
+        
+        # 古いNG状態を削除（retention）
+        self._cleanup_old_states()
+        
+        # 状態変化の判定
+        was_ng = check_id in self.state
+        is_ng = not is_ok
+        
+        if is_ng and not was_ng:
+            # OK → NG: 通知
+            self.state[check_id] = {"first_detected_at": now}
+            self._save()
+            return "alert"
+        
+        elif not is_ng and was_ng:
+            # NG → OK: 復旧通知
+            del self.state[check_id]
+            self._save()
+            return "recovery"
+        
+        elif is_ng and was_ng:
+            # NG → NG: 通知なし
+            return "ongoing"
+        
+        else:
+            # OK → OK: 通知なし
+            return "ok"
+    
+    def _cleanup_old_states(self):
+        """古いNG状態を削除"""
+        cutoff = datetime.now() - timedelta(hours=self.retention_hours)
+        
+        to_delete = []
+        for check_id, info in self.state.items():
+            detected_at = datetime.fromisoformat(info["first_detected_at"])
+            if detected_at < cutoff:
+                to_delete.append(check_id)
+        
+        for check_id in to_delete:
+            del self.state[check_id]
+        
+        if to_delete:
+            self._save()
+```
+
+#### 期待効果
+
+**1. 実務的な価値**
+- REST API実行前の事前条件確認
+- 外部通信不可時の早期気づき
+- ネットワーク疎通という実務で大事な要素を適切に補強
+
+**2. Komonらしさの維持**
+- 軽量・シンプル・非侵襲の哲学を完全維持
+- 従来の動きを壊さない後方互換
+- 監視ツール化しないように「状態変化通知のみ」の運用
+
+**3. OSSとしての配慮**
+- 外部への負荷ゼロ
+- デフォルトのhttp宛先は実在しないURL
+- ユーザーに設定を促す設計
+
+**4. 長期運用の安全性**
+- 状態ファイルのゴミが残らないクリーン設計
+- retention付きで自動クリーンアップ
+
+#### 実装優先度
+
+**今すぐやる必要はない**:
+- 現在のKomonで十分動作している
+- 他の優先度の高いタスクを先に
+
+**でも設計は今詰めておく価値がある**:
+- 実務的な価値が高い
+- Komonの哲学を完全に維持した設計
+- 将来の実装がスムーズになる
+
+#### 実装ステップ（もし実装するなら）
+
+**ステップ1**: future-ideas.mdに記録（✅ 完了）
+
+**ステップ2**: Spec作成
+- requirements.yml: 要件定義
+- design.yml: 設計書
+- tasks.yml: 実装タスクリスト
+
+**ステップ3**: 実装（ロードマップ順）
+1. ネットワークチェックのモジュール化
+2. komon advise にフックを追加
+3. CLI 引数の拡張
+4. 状態ファイルの実装
+5. 通知ポリシーの実装
+6. デフォルト例の設定
+
+**ステップ4**: テスト
+- プロパティベーステスト
+- 統合テスト
+- ユニットテスト
+
+**ステップ5**: ドキュメント
+- README.md更新
+- CHANGELOG.md記録
+- 設定例の追加
+
+#### 開発者コメント
+
+```
+ユーザーからの要望で生まれたアイデア。
+
+「ネットワーク疎通チェックが欲しい」
+「でもKomonの軽量さは守りたい」
+
+この2つを両立する設計。
+
+デフォルト動作は一切変わらない。
+opt-in設計で既存ユーザーへの影響ゼロ。
+状態変化時のみ通知で、監視ツール化を避ける。
+
+Komonの哲学を完全に維持した上で、
+実務的な価値を追加する。
+
+この設計なら、Komonらしさを損なわずに
+実装できると思う。
+```
+
+---
+
 ## 更新履歴
 
+- 2025-12-08: ネットワーク疎通チェック機能のアイデアを追加（IDEA-024）
 - 2025-12-08: IDEA-023をタスク化（TASK-019, 020, 021, 022）、バージョン番号を修正
 - 2025-12-04: Webhook通知の統一化のアイデアを追加（IDEA-023）
 - 2025-12-03: OS判定・汎用Linux対応のアイデアを追加（IDEA-022）
