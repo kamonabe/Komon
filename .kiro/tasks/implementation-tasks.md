@@ -554,6 +554,185 @@ notifications:
 
 ---
 
+### [TASK-023] ネットワーク疎通チェック機能（ping/http）
+**元アイデア**: [IDEA-024] ネットワーク疎通チェック機能（ping/http）  
+**feature-name**: network-connectivity-check  
+**ステータス**: 🔴 TODO  
+**優先度**: Medium  
+**見積もり**: 中（6-8時間）  
+**対象バージョン**: v1.25.0
+
+#### 背景
+REST API実行前の事前条件確認や外部通信不可時の早期気づきのため、ネットワーク疎通の軽量チェック機能を追加。Komonの「アドバイザ（診断補助）」の範囲内で、軽量性を最優先。
+
+**Komonの哲学を完全維持**:
+- ✅ デフォルト動作は従来通り（`komon` 単体実行ではチェックしない）
+- ✅ すべて opt-in（引数 or 設定で有効化）
+- ✅ 軽量性を最優先
+- ✅ 状態変化時のみ通知（正常→異常、異常→正常）
+
+#### タスク分解
+
+**Phase 1: 基本モジュール実装**
+- [ ] `src/komon/net/` ディレクトリの作成
+- [ ] `src/komon/net/__init__.py` の作成
+- [ ] `src/komon/net/ping_check.py` の実装
+  - `check_ping()` 関数の実装
+  - タイムアウト処理
+  - エラーハンドリング
+- [ ] `src/komon/net/http_check.py` の実装
+  - `check_http()` 関数の実装
+  - GET/HEAD/POSTメソッド対応
+  - タイムアウト処理
+  - エラーハンドリング
+- [ ] `src/komon/net/state_manager.py` の実装
+  - `NetworkStateManager` クラスの実装
+  - NG状態のみ保持（OK状態は保持しない）
+  - retention（寿命）付き自動削除
+  - 状態ファイルの読み書き
+
+**Phase 2: CLI引数の拡張**
+- [ ] `scripts/advise.py` の拡張
+  - `--with-net` オプションの追加（全部：リソース・ログ + ping + http）
+  - `--net-only` オプションの追加（ping + http のみ）
+  - `--ping-only` オプションの追加（ping のみ）
+  - `--http-only` オプションの追加（http のみ）
+  - デフォルト動作は従来通り（ネットワークチェックなし）
+
+**Phase 3: 設定ファイルの拡張**
+- [ ] `config/settings.yml.sample` の拡張
+  - `network_check` セクションの追加
+  - `ping.targets` の設定（デフォルト: 127.0.0.1）
+  - `http.targets` の設定（デフォルト: https://komon-example.com）
+  - `state.retention_hours` の設定（デフォルト: 24時間）
+  - `enabled: false` をデフォルトに設定
+
+**Phase 4: 通知ポリシーの実装**
+- [ ] 状態変化検知ロジックの実装
+  - OK → NG：通知
+  - NG → OK：復旧通知
+  - NG → NG：通知なし（ログのみ）
+  - OK → OK：通知なし
+- [ ] 通知メッセージのフォーマット
+  - ping失敗時のメッセージ
+  - http失敗時のメッセージ
+  - 復旧時のメッセージ
+
+**Phase 5: テストケースの追加**
+- [ ] ユニットテスト: `test_ping_check.py`（10件）
+  - 正常系（ping成功）
+  - 異常系（ping失敗、タイムアウト）
+  - エラーハンドリング
+- [ ] ユニットテスト: `test_http_check.py`（10件）
+  - 正常系（http成功、各メソッド）
+  - 異常系（http失敗、タイムアウト）
+  - エラーハンドリング
+- [ ] ユニットテスト: `test_state_manager.py`（15件）
+  - 状態の保存・読み込み
+  - retention による自動削除
+  - 状態変化の検知
+- [ ] 統合テスト: `test_network_check_integration.py`（8件）
+  - CLI引数の動作確認
+  - 設定ファイルの読み込み
+  - 通知ポリシーの動作確認
+
+**Phase 6: ドキュメント更新**
+- [ ] README.md の更新
+  - ネットワークチェック機能の説明
+  - CLI引数の使い方
+  - 設定例
+- [ ] docs/EXAMPLES.md の更新
+  - 基本的な使い方
+  - cron設定例
+  - 上級者向け設定例
+- [ ] docs/CHANGELOG.md の更新
+
+#### 完了条件
+- ✅ ping疎通チェックが動作する
+- ✅ http疎通チェックが動作する
+- ✅ CLI引数（`--with-net`, `--net-only`, `--ping-only`, `--http-only`）が動作する
+- ✅ デフォルト動作は従来通り（ネットワークチェックなし）
+- ✅ 状態変化時のみ通知される
+- ✅ NG状態のretentionが動作する
+- ✅ 設定ファイルで有効/無効を切り替えられる
+- ✅ 全テストがパス（43件追加）
+- ✅ カバレッジを維持
+- ✅ ドキュメントが更新されている
+
+#### 実装イメージ
+
+**CLI使用例**:
+```bash
+# 従来どおり（ネットワークチェックなし）
+komon
+
+# 全部（リソース・ログ + ping + http）
+komon --with-net
+
+# ネットワークチェックのみ
+komon --net-only
+
+# pingのみ
+komon --ping-only
+
+# httpのみ
+komon --http-only
+```
+
+**設定例**:
+```yaml
+network_check:
+  enabled: false  # デフォルトは無効
+  
+  ping:
+    targets:
+      - host: "127.0.0.1"
+        description: "ローカルホスト（例）"
+      - host: "8.8.8.8"
+        description: "Google DNS"
+    timeout: 3
+    
+  http:
+    targets:
+      - url: "https://api.example.com/health"
+        description: "APIヘルスチェック"
+        method: "GET"
+      - url: "https://www.google.com"
+        description: "外部接続確認"
+        method: "HEAD"
+    timeout: 10
+    
+  state:
+    retention_hours: 24  # 24時間でNG状態を削除
+    file_path: "data/network_state.json"
+```
+
+**cron設定例**:
+```bash
+# 基本（推奨・デフォルト）
+*/5 * * * * /usr/local/bin/komon
+
+# 便利に使いたい人
+*/5 * * * * /usr/local/bin/komon --with-net
+
+# こだわり運用（上級者向け）
+*/5  * * * * komon                 # リソース＆ログ
+*/15 * * * * komon --net-only      # ネットワークだけ
+```
+
+#### 期待効果
+- REST API実行前の事前条件確認が可能
+- 外部通信不可時の早期気づき
+- ネットワーク疎通の軽量チェック
+- Komonの「アドバイザ」としての価値向上
+- opt-in設計により既存ユーザーへの影響ゼロ
+
+#### 依存関係
+- 既存機能との依存なし（完全に独立した新機能）
+- TASK-019, 020との並行実装可能
+
+---
+
 ## 優先順位の判断基準
 
 **High Priority**:
@@ -582,6 +761,7 @@ notifications:
 
 ## 更新履歴
 
+- 2025-12-08: TASK-023を追加（IDEA-024: ネットワーク疎通チェック機能）
 - 2025-12-08: TASK-019, 020, 021, 022を追加（IDEA-023: Webhook通知の統一化、4フェーズに分割）
 - 2025-12-03: v1.23.0の完了タスクを `completed-tasks.md` に移動（TASK-017）
 - 2025-12-03: TASK-018を追加（IDEA-022: OS判定・汎用Linux対応）
