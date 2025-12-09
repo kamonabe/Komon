@@ -7,6 +7,7 @@ komonコマンドのメイン処理を提供します。
 import sys
 import os
 import subprocess
+from komon import __version__
 
 
 def main():
@@ -16,6 +17,11 @@ def main():
         return
     
     command = sys.argv[1]
+    
+    # バージョン表示
+    if command in ["--version", "-v"]:
+        print(f"Komon version {__version__}")
+        return
     
     # scriptsディレクトリのパスを取得
     # インストールされている場合は、カレントディレクトリのscriptsを使用
@@ -52,10 +58,11 @@ def print_usage():
 Komon - 軽量アドバイザー型SOAR風監視ツール
 
 使用方法:
-  komon initial    初期設定を実行
-  komon status     現在のステータスを表示
-  komon advise     対話型アドバイザーを実行
-  komon guide      ガイドメニューを表示
+  komon initial       初期設定を実行
+  komon status        現在のステータスを表示
+  komon advise        対話型アドバイザーを実行
+  komon guide         ガイドメニューを表示
+  komon --version     バージョン情報を表示
 
 詳細は docs/README.md を参照してください。
 """)

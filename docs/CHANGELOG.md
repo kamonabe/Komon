@@ -6,6 +6,38 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.25.1] - 2025-01-22
+
+### Added
+
+- **`komon --version` / `komon -v` コマンド**
+  - インストールされているKomonのバージョンを表示
+  - 出力例: `Komon version 1.25.1`
+  - トラブルシューティング時やサポート報告時に便利
+
+### Changed
+
+- **`komon initial` コマンドの改善**
+  - `config/settings.yml.sample` をベースに対話的に設定を作成
+  - 各設定項目でデフォルト値を表示し、Enter押下で維持、入力で変更
+  - ユーザーフレンドリーな出力（何を維持し、何を変更したかを表示）
+  - 主要な設定項目のみプロンプト（Slack、Email、Network check、Throttle等）
+  - 複雑な3段階閾値構造はデフォルト値を使用（必要に応じて手動編集）
+
+### Fixed
+
+- **`komon initial` の設定キー名を修正**
+  - `notifications` (正) ← `notification` (誤)
+  - `throttle` (正) ← `notification_throttle` (誤)
+  - Emailフィールド名: `from`, `to` (正) ← `from_address`, `to_address` (誤)
+
+### Documentation
+
+- **コマンドリファレンスに `--version` を追加**
+  - 新しい「基本コマンド」セクションを作成
+  - 使用例、出力例、注意事項を記載
+  - コマンド一覧表とFAQセクションを更新
+
 ## [1.25.0] - 2025-12-08
 
 ### Added
