@@ -228,7 +228,7 @@ Komon/
 │   ├── README.md                   # 詳細ドキュメント
 │   ├── CHANGELOG.md                # 変更履歴
 │   └── SECURITY.md                 # セキュリティ情報
-├── tests/                          # テストコード（92%カバレッジ、436テスト）
+├── tests/                          # テストコード（92%カバレッジ）
 ├── data/                           # データ保存先（自動生成）
 │   ├── usage_history/              # リソース使用履歴
 │   ├── notifications/              # 通知履歴
@@ -851,7 +851,7 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**テストカバレッジ: 92%** (549テスト、全てパス)
+**テストカバレッジ: 92%**
 
 詳細は [tests/README.md](tests/README.md) を参照してください。
 
@@ -1185,7 +1185,7 @@ Komon/
 │   ├── README.md                   # Detailed documentation
 │   ├── CHANGELOG.md                # Change history
 │   └── SECURITY.md                 # Security information
-├── tests/                          # Test code (92% coverage, 549 tests)
+├── tests/                          # Test code (92% coverage)
 ├── data/                           # Data storage (auto-generated)
 │   ├── usage_history/              # Resource usage history
 │   ├── notifications/              # Notification history
@@ -1647,7 +1647,7 @@ bash run_coverage.sh
 # Open htmlcov/index.html in browser
 ```
 
-**Test Coverage: 92%** (549 tests, all passing)
+**Test Coverage: 92%**
 
 See [tests/README.md](tests/README.md) for details.
 
