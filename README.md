@@ -227,7 +227,7 @@ Komon/
 │   ├── README.md                   # 詳細ドキュメント
 │   ├── CHANGELOG.md                # 変更履歴
 │   └── SECURITY.md                 # セキュリティ情報
-├── tests/                          # テストコード（92%カバレッジ、436テスト）
+├── tests/                          # テストコード（92%カバレッジ、545テスト）
 ├── data/                           # データ保存先（自動生成）
 │   ├── usage_history/              # リソース使用履歴
 │   ├── notifications/              # 通知履歴
@@ -659,12 +659,6 @@ komon advise --section network   # ネットワーク疎通チェックのみ
 # 通知履歴の表示件数を指定
 komon advise --history 10        # 直近10件
 komon advise --history 0         # 全件表示
-
-# ネットワークチェックオプション
-komon advise --with-net          # 通常のチェック + ネットワークチェック
-komon advise --net-only          # ネットワークチェックのみ
-komon advise --ping-only         # Pingチェックのみ
-komon advise --http-only         # HTTPチェックのみ
 ```
 
 📖 **詳細なコマンドリファレンス**: [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md)
@@ -706,6 +700,45 @@ notifications:
 ```
 
 **セキュリティ注意**: Webhook URLやパスワードは環境変数で管理することを推奨します。詳細は[セキュリティガイド](docs/SECURITY.md)を参照してください。
+
+### ネットワーク疎通チェック設定（v1.25.0〜）
+
+外部サービスやAPIへの疎通を定期的に確認します。
+
+```yaml
+network_check:
+  enabled: false  # デフォルトは無効（opt-in）
+  ping:
+    enabled: true
+    targets:
+      - host: "8.8.8.8"
+        name: "Google DNS"
+      - host: "1.1.1.1"
+        name: "Cloudflare DNS"
+    timeout: 2
+    count: 3
+  http:
+    enabled: true
+    targets:
+      - url: "https://api.example.com/health"
+        name: "API Health Check"
+        method: "GET"
+        timeout: 5
+        expected_status: 200
+```
+
+**⚠️ 注意**: `network_check.http.targets`の例示URL（`https://api.example.com/health`）は実在しません。必ず実際の監視対象URLに差し替えてください。
+
+### 出力フォーマット設定（v1.23.0〜）
+
+`output`セクションで出力フォーマットをカスタマイズできます。
+
+```yaml
+output:
+  default_mode: "normal"  # "normal" または "verbose"
+  history_limit: 5        # 通知履歴のデフォルト表示件数
+  show_zero_cpu: false    # CPU/メモリ0.0%のプロセスを表示するか
+```
 
 ### 従来の単一閾値設定（後方互換性あり）
 
