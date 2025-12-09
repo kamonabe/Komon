@@ -121,10 +121,16 @@ class NetworkStateManager:
             # Current: OK
             if was_ng:
                 # NG → OK (recovery)
-                del self.state[key]
-                self._save()
-                logger.info("State change detected: NG → OK, %s", key)
-                return 'ng_to_ok'
+                # Check if key still exists (may have been cleaned up)
+                if key in self.state:
+                    del self.state[key]
+                    self._save()
+                    logger.info("State change detected: NG → OK, %s", key)
+                    return 'ng_to_ok'
+                else:
+                    # Key was already cleaned up, treat as no change
+                    logger.debug("Key already cleaned up: %s", key)
+                    return None
             else:
                 # OK → OK (no change)
                 return None

@@ -25,9 +25,10 @@ class TestNetworkStateManager:
     def test_init_with_existing_file(self, tmp_path):
         """Test initialization with existing state file."""
         state_file = tmp_path / "state.json"
+        recent_time = (datetime.now() - timedelta(hours=1)).isoformat() + "Z"
         initial_state = {
             "net.ping:8.8.8.8": {
-                "first_detected_at": "2025-12-08T12:00:00Z"
+                "first_detected_at": recent_time
             }
         }
         state_file.write_text(json.dumps(initial_state))
@@ -50,9 +51,10 @@ class TestNetworkStateManager:
     def test_check_state_change_ng_to_ok(self, tmp_path):
         """Test state change from NG to OK."""
         state_file = tmp_path / "state.json"
+        recent_time = (datetime.now() - timedelta(hours=1)).isoformat() + "Z"
         initial_state = {
             "net.ping:8.8.8.8": {
-                "first_detected_at": "2025-12-08T12:00:00Z"
+                "first_detected_at": recent_time
             }
         }
         state_file.write_text(json.dumps(initial_state))
@@ -76,9 +78,10 @@ class TestNetworkStateManager:
     def test_check_state_change_ng_to_ng(self, tmp_path):
         """Test no state change (NG to NG)."""
         state_file = tmp_path / "state.json"
+        recent_time = (datetime.now() - timedelta(hours=1)).isoformat() + "Z"
         initial_state = {
             "net.ping:8.8.8.8": {
-                "first_detected_at": "2025-12-08T12:00:00Z"
+                "first_detected_at": recent_time
             }
         }
         state_file.write_text(json.dumps(initial_state))
@@ -115,12 +118,13 @@ class TestNetworkStateManager:
     def test_get_ng_count(self, tmp_path):
         """Test getting NG count."""
         state_file = tmp_path / "state.json"
+        recent_time = (datetime.now() - timedelta(hours=1)).isoformat() + "Z"
         initial_state = {
             "net.ping:8.8.8.8": {
-                "first_detected_at": "2025-12-08T12:00:00Z"
+                "first_detected_at": recent_time
             },
             "net.http:https://example.com": {
-                "first_detected_at": "2025-12-08T12:05:00Z"
+                "first_detected_at": recent_time
             }
         }
         state_file.write_text(json.dumps(initial_state))
@@ -133,12 +137,13 @@ class TestNetworkStateManager:
     def test_get_ng_targets(self, tmp_path):
         """Test getting NG targets."""
         state_file = tmp_path / "state.json"
+        recent_time = (datetime.now() - timedelta(hours=1)).isoformat() + "Z"
         initial_state = {
             "net.ping:8.8.8.8": {
-                "first_detected_at": "2025-12-08T12:00:00Z"
+                "first_detected_at": recent_time
             },
             "net.http:https://example.com": {
-                "first_detected_at": "2025-12-08T12:05:00Z"
+                "first_detected_at": recent_time
             }
         }
         state_file.write_text(json.dumps(initial_state))
