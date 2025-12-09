@@ -92,9 +92,9 @@ CPU:     [█░░░░░░░░░] 12.3% / 80% ✅
   - 必要に応じてプロセスを停止してください
 
 📜 通知履歴（最新5件）
-💿 [12:51:44] DISK: 96.7% - 警戒
-📊 [12:51:44] MEMORY: 91.3% - 警戒
-🔥 [12:51:44] CPU: 88.5% - 警戒
+💿 [2025-11-22 12:51:44] DISK: 96.7% - 警戒
+📊 [2025-11-22 12:51:44] MEMORY: 91.3% - 警戒
+🔥 [2025-11-22 12:51:44] CPU: 88.5% - 警戒
 
 詳細: komon advise --verbose
 ```
@@ -121,9 +121,9 @@ CPU:     [█░░░░░░░░░] 12.3% / 80% ✅
 3. python (PID: 34567) - CPU: 25.0%, メモリ: 20.0%
    💡 機械学習の学習プロセスやデータ処理スクリプトの可能性があります
 
-� 通知履歴
-� [22025-11-22 21:01:28] MEM: 85.0 - Test alert
-� [20255-11-22 21:01:27] LOG: 1000.0 - Test email alert
+📜 通知履歴
+📊 [2025-11-22 21:01:28] MEM: 85.0 - Test alert
+📋 [2025-11-22 21:01:27] LOG: 1000.0 - Test email alert
 💾 [2025-11-22 20:59:08] MEM: 85.0 - Test alert
 ```
 
@@ -228,7 +228,7 @@ Komon/
 │   ├── README.md                   # 詳細ドキュメント
 │   ├── CHANGELOG.md                # 変更履歴
 │   └── SECURITY.md                 # セキュリティ情報
-├── tests/                          # テストコード（92%カバレッジ、545テスト）
+├── tests/                          # テストコード（92%カバレッジ、436テスト）
 ├── data/                           # データ保存先（自動生成）
 │   ├── usage_history/              # リソース使用履歴
 │   ├── notifications/              # 通知履歴
@@ -1130,7 +1130,6 @@ While large-scale monitoring systems become essential in production environments
 ### Example of Combined Use
 
 - **Zabbix/Prometheus**: Infrastructure-wide monitoring, SLA guarantees
-- **Prometheus**: Infrastructure-wide monitoring, SLA guarantees
 - **Komon**: Individual developer "awareness," fine-grained process-level monitoring
 
 You can receive "developer-perspective insights" that large-scale monitoring might miss through Komon's "gentle notifications."
@@ -1186,7 +1185,7 @@ Komon/
 │   ├── README.md                   # Detailed documentation
 │   ├── CHANGELOG.md                # Change history
 │   └── SECURITY.md                 # Security information
-├── tests/                          # Test code (92% coverage, 545 tests)
+├── tests/                          # Test code (92% coverage, 549 tests)
 ├── data/                           # Data storage (auto-generated)
 │   ├── usage_history/              # Resource usage history
 │   ├── notifications/              # Notification history
@@ -1648,7 +1647,7 @@ bash run_coverage.sh
 # Open htmlcov/index.html in browser
 ```
 
-**Test Coverage: 92%** (436 tests, all passing)
+**Test Coverage: 92%** (549 tests, all passing)
 
 See [tests/README.md](tests/README.md) for details.
 
