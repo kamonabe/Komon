@@ -9,15 +9,16 @@
 [![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](htmlcov/index.html)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey)](https://www.linux.org/)
 
-> **English**: Komon is a lightweight system monitoring advisor for developers. It quietly watches your development environment and sends friendly notifications when resources are overused, logs spike, or updates are needed. Simple architecture makes it easy to extend with custom notifications and monitoring targets.
-> 
-> **Key Features**: 3-tier threshold alerts • Progressive notifications • Disk usage prediction • Log trend analysis • Process-specific advice • Duplicate process detection • Notification history
-> 
-> **Platform**: Linux (AlmaLinux 9 recommended) • Python 3.10+
-> 
-> 📖 **Documentation below is in Japanese** - Feel free to use translation tools, or check out the code examples which are self-explanatory!
+---
+
+## 🌏 Language / 言語
+
+- **[日本語版](#日本語版)** ⬇️ このまま下にスクロール
+- **[English Version](#english-version)** ⬇️ Scroll down to English section
 
 ---
+
+# 日本語版
 
 **Komon は、開発者のための軽量アドバイザー型SOAR風ツールです。**
 
@@ -986,3 +987,812 @@ MIT License - 個人・商用利用、改変・再配布が自由
 - シンプルで拡張しやすい設計
 - 過剰な機能追加よりも、コアな機能の安定性を重視
 - 他のプラットフォームへの移植は、コミュニティに委ねる
+
+---
+---
+
+# English Version
+
+**Komon is a lightweight advisor-type SOAR-inspired tool for developers.**
+
+It quietly monitors resource overuse, log surges, and update oversights in your development environment, and gently notifies and suggests actions only when necessary.
+
+🛠 Komon has a simple internal structure, making it easy to add notification methods and extend monitoring items.
+
+**Note**: Komon's output messages are currently in Japanese only. However, the code is well-documented and the configuration files use English keys, making it accessible for English-speaking developers who want to understand or modify the tool.
+
+---
+
+## 📖 Table of Contents
+
+- [Sample Output](#-sample-output)
+- [Why Komon?](#-why-komon)
+- [Relationship with Other Monitoring Tools](#-relationship-with-other-monitoring-tools)
+- [Project Structure](#-project-structure)
+- [Quick Start](#-quick-start)
+- [Command Reference](#-command-reference)
+- [Configuration](#️-configuration)
+- [Scheduled Execution](#-scheduled-execution-cron)
+- [Documentation](#-documentation)
+- [Development](#-development)
+- [Supported Platforms](#-supported-platforms)
+- [FAQ](#-faq)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🎯 Sample Output
+
+Running the `komon advise` command analyzes system status and provides interactive improvement suggestions:
+
+```bash
+$ python scripts/advise.py
+
+📊 Current System Status
+CPU:     [█░░░░░░░░░] 12.3% / 80% ✅
+Memory:  [████░░░░░░] 45.2% / 85% ✅
+Disk:    [███████░░░] 67.8% / 90% ✅
+
+🔔 Alert Information
+(None)
+
+💡 Improvement Suggestions
+
+① Security Patch Check
+→ No security updates available.
+
+② System Patches (Non-Security)
+→ 384 non-security updates available. Examples:
+   - NetworkManager.x86_64               1:1.54.0-3.el9_7                                 baseos    
+   - NetworkManager-libnm.x86_64         1:1.54.0-3.el9_7                                 baseos    
+   ...
+
+💡 You can apply these updates with:
+   sudo dnf upgrade -y
+
+🔄 Duplicate Process Detection
+→ No duplicate processes detected.
+
+⏱️  Long-Running Process Detection
+⚠️ The following scripts have been running for a long time:
+
+  • shellIntegration-bash.sh (PID: 12345)
+    Runtime: 1 hour 2 minutes
+
+【Recommended Actions】
+  - Verify the script is functioning normally
+  - Review cron intervals if shorter than script execution time
+  - Stop the process if necessary
+
+📜 Notification History (Latest 5)
+💿 [12:51:44] DISK: 96.7% - Alert
+📊 [12:51:44] MEMORY: 91.3% - Alert
+🔥 [12:51:44] CPU: 88.5% - Alert
+
+Details: komon advise --verbose
+```
+
+**New Features (v1.23.0~)**:
+- Display current system status first (with progress bars)
+- Visually clear presentation
+- Reduced noise (hide 0.0% processes)
+- Changed default notification history display to 5 items
+- `--verbose` option for detailed display
+- `--section` option to display specific sections only
+
+**Contextual Advice (v1.18.0~)**:
+When high-load processes are detected, specific advice is provided based on the process type.
+
+When resource usage exceeds thresholds, you'll receive gentle notifications like:
+
+```
+💬 Something to note
+
+CPU seems to be working hard (92.3%).
+Is there a heavy process running?
+```
+
+These notifications can also be received via Slack or email. Additionally, they are automatically saved as notification history and can be reviewed later with `komon advise --history`.
+
+### Progressive Notification Messages (v1.17.0~)
+
+When the same issue occurs repeatedly, notification messages change progressively:
+
+- **1st time**: "Something to note" (gentle expression)
+- **2nd time**: "Still continuing" (indicates persistence)
+- **3rd time and beyond**: "Might want to check this soon" (prompts action)
+
+This helps you properly gauge issue urgency and prevents "notification fatigue."
+
+---
+
+## 🤔 Why Komon?
+
+Compared to existing monitoring tools (Prometheus, Zabbix, Nagios, etc.):
+
+- **Lightweight**: Few dependencies, quick to deploy
+- **Developer-Friendly**: Designed for use in development environments
+- **Gentle Notifications**: Human-like expressions, not overly technical
+- **Easy to Extend**: Written in Python, easy to customize
+- **Progressive Warnings**: 3-level thresholds prevent notification fatigue
+
+Komon is not a large-scale monitoring system, but a **lightweight advisor for individual developers and small teams**.
+
+---
+
+## 🤝 Relationship with Other Monitoring Tools
+
+Komon is lightweight (memory usage: ~30MB), so it can be **used alongside** existing monitoring tools like Zabbix or Prometheus without issues.
+
+While large-scale monitoring systems become essential in production environments, adding Komon separately for developers enables more agile monitoring.
+
+### Example of Combined Use
+
+- **Zabbix/Prometheus**: Infrastructure-wide monitoring, SLA guarantees
+- **Prometheus**: Infrastructure-wide monitoring, SLA guarantees
+- **Komon**: Individual developer "awareness," fine-grained process-level monitoring
+
+You can receive "developer-perspective insights" that large-scale monitoring might miss through Komon's "gentle notifications."
+
+Of course, **standalone Komon use** in small-scale environments or development servers is also intended.
+
+### Notes on Combined Use
+
+When using alongside existing monitoring tools in production environments, please conduct thorough testing beforehand. We especially recommend verifying:
+
+- Resource usage impact (CPU, memory, disk I/O)
+- Log output duplication or conflicts
+- Notification duplication (multiple tools notifying for the same event)
+- Cron execution timing adjustments
+
+---
+
+## 📁 Project Structure
+
+```
+Komon/
+├── src/komon/                      # Core modules
+│   ├── monitor.py                  # Resource monitoring
+│   ├── analyzer.py                 # Threshold judgment & analysis
+│   ├── contextual_advisor.py       # Contextual advice
+│   ├── notification.py             # Notification functionality
+│   ├── notification_history.py     # Notification history management
+│   ├── history.py                  # History management
+│   ├── log_watcher.py              # Log monitoring
+│   ├── log_analyzer.py             # Log analysis
+│   ├── log_trends.py               # Log trend analysis
+│   ├── weekly_data.py              # Weekly data collection
+│   ├── report_formatter.py         # Report formatting
+│   ├── settings_validator.py       # Settings validation
+│   └── cli.py                      # CLI entry point
+├── scripts/                        # Execution scripts
+│   ├── main.py                     # Resource monitoring main
+│   ├── main_log_monitor.py         # Log surge monitoring
+│   ├── main_log_trend.py           # Log trend analysis
+│   ├── weekly_report.py            # Weekly health report
+│   ├── advise.py                   # Interactive advisor
+│   ├── initial.py                  # Initial setup
+│   ├── status.py                   # Status display
+│   ├── komon_guide.py              # Guide menu
+│   ├── check_coverage.py           # Coverage analysis
+│   ├── setup_coverage_fix.sh       # Coverage setup fix
+│   ├── generate_release_notes.py   # Auto-generate release notes
+│   ├── check_status_consistency.py # Status consistency check
+│   └── init.sh                     # Initialization script
+├── config/                         # Configuration files
+│   └── settings.yml.sample         # Configuration sample
+├── docs/                           # Documentation
+│   ├── README.md                   # Detailed documentation
+│   ├── CHANGELOG.md                # Change history
+│   └── SECURITY.md                 # Security information
+├── tests/                          # Test code (92% coverage, 545 tests)
+├── data/                           # Data storage (auto-generated)
+│   ├── usage_history/              # Resource usage history
+│   ├── notifications/              # Notification history
+│   ├── komon_data/                 # Komon internal data
+│   └── logstats/                   # Log statistics data
+├── .kiro/                          # Kiro IDE configuration
+│   ├── specs/                      # Specifications
+│   ├── tasks/                      # Task management
+│   └── steering/                   # Development rules
+├── requirements.txt                # Python dependencies
+├── setup.py                        # Installation configuration
+├── LICENSE                         # License
+└── version.txt                     # Version information
+```
+
+---
+
+## 🚀 Quick Start (Takes ~5 minutes)
+
+### Prerequisites
+- Linux environment (AlmaLinux 9 recommended)
+- Python 3.10 or higher
+
+### 1. Installation
+
+```bash
+# Install from PyPI (recommended)
+pip install komon
+
+# Or development version (GitHub)
+git clone https://github.com/kamonabe/Komon.git
+cd Komon
+pip install -e .
+```
+
+### 2. Initial Setup (5 minutes)
+
+```bash
+# Run initial setup wizard
+python scripts/initial.py
+
+# Or (if installed)
+komon initial
+```
+
+### 3. Verification (1 minute)
+
+```bash
+# Interactive advisor
+komon advise
+
+# Verbose mode (display all information)
+komon advise --verbose
+
+# Display specific sections only
+komon advise --section status    # System status only
+komon advise --section alerts    # Alert information only
+komon advise --section process   # Process information only
+komon advise --section history   # Notification history only
+
+# Specify notification history display count
+komon advise --history 10        # Latest 10 items only
+komon advise --history 0         # Display all
+
+# Or run directly from scripts
+python scripts/main.py      # Resource monitoring
+python scripts/status.py    # Status check
+python scripts/advise.py    # Interactive advisor
+python scripts/weekly_report.py  # Weekly health report
+```
+
+### Slack Notification Setup (Optional)
+
+To use Slack notifications, obtain a Webhook URL:
+
+1. Access [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks)
+2. Select "Create New App" → "Incoming Webhooks"
+3. Copy the URL and set it in `settings.yml` under `notifications.slack.webhook_url`
+
+**Note**: Slack notifications are not required. You can check status with the `komon advise` command without notifications.
+
+### Main Features
+
+#### 🌐 Network Connectivity Check (v1.25.0~)
+
+Periodically checks connectivity to external services and APIs for early detection of connection failures.
+
+**Features**:
+- Supports Ping check (ICMP) and HTTP check (GET/POST)
+- Monitors multiple targets simultaneously
+- Notifies only on state changes (normal→abnormal, abnormal→normal)
+- Notification spam prevention (suppresses duplicate alerts)
+- Opt-in design (disabled by default, enabled via CLI argument)
+
+**Usage Examples**:
+```bash
+# Enable network check
+komon advise --with-net
+
+# Network check only
+komon advise --net-only
+
+# Ping check only
+komon advise --ping-only
+
+# HTTP check only
+komon advise --http-only
+
+# Display specific section only
+komon advise --section network
+```
+
+#### 📊 Disk Usage Trend Prediction (v1.16.0~)
+
+Predicts future usage from 7 days of disk usage data using linear regression, calculating the predicted date when disk capacity will reach 90%.
+
+**Features**:
+- Calculates growth rate from past 7 days of data
+- Displays predicted date to reach 90% ("Will reach 90% in N days")
+- Detects rapid increases of 10% or more compared to previous day
+- Displays prediction results in `komon advise` command
+- Automatically included in weekly reports
+
+#### 📜 Notification History Storage and Display (v1.11.0~)
+
+Even in environments where Slack notifications aren't available, you can review information detected by Komon later.
+
+**Features**:
+- Notifications automatically saved to local file (max 100 items)
+- Display history with `komon advise --history`
+- Display only latest 10 items with `komon advise --history 10`
+
+#### 📊 Weekly Health Report (v1.12.0~)
+
+Regularly understand system status even when there are no anomalies.
+
+**Features**:
+- Aggregates resource data from past 7 days
+- Displays week-over-week changes
+- Summary of this week's alert information
+- Trend judgment (stable/increasing/decreasing)
+- Includes disk usage prediction
+
+#### 🚨 Progressive Threshold Notifications (v1.13.0~)
+
+Notifies progressively with 3-level thresholds (warning/alert/critical).
+
+**Features**:
+- 💛 Warning (70%): "Might want to start paying attention"
+- 🧡 Alert (80%): "This is a concerning level"
+- ❤️ Critical (90%): "Quite tight!"
+
+#### 🔕 Notification Frequency Control (v1.15.0~)
+
+Suppresses duplicate alert notifications to prevent notification fatigue.
+
+**Features**:
+- Duplicate alerts suppressed at configured interval (default: 60 minutes)
+- Immediate notification when threshold level increases (85%→90%, etc.)
+- Re-notification for long-lasting issues (escalation feature)
+
+#### 💡 Contextual Advice (v1.18.0~)
+
+Provides specific advice for high-load processes based on process type.
+
+**Features**:
+- Automatically determines process type from process name (node, docker, python, nginx, etc.)
+- Suggests appropriate actions for each process
+- 3 levels of detail (minimal/normal/detailed)
+- Add custom advice with custom patterns
+
+**Supported Processes**:
+- **node**: Development servers, build processes
+- **docker**: Container management
+- **python**: Machine learning, data processing
+- **nginx/apache**: Web servers
+- **mysql/postgres**: Databases
+- **java**: Java applications
+- And many more
+
+#### 📊 Include Process Information in Slack Notifications (v1.19.0~)
+
+Slack notifications now show at a glance which processes are causing high load.
+
+**Features**:
+- Automatically adds top 3 process information when CPU/memory exceeds threshold
+- Displays process name and usage rate
+- No impact on existing notification functionality
+
+#### 🔍 Duplicate Process Detection (v1.20.0~)
+
+Detects multiple instances of the same script (e.g., from cron) and warns as a cause of resource pressure.
+
+**Features**:
+- Automatically detects duplicate script execution
+- Displays script name, execution count, PID list
+- Adjustable detection threshold in config file (default: 3 or more)
+- Target extensions: .py, .sh, .rb, .pl
+
+#### ⏱️ Long-Running Process Detection (v1.22.0~)
+
+Detects when specific scripts have been running for a long time and displays advisory information for continued operation.
+
+**Features**:
+- Automatically detects long-running processes
+- Displays script name, PID, runtime
+- Displays runtime in human-readable format (e.g., 2 hours 30 minutes)
+- Adjustable detection threshold in config file (default: 3600 seconds = 1 hour)
+- Target extensions: .py, .sh, .rb, .pl
+
+#### 📋 Log Tail Excerpt Display on Log Surge (v1.21.0~)
+
+When log surge is detected, actual log content is also attached for a few lines, allowing immediate understanding of the issue.
+
+**Features**:
+- Automatically extracts last N lines when log surge detected (default: 10 lines)
+- Displays in code block format in notification message
+- Display line count configurable in settings (0 to disable)
+- Long lines automatically truncated (default: 500 characters)
+- Fast operation even with large log files (reads only tail)
+
+---
+
+## 📋 Command Reference
+
+List of main commands available in Komon.
+
+### Daily Use Commands
+
+| Command | Description | Usage Example |
+|---------|-------------|---------------|
+| `komon advise` | Interactive advisor (system status analysis and improvement suggestions) | `komon advise --verbose` |
+| `komon status` | Display current system status concisely | `komon status` |
+| `komon guide` | Interactive usage guide | `komon guide` |
+| `komon initial` | Initial setup wizard | `komon initial` |
+
+### Monitoring & Report Commands (for cron execution)
+
+| Command | Description | Recommended Frequency |
+|---------|-------------|----------------------|
+| `python scripts/main.py` | Resource monitoring (CPU/Memory/Disk) | Every 5 minutes |
+| `python scripts/main_log_monitor.py` | Log surge monitoring | Every 5 minutes |
+| `python scripts/main_log_trend.py` | Log trend analysis (past 7 days) | Daily at 3 AM |
+| `python scripts/weekly_report.py` | Weekly health report | Every Monday at 9 AM |
+
+### Development & Maintenance Commands
+
+| Command | Description | Usage Timing |
+|---------|-------------|--------------|
+| `python scripts/check_coverage.py` | Test coverage analysis | During development |
+| `python scripts/generate_release_notes.py` | Auto-generate release notes | At release |
+| `python scripts/check_status_consistency.py` | Task consistency check | Before push |
+| `python scripts/validate_specs.py` | Spec structure validation | When creating specs |
+
+### advise Command Options
+
+```bash
+# Verbose mode
+komon advise --verbose
+
+# Display specific sections only
+komon advise --section status    # System status only
+komon advise --section alerts    # Alert information only
+komon advise --section process   # Process information only
+komon advise --section history   # Notification history only
+komon advise --section network   # Network connectivity check only
+
+# Specify notification history display count
+komon advise --history 10        # Latest 10 items
+komon advise --history 0         # Display all
+```
+
+📖 **Detailed Command Reference**: [docs/COMMAND_REFERENCE.md](docs/COMMAND_REFERENCE.md)
+
+---
+
+## ⚙️ Configuration
+
+Create `settings.yml` to customize monitoring items and notification settings.
+
+Sample file: `config/settings.yml.sample`
+
+### 3-Level Threshold Settings (Recommended)
+
+From v1.13.0, resource usage thresholds can be set in 3 levels (warning/alert/critical).
+
+```yaml
+thresholds:
+  cpu:
+    warning: 70   # 💛 Warning: Might want to start paying attention
+    alert: 85     # 🧡 Alert: This is a concerning level
+    critical: 95  # ❤️ Critical: Quite tight!
+  mem:
+    warning: 70
+    alert: 80
+    critical: 90
+  disk:
+    warning: 70
+    alert: 80
+    critical: 90
+
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"  # Environment variable recommended (improved security)
+  email:
+    enabled: false
+    password: "env:KOMON_EMAIL_PASSWORD"  # Environment variable recommended
+```
+
+**Security Note**: We recommend managing Webhook URLs and passwords via environment variables. See [Security Guide](docs/SECURITY.md) for details.
+
+### Network Connectivity Check Settings (v1.25.0~)
+
+Periodically checks connectivity to external services and APIs.
+
+```yaml
+network_check:
+  enabled: false  # Disabled by default (opt-in)
+  ping:
+    enabled: true
+    targets:
+      - host: "8.8.8.8"
+        name: "Google DNS"
+      - host: "1.1.1.1"
+        name: "Cloudflare DNS"
+    timeout: 2
+    count: 3
+  http:
+    enabled: true
+    targets:
+      - url: "https://api.example.com/health"
+        name: "API Health Check"
+        method: "GET"
+        timeout: 5
+        expected_status: 200
+```
+
+**⚠️ Note**: The example URL in `network_check.http.targets` (`https://api.example.com/health`) does not exist. Be sure to replace it with your actual monitoring target URL.
+
+### Output Format Settings (v1.23.0~)
+
+Customize output format in the `output` section.
+
+```yaml
+output:
+  default_mode: "normal"  # "normal" or "verbose"
+  history_limit: 5        # Default notification history display count
+  show_zero_cpu: false    # Whether to display processes with 0.0% CPU/memory
+```
+
+### Legacy Single Threshold Settings (Backward Compatible)
+
+The legacy single-value format is still supported.
+
+```yaml
+thresholds:
+  cpu: 85
+  mem: 80
+  disk: 80
+```
+
+When a single value is specified, it's automatically converted to 3-level format:
+- Warning: threshold - 10
+- Alert: threshold
+- Critical: threshold + 10
+
+### Benefits of 3-Level Thresholds
+
+- **Early Warning**: Progressive notifications at 70% warning, 80% alert, 90% critical
+- **Appropriate Response**: Judge response urgency based on level
+- **Prevent Crying Wolf**: Progressive expressions reduce notification fatigue
+
+### Notification Frequency Control (v1.15.0~)
+
+Suppresses repeated notifications for the same alert to prevent "notification fatigue."
+
+```yaml
+throttle:
+  enabled: true  # Enable notification frequency control
+  interval_minutes: 60  # Notification interval for same alert (minutes)
+  escalation_minutes: 180  # Re-notification interval for long-lasting issues (minutes)
+```
+
+**Main Features**:
+- **Notification Suppression**: Controls notifications for same metric at 60-minute intervals
+- **Immediate Notification on Level Increase**: Immediate notification when warning→alert, alert→critical
+- **Escalation**: Re-notifies for issues lasting 3 hours ("3 hours have passed, but high state continues")
+
+See [docs/README.md](docs/README.md) for details.
+
+---
+
+## 🕒 Scheduled Execution (Cron)
+
+```bash
+# Resource monitoring (every 5 minutes)
+*/5 * * * * cd /path/to/Komon && /usr/bin/python3 scripts/main.py >> log/main.log 2>&1
+
+# Log monitoring (every 5 minutes)
+*/5 * * * * cd /path/to/Komon && /usr/bin/python3 scripts/main_log_monitor.py >> log/monitor.log 2>&1
+
+# Log trend analysis (daily at 3 AM)
+0 3 * * * cd /path/to/Komon && /usr/bin/python3 scripts/main_log_trend.py >> log/trend.log 2>&1
+
+# Weekly health report (every Monday at 9 AM)
+0 9 * * 1 cd /path/to/Komon && /usr/bin/python3 scripts/weekly_report.py >> log/weekly_report.log 2>&1
+```
+
+**Note**: Python command may differ depending on environment:
+- `/usr/bin/python3` (RHEL-based, Ubuntu, etc.)
+- `python3` (when PATH is configured)
+- `python` (when alias is configured)
+- `venv/bin/python` (when using virtual environment)
+
+Check actual path with `which python3` command.
+
+---
+
+## 📚 Documentation
+
+### For Users
+
+- [Command Reference](docs/COMMAND_REFERENCE.md) - Detailed explanation of all commands
+- [Detailed Documentation](docs/README.md)
+- [System Specification](.kiro/specs/komon-system.md)
+- [Change History](docs/CHANGELOG.md)
+- [Security Guide](docs/SECURITY.md) - Credential management, file permissions, security best practices
+- [Recommended Runtime Details](docs/RECOMMENDED_RUNTIME.md) - Operation verification status for each distribution, installation procedures
+- [Enterprise Deployment Guide](docs/ENTERPRISE_GUIDE.md) - Deployment in enterprise environments, multi-server operations, security considerations
+
+### For Developers
+
+- [AI Development Rules](docs/AI_DEVELOPMENT_RULES.md) - Best practices for AI-assisted development, granularity judgment criteria
+
+---
+
+## 🔧 Development
+
+### Spec-Driven Development
+
+This project adopts Spec-Driven Development.
+
+Specification: `.kiro/specs/komon-system.md`
+
+### Running Tests
+
+```bash
+# Install development packages
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest tests/ -v
+
+# Generate coverage report (recommended)
+bash run_coverage.sh
+
+# View HTML report
+# Open htmlcov/index.html in browser
+```
+
+**Test Coverage: 92%** (436 tests, all passing)
+
+See [tests/README.md](tests/README.md) for details.
+
+---
+
+## 🐧 Supported Platforms
+
+### Recommended Environment (Recommended Runtime)
+
+Komon is recommended for **RHEL-based Linux**:
+
+- **Python**: 3.10 or higher (recommended: 3.11, 3.12)
+- **OS**: RHEL-based Linux (systemd support)
+  - **AlmaLinux 9+** ⭐ Most recommended
+  - **Rocky Linux 9+** ⭐ Recommended
+  - **Amazon Linux 2023+** ⭐ Recommended
+  - Fedora 38+
+  - CentOS Stream 9+
+
+### Best Effort Support
+
+Also works in the following environments, but with some feature limitations:
+
+- **Debian-based Linux**
+  - Ubuntu 22.04+
+  - Debian 12+
+  - Raspberry Pi OS (Debian 12-based)
+  
+  **Limitations**:
+  - Package-related advice is suppressed (to prevent incorrect advice due to package name differences)
+  - Log path automatically switches to `/var/log/syslog`
+
+- **Other Linux**
+  - SUSE-based, Arch-based may work for basic features
+  - However, OS-specific advice is limited
+
+**Important**: On non-RHEL systems, some advice is suppressed based on Komon's philosophy of "not giving incorrect advice."
+
+### Unsupported Environments
+
+- **Amazon Linux 2** (Python 2.7 standard, short support lifespan)
+- **CentOS 7 or earlier** (no systemd support or Python 3.10 incompatible)
+- **Windows Native** (currently unsupported)
+  - Works on WSL (Windows Subsystem for Linux)
+- **macOS** (currently out of scope)
+
+### Detailed Information
+
+For operation verification status on each distribution, installation procedure differences, and troubleshooting, see:
+
+📖 **[Recommended Runtime Details (RECOMMENDED_RUNTIME.md)](docs/RECOMMENDED_RUNTIME.md)**
+
+### Automatic OS Detection
+
+Komon automatically detects the execution environment OS and provides appropriate advice:
+
+- Reads `/etc/os-release` to determine OS family
+- Manual override possible in config file (`system.os_family`)
+- Displays error message and exits on Windows native startup
+- Works as Linux in WSL environment
+
+### About Windows / macOS
+
+- **Windows**: We recommend running on WSL (Windows Subsystem for Linux)
+- **macOS**: Currently out of scope, but ported versions are welcome
+
+If you create a ported version, please let us know.
+We'll add a link in the README.
+
+---
+
+## ❓ FAQ
+
+<details>
+<summary><strong>Q: Does it work on Windows?</strong></summary>
+
+Currently Linux-only. Windows ports are welcome, but the author has no plans to develop one.
+</details>
+
+<details>
+<summary><strong>Q: Notifications aren't arriving</strong></summary>
+
+1. Check `settings.yml` configuration
+2. Verify Slack Webhook URL is correct
+3. Check status with `python scripts/status.py`
+</details>
+
+<details>
+<summary><strong>Q: How much resources does it consume?</strong></summary>
+
+Komon itself is very lightweight (memory usage: ~30MB). Even with 5-minute execution intervals, system impact is minimal.
+</details>
+
+<details>
+<summary><strong>Q: Output is in Japanese - can I use it?</strong></summary>
+
+Yes! While Komon's output messages are in Japanese, the code is well-documented in English, and configuration files use English keys. English-speaking developers can:
+- Understand the code structure and modify it
+- Configure settings using English keys in `settings.yml`
+- Read technical documentation and comments in the codebase
+- Contribute to the project
+
+If you're interested in creating an English output version, contributions are welcome!
+</details>
+
+---
+
+## 🤝 Contributing
+
+Bug reports, feature suggestions, and pull requests are welcome!
+
+- **Bug Reports**: Report at [Issues](https://github.com/kamonabe/Komon/issues)
+- **Feature Suggestions**: Discuss at [Discussions](https://github.com/kamonabe/Komon/discussions)
+- **Pull Requests**: See [CONTRIBUTING.md](docs/CONTRIBUTING.md)
+
+### Seeking Ported Versions
+
+If you create Windows or macOS versions, please let us know!
+We'll add links in the README.
+
+---
+
+## ⭐ If This Project Helps You
+
+Starring on GitHub encourages development!
+
+---
+
+## 📄 License
+
+MIT License - Free for personal and commercial use, modification, and redistribution
+
+---
+
+## 👤 Author
+
+**Kamo-Tech Lab**  
+Developer: [@kamonabe](https://github.com/kamonabe)
+
+"Creating and sharing what I wanted to have" is the origin of this project.
+
+### Development Policy
+
+- Prioritize practicality in Linux environments
+- Simple and extensible design
+- Emphasize core feature stability over excessive feature additions
+- Leave porting to other platforms to the community
