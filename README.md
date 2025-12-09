@@ -851,7 +851,7 @@ bash run_coverage.sh
 # htmlcov/index.html をブラウザで開く
 ```
 
-**テストカバレッジ: 92%** (436テスト、全てパス)
+**テストカバレッジ: 92%** (549テスト、全てパス)
 
 詳細は [tests/README.md](tests/README.md) を参照してください。
 
