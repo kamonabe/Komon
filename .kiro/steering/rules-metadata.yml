@@ -1,7 +1,54 @@
-version: 1.0.0
-updated: '2025-11-26'
+version: 1.2.0
+updated: '2025-01-22'
 description: Kiroが処理するステアリングルールのメタデータ
+
+# Context効率化のための読み込み戦略
+# - initial_load: true  = 常に最初に読み込む（軽量ルールのみ）
+# - initial_load: false = オンデマンドで読み込む（詳細ルール）
+
+# 階層構造の定義（仕様駆動開発の観点）
+hierarchy:
+  level-1:  # 常に読み込む（概要）
+    description: "初期読み込み時に必ず読み込むルール"
+    target-size: "約1,000行"
+    purpose: "基本的な質問に即答、環境設定、セキュリティチェック"
+    rules:
+      - steering-rules-index
+      - environment-and-communication
+      - ai-security-guardrails
+  
+  level-2:  # オンデマンド読み込み（詳細）
+    description: "必要に応じて読み込むルール"
+    target-size: "約4,000行"
+    purpose: "詳細な質問、実装時の参照"
+    rules:
+      - versioning-rules
+      - development-workflow
+      - task-management
+      - spec-quality-assurance
+      - testing-strategy
+      - git-workflow
+      - release-process
+      - error-handling-and-logging
+      - commit-message-rules
+  
+  level-3:  # 実装時に読み込む（全体）
+    description: "実装開始時に全て読み込む"
+    target-size: "全ルール（約5,000行）"
+    purpose: "実装品質の保証、全ルールの適用"
+    triggers:
+      - implementation-start
+      - task-start
+
 rules:
+  steering-rules-index:
+    priority: high
+    applies-to:
+    - all
+    triggers:
+    - always
+    initial_load: true
+    description: 全ステアリングルールの索引と概要（軽量）
   versioning-rules:
     priority: high
     applies-to:
@@ -11,6 +58,7 @@ rules:
     triggers:
     - implementation-complete
     - changelog-update
+    initial_load: false
     description: Semantic Versioningに基づくバージョン番号の決定ルール
   development-workflow:
     priority: high
@@ -22,6 +70,7 @@ rules:
     - task-start
     - spec-creation
     - implementation-start
+    initial_load: false
     description: 仕様駆動開発のワークフロー
   task-management:
     priority: medium
@@ -30,6 +79,7 @@ rules:
     triggers:
     - task-complete
     - task-update
+    initial_load: false
     description: タスク管理の2階層構造ルール
   spec-quality-assurance:
     priority: high
@@ -39,6 +89,7 @@ rules:
     triggers:
     - spec-complete
     - implementation-start
+    initial_load: false
     description: Spec品質保証と検証スクリプト実行ルール
   error-handling-and-logging:
     priority: medium
@@ -47,6 +98,7 @@ rules:
     - error-handling
     triggers:
     - code-implementation
+    initial_load: false
     description: エラーハンドリングとログ出力の標準
   environment-and-communication:
     priority: high
@@ -54,6 +106,7 @@ rules:
     - all
     triggers:
     - always
+    initial_load: true
     description: 開発環境とコミュニケーション言語のルール
   commit-message-rules:
     priority: low
@@ -61,6 +114,7 @@ rules:
     - commit
     triggers:
     - commit-creation
+    initial_load: false
     description: Conventional Commits形式のコミットメッセージルール
   ai-security-guardrails:
     priority: critical
@@ -74,4 +128,5 @@ rules:
     - user-input
     - file-upload
     - code-generation
+    initial_load: true
     description: AI自身が機密情報を検知して警告するガードレール
