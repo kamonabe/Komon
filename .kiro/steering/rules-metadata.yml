@@ -10,12 +10,10 @@ description: Kiroが処理するステアリングルールのメタデータ
 hierarchy:
   level-1:  # 常に読み込む（概要）
     description: "初期読み込み時に必ず読み込むルール"
-    target-size: "約1,000行"
-    purpose: "基本的な質問に即答、環境設定、セキュリティチェック"
+    target-size: "約200行"
+    purpose: "基本的な質問に即答、最低限のルール"
     rules:
-      - steering-rules-index
-      - environment-and-communication
-      - ai-security-guardrails
+      - essential-rules
   
   level-2:  # オンデマンド読み込み（詳細）
     description: "必要に応じて読み込むルール"
@@ -41,13 +39,21 @@ hierarchy:
       - task-start
 
 rules:
+  essential-rules:
+    priority: critical
+    applies-to:
+    - all
+    triggers:
+    - always
+    initial_load: true
+    description: 最低限の必須ルール（超軽量版）
   steering-rules-index:
     priority: high
     applies-to:
     - all
     triggers:
     - always
-    initial_load: true
+    initial_load: false
     description: 全ステアリングルールの索引と概要（軽量）
   versioning-rules:
     priority: high
@@ -106,7 +112,7 @@ rules:
     - all
     triggers:
     - always
-    initial_load: true
+    initial_load: false
     description: 開発環境とコミュニケーション言語のルール
   commit-message-rules:
     priority: low
@@ -128,7 +134,7 @@ rules:
     - user-input
     - file-upload
     - code-generation
-    initial_load: true
+    initial_load: false
     description: AI自身が機密情報を検知して警告するガードレール
   release-process:
     priority: high
