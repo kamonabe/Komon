@@ -74,7 +74,7 @@ Komonプロジェクトは**Semantic Versioning 2.0.0**に従います。
 
 参考: https://semver.org/
 
-**詳細**: `versioning-rules.md`
+**詳細**: `.kiro/steering-detailed/versioning-rules.md`
 
 ---
 
@@ -91,7 +91,7 @@ Komonプロジェクトは**Semantic Versioning 2.0.0**に従います。
 **基本方針**:
 
 
-**詳細**: `development-workflow.md`
+**詳細**: `.kiro/steering-detailed/development-workflow.md`
 
 ---
 
@@ -108,7 +108,7 @@ Komonプロジェクトは**Semantic Versioning 2.0.0**に従います。
 **基本方針**:
 
 
-**詳細**: `task-management.md`
+**詳細**: `.kiro/steering-detailed/task-management.md`
 
 ---
 
@@ -127,7 +127,7 @@ Komonプロジェクトでは、**ローカルで確実に品質を作り込み�
 
 Komonはシンプル軽量なツールであり、検証スクリプトも軽量なため、冗長性を気にせずローカルとCI/CDの両方でしっかり検証を行います。
 
-**詳細**: `spec-quality-assurance.md`
+**詳細**: `.kiro/steering-detailed/spec-quality-assurance.md`
 
 ---
 
@@ -146,7 +146,7 @@ Komonは**軽量アドバイザー型ツール**であり、エラーが発生�
 
 ユーザー向けには分かりやすい日本語メッセージを表示し、開発者向けには詳細なログを記録します。
 
-**詳細**: `error-handling-and-logging.md`
+**詳細**: `.kiro/steering-detailed/error-handling-and-logging.md`
 
 ---
 
@@ -163,7 +163,58 @@ Komonは**軽量アドバイザー型ツール**であり、エラーが発生�
 **基本方針**:
 
 
-**詳細**: `commit-message-rules.md`
+**詳細**: `.kiro/steering-detailed/commit-message-rules.md`
+
+---
+
+### 7. release-process
+
+**概要**: 
+
+**優先度**: high
+
+**適用場面**: release
+
+**トリガー**: implementation-complete, release
+
+**基本方針**:
+Komonプロジェクトでは、**リリース前の徹底的な確認**を重視します。
+
+**詳細**: `.kiro/steering-detailed/release-process.md`
+
+---
+
+### 8. testing-strategy
+
+**概要**: 
+
+**優先度**: high
+
+**適用場面**: implementation, testing
+
+**トリガー**: test-creation, implementation-complete
+
+**基本方針**:
+Komonでは**しっかりしたテスト**を維持します。
+
+**詳細**: `.kiro/steering-detailed/testing-strategy.md`
+
+---
+
+### 9. git-workflow
+
+**概要**: 
+
+**優先度**: high
+
+**適用場面**: implementation, git-operations
+
+**トリガー**: implementation-start, merge
+
+**基本方針**:
+Komonプロジェクトでは、**mainブランチを絶対に壊さない**ことを最優先とします。
+
+**詳細**: `.kiro/steering-detailed/git-workflow.md`
 
 ---
 
@@ -200,10 +251,11 @@ python scripts/generate_steering_index.py
 
 ## 📊 統計
 
-- **Level 1ルール**: {len(level_1_rules)}ファイル（常に読み込む）
-- **Level 2ルール**: {len(level_2_rules)}ファイル（オンデマンド）
-- **合計**: {len(level_1_rules) + len(level_2_rules)}ファイル
+- **Level 1ルール**: 2ファイル（常に読み込む）
+- **Level 2ルール**: 9ファイル（オンデマンド）
+- **合計**: 11ファイル
 
 ---
 
-**自動生成日時**: {import datetime; datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**自動生成日時**: 2025-12-10 17:26:27
+

@@ -16,6 +16,7 @@ import sys
 def validate_index_references():
     """索引の参照先が存在するかチェック"""
     steering_dir = Path('.kiro/steering')
+    steering_detailed_dir = Path('.kiro/steering-detailed')
     index_path = steering_dir / 'steering-rules-index.md'
     
     if not index_path.exists():
@@ -30,9 +31,19 @@ def validate_index_references():
     
     errors = []
     for ref in references:
-        ref_path = steering_dir / ref
+        # パスに応じて適切なディレクトリを選択
+        if ref.startswith('.kiro/steering-detailed/'):
+            # .kiro/steering-detailed/ で始まる場合は、プロジェクトルートから相対パス
+            ref_path = Path(ref)
+        elif ref.startswith('steering-detailed/'):
+            # steering-detailed/ で始まる場合は、.kiro/ からの相対パス
+            ref_path = Path('.kiro') / ref
+        else:
+            # その他の場合は .kiro/steering/ からの相対パス
+            ref_path = steering_dir / ref
+        
         if not ref_path.exists():
-            errors.append(f"Referenced file not found: {ref}")
+            errors.append(f"Referenced file not found: {ref} (checked: {ref_path})")
     
     if errors:
         print("❌ Index reference errors:")

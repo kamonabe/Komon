@@ -6,6 +6,23 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.25.3] - 2025-01-22
+
+### Fixed
+
+- **CLI実行環境の不具合修正**
+  - pip インストール後に `komon advise` が動作しない問題を修正
+  - subprocess呼び出しから適切なモジュールインポートに変更
+  - 設定ディレクトリの自動検出機能を追加（`KOMON_CONFIG_DIR` → カレントディレクトリ → `~/.komon/`）
+  - どのディレクトリからでもkomonコマンドが実行可能に改善
+
+### Changed
+
+- **CLI構造の全面リファクタリング**
+  - argparseベースの適切なCLI構造に変更
+  - 全コマンドを `src/komon/commands/` モジュールに移行
+  - `get_config_dir()` と `ensure_config_dir()` 関数による自動ディレクトリ管理
+
 ## [1.25.2] - 2025-01-22
 
 ### Fixed

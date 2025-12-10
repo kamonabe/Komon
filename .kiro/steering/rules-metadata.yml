@@ -130,3 +130,32 @@ rules:
     - code-generation
     initial_load: true
     description: AI自身が機密情報を検知して警告するガードレール
+  release-process:
+    priority: high
+    applies-to:
+    - release
+    triggers:
+    - implementation-complete
+    - release
+    initial_load: false
+    description: リリースプロセスと最終確認
+  testing-strategy:
+    priority: high
+    applies-to:
+    - implementation
+    - testing
+    triggers:
+    - test-creation
+    - implementation-complete
+    initial_load: false
+    description: テスト戦略と品質基準
+  git-workflow:
+    priority: high
+    applies-to:
+    - implementation
+    - git-operations
+    triggers:
+    - implementation-start
+    - merge
+    initial_load: false
+    description: Git運用ルールとブランチ戦略

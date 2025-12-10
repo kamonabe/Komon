@@ -59,6 +59,7 @@ def load_rules_metadata() -> dict:
 def generate_index():
     """索引ファイルを自動生成"""
     steering_dir = Path('.kiro/steering')
+    steering_detailed_dir = Path('.kiro/steering-detailed')
     metadata = load_rules_metadata()
     
     # 階層ごとにルールを分類
@@ -69,7 +70,12 @@ def generate_index():
         if rule_id == 'steering-rules-index':
             continue  # 索引自身はスキップ
         
-        rule_path = steering_dir / f"{rule_id}.md"
+        # Level 1ルールは.kiro/steering/、Level 2ルールは.kiro/steering-detailed/から読み込み
+        if rule_meta.get('initial_load', False):
+            rule_path = steering_dir / f"{rule_id}.md"
+        else:
+            rule_path = steering_detailed_dir / f"{rule_id}.md"
+        
         if not rule_path.exists():
             print(f"⚠️  Warning: {rule_path} not found")
             continue
@@ -95,6 +101,7 @@ def generate_index():
 
 def generate_index_content(level_1_rules: list, level_2_rules: list) -> str:
     """索引ファイルの内容を生成"""
+    import datetime
     
     content = """---
 rule-id: steering-rules-index
@@ -163,7 +170,7 @@ generator: scripts/generate_steering_index.py
 **基本方針**:
 {rule['basic_policy']}
 
-**詳細**: `{rule['rule_id']}.md`
+**詳細**: `.kiro/steering-detailed/{rule['rule_id']}.md`
 
 ---
 """
@@ -208,8 +215,26 @@ python scripts/generate_steering_index.py
 
 ---
 
-**自動生成日時**: {import datetime; datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**自動生成日時**: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 """
+    
+    # f-stringで統計セクションを生成
+    stats_section = f"""## 📊 統計
+
+- **Level 1ルール**: {len(level_1_rules)}ファイル（常に読み込む）
+- **Level 2ルール**: {len(level_2_rules)}ファイル（オンデマンド）
+- **合計**: {len(level_1_rules) + len(level_2_rules)}ファイル
+
+---
+
+**自動生成日時**: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+"""
+    
+    # 統計セクションを置換
+    content = content.replace(
+        '## 📊 統計\n\n- **Level 1ルール**: {len(level_1_rules)}ファイル（常に読み込む）\n- **Level 2ルール**: {len(level_2_rules)}ファイル（オンデマンド）\n- **合計**: {len(level_1_rules) + len(level_2_rules)}ファイル\n\n---\n\n**自動生成日時**: {datetime.datetime.now().strftime(\'%Y-%m-%d %H:%M:%S\')}',
+        stats_section
+    )
     
     return content
 
