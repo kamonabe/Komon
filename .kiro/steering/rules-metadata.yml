@@ -1,5 +1,5 @@
-version: 1.2.0
-updated: '2025-01-22'
+version: 1.3.0
+updated: '2025-12-10'
 description: Kiroが処理するステアリングルールのメタデータ
 
 # Context効率化のための読み込み戦略
@@ -17,7 +17,7 @@ hierarchy:
   
   level-2:  # オンデマンド読み込み（詳細）
     description: "必要に応じて読み込むルール"
-    target-size: "約4,000行"
+    target-size: "約3,000行"
     purpose: "詳細な質問、実装時の参照"
     rules:
       - versioning-rules
@@ -32,7 +32,7 @@ hierarchy:
   
   level-3:  # 実装時に読み込む（全体）
     description: "実装開始時に全て読み込む"
-    target-size: "全ルール（約5,000行）"
+    target-size: "全ルール（約3,200行）"
     purpose: "実装品質の保証、全ルールの適用"
     triggers:
       - implementation-start
@@ -41,127 +41,89 @@ hierarchy:
 rules:
   essential-rules:
     priority: critical
-    applies-to:
-    - all
-    triggers:
-    - always
+    applies-to: [all]
+    triggers: [always]
     initial_load: true
     description: 最低限の必須ルール（超軽量版）
-  steering-rules-index:
-    priority: high
-    applies-to:
-    - all
-    triggers:
-    - always
-    initial_load: false
-    description: 全ステアリングルールの索引と概要（軽量）
+  
+  # オンデマンド読み込みルール（キーワード自動判定）
   versioning-rules:
     priority: high
-    applies-to:
-    - release
-    - versioning
-    - changelog
-    triggers:
-    - implementation-complete
-    - changelog-update
-    initial_load: false
+    keywords: ["バージョン", "リリース", "MAJOR", "MINOR", "PATCH", "semver"]
+    file_path: "steering-detailed/versioning-rules.md"
+    auto_load: true
+    applies-to: [release, versioning, changelog]
+    triggers: [implementation-complete, changelog-update]
     description: Semantic Versioningに基づくバージョン番号の決定ルール
+  
   development-workflow:
     priority: high
-    applies-to:
-    - implementation
-    - spec-creation
-    - task-management
-    triggers:
-    - task-start
-    - spec-creation
-    - implementation-start
-    initial_load: false
+    keywords: ["TASK-", "実装", "開発開始", "Spec作成", "仕様駆動"]
+    file_path: "steering-detailed/development-workflow.md"
+    auto_load: true
+    applies-to: [implementation, spec-creation, task-management]
+    triggers: [task-start, spec-creation, implementation-start]
     description: 仕様駆動開発のワークフロー
-  task-management:
-    priority: medium
-    applies-to:
-    - task-management
-    triggers:
-    - task-complete
-    - task-update
-    initial_load: false
-    description: タスク管理の2階層構造ルール
-  spec-quality-assurance:
-    priority: high
-    applies-to:
-    - spec-creation
-    - implementation-start
-    triggers:
-    - spec-complete
-    - implementation-start
-    initial_load: false
-    description: Spec品質保証と検証スクリプト実行ルール
-  error-handling-and-logging:
-    priority: medium
-    applies-to:
-    - implementation
-    - error-handling
-    triggers:
-    - code-implementation
-    initial_load: false
-    description: エラーハンドリングとログ出力の標準
-  environment-and-communication:
-    priority: high
-    applies-to:
-    - all
-    triggers:
-    - always
-    initial_load: false
-    description: 開発環境とコミュニケーション言語のルール
-  commit-message-rules:
-    priority: low
-    applies-to:
-    - commit
-    triggers:
-    - commit-creation
-    initial_load: false
-    description: Conventional Commits形式のコミットメッセージルール
-  ai-security-guardrails:
-    priority: critical
-    applies-to:
-    - all
-    - spec-creation
-    - implementation
-    - code-review
-    triggers:
-    - always
-    - user-input
-    - file-upload
-    - code-generation
-    initial_load: false
-    description: AI自身が機密情報を検知して警告するガードレール
-  release-process:
-    priority: high
-    applies-to:
-    - release
-    triggers:
-    - implementation-complete
-    - release
-    initial_load: false
-    description: リリースプロセスと最終確認
-  testing-strategy:
-    priority: high
-    applies-to:
-    - implementation
-    - testing
-    triggers:
-    - test-creation
-    - implementation-complete
-    initial_load: false
-    description: テスト戦略と品質基準
+    
   git-workflow:
     priority: high
-    applies-to:
-    - implementation
-    - git-operations
-    triggers:
-    - implementation-start
-    - merge
-    initial_load: false
+    keywords: ["ブランチ", "マージ", "コミット", "push", "git"]
+    file_path: "steering-detailed/git-workflow.md"
+    auto_load: true
+    applies-to: [implementation, git-operations]
+    triggers: [implementation-start, merge]
     description: Git運用ルールとブランチ戦略
+    
+  testing-strategy:
+    priority: high
+    keywords: ["テスト", "カバレッジ", "プロパティテスト", "pytest"]
+    file_path: "steering-detailed/testing-strategy.md"
+    auto_load: true
+    applies-to: [implementation, testing]
+    triggers: [test-creation, implementation-complete]
+    description: テスト戦略と品質基準
+    
+  task-management:
+    priority: medium
+    keywords: ["タスク番号", "TASK-", "implementation-tasks", "タスク管理"]
+    file_path: "steering-detailed/task-management.md"
+    auto_load: true
+    applies-to: [task-management]
+    triggers: [task-complete, task-update]
+    description: タスク管理の2階層構造ルール
+    
+  spec-quality-assurance:
+    priority: high
+    keywords: ["Spec", "requirements", "design", "品質保証", "検証"]
+    file_path: "steering-detailed/spec-quality-assurance.md"
+    auto_load: true
+    applies-to: [spec-creation, implementation-start]
+    triggers: [spec-complete, implementation-start]
+    description: Spec品質保証と検証スクリプト実行ルール
+    
+  release-process:
+    priority: high
+    keywords: ["リリース", "GitHub Releases", "PyPI", "タグ"]
+    file_path: "steering-detailed/release-process.md"
+    auto_load: true
+    applies-to: [release]
+    triggers: [implementation-complete, release]
+    description: リリースプロセスと最終確認
+    
+  error-handling-and-logging:
+    priority: medium
+    keywords: ["エラー", "ログ", "例外", "print", "logging"]
+    file_path: "steering-detailed/error-handling-and-logging.md"
+    auto_load: true
+    applies-to: [implementation, error-handling]
+    triggers: [code-implementation]
+    description: エラーハンドリングとログ出力の標準
+    
+  commit-message-rules:
+    priority: low
+    keywords: ["コミットメッセージ", "Conventional Commits", "feat", "fix"]
+    file_path: "steering-detailed/commit-message-rules.md"
+    auto_load: true
+    applies-to: [commit]
+    triggers: [commit-creation]
+    description: Conventional Commits形式のコミットメッセージルール
