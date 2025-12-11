@@ -33,6 +33,9 @@ setup(
             "komon=komon.cli:main",
         ],
     },
+    package_data={
+        "komon": ["../config/*.sample"],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

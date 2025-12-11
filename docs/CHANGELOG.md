@@ -6,6 +6,15 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.25.4] - 2025-12-11
+
+### Fixed
+
+- **パッケージング問題の修正**
+  - pip インストール後に `config/settings.yml.sample` が含まれない問題を修正
+  - `setup.py` に `package_data` を追加して設定ファイルサンプルを正しくパッケージに含める
+  - `komon initial` コマンドが正常に動作するように改善
+
 ## [1.25.3] - 2025-01-22
 
 ### Fixed
