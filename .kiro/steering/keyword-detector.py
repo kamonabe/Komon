@@ -2,12 +2,14 @@
 """
 Kiro用キーワード自動判定システム
 ユーザーメッセージから必要な詳細ルールを自動判定して読み込み指示を生成
+セッション内キャッシュ対応版
 """
 
 import re
 import yaml
 from pathlib import Path
 from typing import List, Dict, Set, Tuple
+from .session_cache import cached_read_file, get_session_cache
 
 class KeywordDetector:
     def __init__(self, metadata_path: str = ".kiro/steering/rules-metadata.yml"):
@@ -121,13 +123,26 @@ class KeywordDetector:
             instructions.append(f"  - 検知キーワード: {keywords}")
             instructions.append("")
         
-        # Kiro向けの実行指示
+        # Kiro向けの実行指示（キャッシュ対応）
         instructions.append("**Kiro実行指示**:")
-        instructions.append("```")
+        instructions.append("```python")
+        instructions.append("# セッション内キャッシュを使用した効率的な読み込み")
+        instructions.append("from .session_cache import cached_read_file")
+        instructions.append("")
         for rule_name, rule_info in sorted_rules:
             file_path = rule_info['file_path']
-            instructions.append(f"readFile('{file_path}', '詳細ルール読み込み: {rule_name}')")
+            instructions.append(f"cached_read_file('{file_path}', '詳細ルール読み込み: {rule_name}')")
         instructions.append("```")
+        
+        # キャッシュ効果の表示
+        cache = get_session_cache()
+        stats = cache.get_cache_stats()
+        if stats['total_tokens_saved'] > 0:
+            instructions.append("")
+            instructions.append("**💰 クレジット節約効果**:")
+            instructions.append(f"- 節約トークン: {stats['total_tokens_saved']:,}")
+            instructions.append(f"- 推定節約額: ${stats['estimated_cost_savings']:.2f}")
+            instructions.append(f"- キャッシュヒット率: {stats['hit_rate']:.1f}%")
         
         return "\n".join(instructions)
     
