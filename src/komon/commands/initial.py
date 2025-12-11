@@ -6,6 +6,7 @@ Initial setup command implementation
 
 import os
 import yaml
+import subprocess
 from pathlib import Path
 import komon
 
@@ -71,13 +72,34 @@ def run_initial_setup(config_dir: Path):
     # config/settings.yml.sample を読み込む
     # 開発環境とインストール環境の両方に対応
     
-    # komonパッケージの実際のインストール場所を動的に検出
-    komon_package_path = Path(komon.__file__).parent
+    def find_settings_sample():
+        """findコマンドでsettings.yml.sampleの実際の場所を動的に発見"""
+        try:
+            # /usr/local配下でsettings.yml.sampleを検索
+            result = subprocess.run(
+                ['find', '/usr/local', '-name', 'settings.yml.sample'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode == 0 and result.stdout.strip():
+                # 最初に見つかったファイルを使用
+                found_path = result.stdout.strip().split('\n')[0]
+                return Path(found_path)
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            # findコマンドが使えない場合は None を返す
+            pass
+        
+        return None
     
     sample_paths = [
         Path("config/settings.yml.sample"),  # 開発環境
-        komon_package_path.parent / "config" / "settings.yml.sample",  # インストール環境（動的検出）
+        find_settings_sample(),  # インストール環境（動的検索）
     ]
+    
+    # Noneを除去
+    sample_paths = [path for path in sample_paths if path is not None]
     
     sample_path = None
     for path in sample_paths:
