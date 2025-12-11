@@ -111,7 +111,7 @@ class TestMain:
             main()
         
         captured = capsys.readouterr()
-        assert "1.25.5" in captured.out
+        assert "1.25.6" in captured.out
 
 
 class TestConfigDir:

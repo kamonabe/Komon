@@ -7,6 +7,7 @@ Initial setup command implementation
 import os
 import yaml
 from pathlib import Path
+import komon
 
 
 def get_input(prompt, default, value_type="str"):
@@ -69,9 +70,13 @@ def run_initial_setup(config_dir: Path):
 
     # config/settings.yml.sample を読み込む
     # 開発環境とインストール環境の両方に対応
+    
+    # komonパッケージの実際のインストール場所を動的に検出
+    komon_package_path = Path(komon.__file__).parent
+    
     sample_paths = [
         Path("config/settings.yml.sample"),  # 開発環境
-        Path(__file__).parent.parent.parent.parent / "config" / "settings.yml.sample",  # インストール環境
+        komon_package_path.parent / "config" / "settings.yml.sample",  # インストール環境（動的検出）
     ]
     
     sample_path = None
