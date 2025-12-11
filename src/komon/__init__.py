@@ -5,7 +5,7 @@ Komon - 軽量アドバイザー型SOAR風監視ツール
 システム更新などを監視し、必要なときだけ通知・提案します。
 """
 
-__version__ = "1.25.4"
+__version__ = "1.25.5"
 __author__ = "kamonabe"
 
 from . import monitor
