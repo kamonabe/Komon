@@ -222,13 +222,20 @@ correctness-properties:
     test-strategy: "Property-based test with hypothesis"
   
   - id: "PROP-005"
-    title: "CLI Argument Handling"
+    title: "CLI Arguments Correctness"
     description: |
-      任意のCLI引数に対して、
-      正しいモードでネットワークチェックが実行される
-    property: "For any CLI argument, network check should run in the correct mode"
+      任意のCLI引数に対して、適切なネットワークチェックが実行される
+    property: "For any CLI arguments, appropriate network checks should be executed"
     validates: ["AC-005"]
-    test-strategy: "Integration test"
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-006"
+    title: "Configuration Settings Correctness"
+    description: |
+      任意の設定ファイルに対して、適切なネットワークチェックが実行される
+    property: "For any configuration settings, appropriate network checks should be executed"
+    validates: ["AC-006"]
+    test-strategy: "Property-based test with hypothesis"
 
 error-handling:
   non-critical-errors:

@@ -217,30 +217,33 @@ correctness-properties:
   - id: "PROP-005"
     title: "Package Manager Command Correctness"
     description: |
-      任意のOSファミリに対して、
-      返されるパッケージ管理コマンドは、
-      そのファミリの期待されるコマンドと一致する
-    property: "For any OS family, the returned package manager command should match the expected command for that family"
-    validates: ["AC-006", "AC-007"]
+      任意のOSファミリに対して、適切なパッケージ管理コマンドが返される
+    property: "For any OS family, the system should return the appropriate package manager command"
+    validates: ["AC-006", "AC-007", "AC-008"]
     test-strategy: "Property-based test with hypothesis"
   
   - id: "PROP-006"
     title: "Log Path Consistency"
     description: |
-      任意のOSファミリに対して、
-      返されるログパスは、
-      そのOSファミリの標準的なログ場所と一致する
-    property: "For any OS family, the returned log path should be consistent with the OS family's standard log location"
+      任意のOSファミリに対して、適切なログパスが返される
+    property: "For any OS family, the system should return the appropriate log path"
     validates: ["AC-009", "AC-010"]
     test-strategy: "Property-based test with hypothesis"
   
   - id: "PROP-007"
     title: "Package Advice Suppression"
     description: |
-      任意の非RHELのOSファミリに対して、
-      パッケージ固有のアドバイスは抑制される
-    property: "For any non-RHEL OS family, package-specific advice should be suppressed to prevent incorrect package name suggestions"
+      任意の非RHELのOSファミリに対して、パッケージ固有のアドバイスは抑制される
+    property: "For any non-RHEL OS family, package-specific advice should be suppressed"
     validates: ["AC-011"]
+    test-strategy: "Property-based test with hypothesis"
+  
+  - id: "PROP-008"
+    title: "Documentation Consistency"
+    description: |
+      任意のドキュメント更新に対して、RHEL推奨が明記されている
+    property: "For any documentation update, RHEL recommendation should be clearly stated"
+    validates: ["AC-012"]
     test-strategy: "Property-based test with hypothesis"
 
 error-handling:

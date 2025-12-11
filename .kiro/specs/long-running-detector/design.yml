@@ -48,6 +48,7 @@ correctness-properties:
     description: '*任意の*閾値設定について、正の整数のみが許可され、無効な値はデフォルト値にフォールバックすること'
     validates:
       - AC-004
+      - AC-005
     test-strategy: property-based
 
 architecture:

@@ -9,7 +9,30 @@ import re
 import yaml
 from pathlib import Path
 from typing import List, Dict, Set, Tuple
-from .session_cache import cached_read_file, get_session_cache
+
+# セッションキャッシュのインポート（テスト実行時の対応）
+try:
+    from .session_cache import cached_read_file, get_session_cache
+except ImportError:
+    # テスト実行時やスタンドアロン実行時の対応
+    def cached_read_file(file_path: str, explanation: str = "") -> str:
+        """キャッシュ機能なしのファイル読み込み（フォールバック）"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except FileNotFoundError:
+            return ""
+    
+    def get_session_cache():
+        """ダミーキャッシュオブジェクト（フォールバック）"""
+        class DummyCache:
+            def get_cache_stats(self):
+                return {
+                    'total_tokens_saved': 0,
+                    'estimated_cost_savings': 0.0,
+                    'hit_rate': 0.0
+                }
+        return DummyCache()
 
 class KeywordDetector:
     def __init__(self, metadata_path: str = ".kiro/steering/rules-metadata.yml"):

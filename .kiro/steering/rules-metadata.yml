@@ -67,7 +67,7 @@ rules:
     
   git-workflow:
     priority: high
-    keywords: ["ブランチ", "マージ", "コミット", "push", "git"]
+    keywords: ["ブランチ", "マージ", "コミット", "push", "git", "実装", "開発開始"]
     file_path: "steering-detailed/git-workflow.md"
     auto_load: true
     applies-to: [implementation, git-operations]
@@ -76,7 +76,7 @@ rules:
     
   testing-strategy:
     priority: high
-    keywords: ["テスト", "カバレッジ", "プロパティテスト", "pytest"]
+    keywords: ["テスト", "カバレッジ", "プロパティテスト", "pytest", "実装", "開発開始"]
     file_path: "steering-detailed/testing-strategy.md"
     auto_load: true
     applies-to: [implementation, testing]
@@ -112,7 +112,7 @@ rules:
     
   error-handling-and-logging:
     priority: medium
-    keywords: ["エラー", "ログ", "例外", "print", "logging"]
+    keywords: ["エラー", "ログ", "例外", "print", "logging", "実装", "開発開始"]
     file_path: "steering-detailed/error-handling-and-logging.md"
     auto_load: true
     applies-to: [implementation, error-handling]

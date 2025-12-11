@@ -51,6 +51,7 @@ correctness-properties:
     description: '*任意の*ログファイルについて、抽出された行はファイルの末尾から指定行数分を古い順に並べたものである'
     validates:
       - AC-001
+      - AC-002
     test-strategy: property-based
     implementation:
       framework: hypothesis
@@ -68,6 +69,30 @@ correctness-properties:
       framework: hypothesis
       strategy: st.lists(st.text(min_size=1, max_size=1000), min_size=1, max_size=10)
       assertion: all(len(line) <= max_length + len(" ... (truncated)") for line in result)
+  
+  - id: P4
+    title: 設定による制御の正確性
+    type: invariant
+    description: '*任意の*設定値について、指定された行数と実際の抽出行数が一致する'
+    validates:
+      - AC-003
+    test-strategy: property-based
+    implementation:
+      framework: hypothesis
+      strategy: st.integers(min_value=0, max_value=50)
+      assertion: len(result) == min(config_lines, available_lines)
+  
+  - id: P5
+    title: エラー時の継続性
+    type: invariant
+    description: '*任意の*エラー状況について、通知処理が継続される'
+    validates:
+      - AC-005
+    test-strategy: property-based
+    implementation:
+      framework: hypothesis
+      strategy: st.sampled_from(['file_not_found', 'permission_denied', 'empty_file'])
+      assertion: notification_sent == True and error_logged == True
 
 detailed-design:
   log-tail-extractor:
