@@ -1,7 +1,7 @@
 import yaml
 from komon.log_watcher import LogWatcher
 from komon.log_analyzer import check_log_anomaly
-from komon.notification import send_slack_alert, send_email_alert
+from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert
 from komon.log_tail_extractor import extract_log_tail
 
 
@@ -89,6 +89,14 @@ def main():
         if notification_cfg.get("slack", {}).get("enabled"):
             webhook_url = notification_cfg["slack"]["webhook_url"]
             send_slack_alert(message, webhook_url, metadata)
+
+        if notification_cfg.get("discord", {}).get("enabled"):
+            webhook_url = notification_cfg["discord"]["webhook_url"]
+            send_discord_alert(message, webhook_url, metadata)
+
+        if notification_cfg.get("teams", {}).get("enabled"):
+            webhook_url = notification_cfg["teams"]["webhook_url"]
+            send_teams_alert(message, webhook_url, metadata)
 
         if notification_cfg.get("email", {}).get("enabled"):
             email_cfg = notification_cfg["email"]

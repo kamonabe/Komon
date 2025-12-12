@@ -43,6 +43,20 @@ notifications:
     # または直接指定（Gitにコミットしないよう注意）
     # webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
 
+  discord:
+    enabled: false  # Discord通知を有効にする場合は true にしてください
+    # Webhook URLは環境変数からの読み込みを推奨（セキュリティ向上）
+    webhook_url: "env:KOMON_DISCORD_WEBHOOK"
+    # または直接指定（Gitにコミットしないよう注意）
+    # webhook_url: "https://discord.com/api/webhooks/xxxx/yyyy"
+
+  teams:
+    enabled: false  # Teams通知を有効にする場合は true にしてください
+    # Webhook URLは環境変数からの読み込みを推奨（セキュリティ向上）
+    webhook_url: "env:KOMON_TEAMS_WEBHOOK"
+    # または直接指定（Gitにコミットしないよう注意）
+    # webhook_url: "https://outlook.office.com/webhook/xxxx/yyyy"
+
   email:
     enabled: false  # メール通知を有効にする場合は true にしてください
     smtp_server: "smtp.example.com"  # SMTP サーバのホスト名

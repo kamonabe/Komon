@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from unittest.mock import patch, MagicMock
 
-from komon.notification import send_slack_alert, send_email_alert
+from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert
 
 
 class TestNotificationIntegration(unittest.TestCase):
@@ -265,6 +265,156 @@ class TestNotificationIntegration(unittest.TestCase):
                 expected["metric_value"],
                 places=1
             )
+    
+    @patch('komon.notification.requests.post')
+    def test_discord_notification_saves_history_on_success(self, mock_post):
+        """Discord通知成功時に履歴が保存されることを確認"""
+        # Discord通知の成功をモック
+        mock_response = MagicMock()
+        mock_response.status_code = 204  # Discordは204を返す
+        mock_post.return_value = mock_response
+        
+        def mock_save(metric_type, metric_value, message):
+            # 履歴ファイルに保存
+            history = []
+            if os.path.exists(self.queue_file):
+                with open(self.queue_file, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
+            
+            history.insert(0, {
+                "timestamp": "2023-01-01T12:00:00",
+                "metric_type": metric_type,
+                "metric_value": metric_value,
+                "message": message
+            })
+            
+            with open(self.queue_file, 'w', encoding='utf-8') as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+        
+        with patch('komon.notification_history.save_notification', side_effect=mock_save):
+            result = send_discord_alert(
+                message="Test Discord alert",
+                webhook_url="https://discord.com/api/webhooks/test",
+                metadata={
+                    "metric_type": "cpu",
+                    "metric_value": 85.5
+                }
+            )
+        
+        # 通知が成功することを確認
+        self.assertTrue(result)
+        
+        # 履歴ファイルが作成されることを確認
+        self.assertTrue(os.path.exists(self.queue_file))
+        
+        # 履歴の内容を確認
+        with open(self.queue_file, 'r', encoding='utf-8') as f:
+            history = json.load(f)
+        
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]["metric_type"], "cpu")
+        self.assertEqual(history[0]["metric_value"], 85.5)
+        self.assertEqual(history[0]["message"], "Test Discord alert")
+    
+    @patch('komon.notification.requests.post')
+    def test_teams_notification_saves_history_on_success(self, mock_post):
+        """Teams通知成功時に履歴が保存されることを確認"""
+        # Teams通知の成功をモック
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        
+        def mock_save(metric_type, metric_value, message):
+            # 履歴ファイルに保存
+            history = []
+            if os.path.exists(self.queue_file):
+                with open(self.queue_file, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
+            
+            history.insert(0, {
+                "timestamp": "2023-01-01T12:00:00",
+                "metric_type": metric_type,
+                "metric_value": metric_value,
+                "message": message
+            })
+            
+            with open(self.queue_file, 'w', encoding='utf-8') as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+        
+        with patch('komon.notification_history.save_notification', side_effect=mock_save):
+            result = send_teams_alert(
+                message="Test Teams alert",
+                webhook_url="https://outlook.office.com/webhook/test",
+                metadata={
+                    "metric_type": "memory",
+                    "metric_value": 78.2
+                }
+            )
+        
+        # 通知が成功することを確認
+        self.assertTrue(result)
+        
+        # 履歴ファイルが作成されることを確認
+        self.assertTrue(os.path.exists(self.queue_file))
+        
+        # 履歴の内容を確認
+        with open(self.queue_file, 'r', encoding='utf-8') as f:
+            history = json.load(f)
+        
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]["metric_type"], "memory")
+        self.assertEqual(history[0]["metric_value"], 78.2)
+        self.assertEqual(history[0]["message"], "Test Teams alert")
+    
+    @patch('komon.notification.requests.post')
+    def test_existing_slack_notification_unaffected(self, mock_post):
+        """既存のSlack通知に影響がないことを確認"""
+        # Slack通知の成功をモック
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        
+        def mock_save(metric_type, metric_value, message):
+            # 履歴ファイルに保存
+            history = []
+            if os.path.exists(self.queue_file):
+                with open(self.queue_file, 'r', encoding='utf-8') as f:
+                    history = json.load(f)
+            
+            history.insert(0, {
+                "timestamp": "2023-01-01T12:00:00",
+                "metric_type": metric_type,
+                "metric_value": metric_value,
+                "message": message
+            })
+            
+            with open(self.queue_file, 'w', encoding='utf-8') as f:
+                json.dump(history, f, ensure_ascii=False, indent=2)
+        
+        with patch('komon.notification_history.save_notification', side_effect=mock_save):
+            result = send_slack_alert(
+                message="Test Slack alert",
+                webhook_url="https://hooks.slack.com/services/test",
+                metadata={
+                    "metric_type": "disk",
+                    "metric_value": 92.1
+                }
+            )
+        
+        # 通知が成功することを確認
+        self.assertTrue(result)
+        
+        # 正しいペイロードが送信されることを確認
+        call_args = mock_post.call_args
+        self.assertEqual(call_args[1]['json'], {"text": "Test Slack alert"})
+        
+        # 履歴が正しく保存されることを確認
+        with open(self.queue_file, 'r', encoding='utf-8') as f:
+            history = json.load(f)
+        
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]["metric_type"], "disk")
+        self.assertEqual(history[0]["metric_value"], 92.1)
 
 
 if __name__ == '__main__':

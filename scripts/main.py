@@ -1,7 +1,7 @@
 import yaml
 from komon.monitor import collect_detailed_resource_usage
 from komon.analyzer import analyze_usage_with_levels, load_thresholds
-from komon.notification import send_slack_alert, send_email_alert, NotificationThrottle
+from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert, NotificationThrottle
 from komon.history import rotate_history, save_current_usage
 from komon.settings_validator import validate_threshold_config, ValidationError
 
@@ -94,6 +94,12 @@ def handle_alerts(alerts: list, levels: dict, config: dict, usage: dict):
         sent = False
         if notification_cfg.get("slack", {}).get("enabled"):
             sent = send_slack_alert(message, notification_cfg["slack"].get("webhook_url", ""), metadata) or sent
+        
+        if notification_cfg.get("discord", {}).get("enabled"):
+            sent = send_discord_alert(message, notification_cfg["discord"].get("webhook_url", ""), metadata) or sent
+        
+        if notification_cfg.get("teams", {}).get("enabled"):
+            sent = send_teams_alert(message, notification_cfg["teams"].get("webhook_url", ""), metadata) or sent
         
         if notification_cfg.get("email", {}).get("enabled"):
             sent = send_email_alert(message, notification_cfg["email"], metadata) or sent

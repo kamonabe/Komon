@@ -6,7 +6,7 @@ notification.py のテスト
 
 import pytest
 from unittest.mock import patch, MagicMock
-from komon.notification import send_slack_alert, send_email_alert
+from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert
 
 
 class TestSendSlackAlert:
@@ -100,6 +100,166 @@ class TestSendSlackAlert:
         
         assert result is False
         mock_getenv.assert_called_once_with("KOMON_SLACK_WEBHOOK", "")
+
+
+class TestSendDiscordAlert:
+    """Discord通知のテスト"""
+    
+    @patch('komon.notification.requests.post')
+    def test_send_discord_success(self, mock_post):
+        """Discord通知が成功する場合"""
+        mock_response = MagicMock()
+        mock_response.status_code = 204  # Discordは204を返す
+        mock_post.return_value = mock_response
+        
+        result = send_discord_alert(
+            message="テストメッセージ",
+            webhook_url="https://discord.com/api/webhooks/TEST"
+        )
+        
+        assert result is True
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[0][0] == "https://discord.com/api/webhooks/TEST"
+        assert call_args[1]['json'] == {"content": "テストメッセージ"}
+    
+    @patch('komon.notification.requests.post')
+    def test_send_discord_failure_status_code(self, mock_post):
+        """Discord通知が失敗する場合（ステータスコードエラー）"""
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_post.return_value = mock_response
+        
+        result = send_discord_alert(
+            message="テストメッセージ",
+            webhook_url="https://discord.com/api/webhooks/INVALID"
+        )
+        
+        assert result is False
+    
+    @patch('komon.notification.requests.post')
+    def test_send_discord_exception(self, mock_post):
+        """Discord通知で例外が発生する場合"""
+        mock_post.side_effect = Exception("Network error")
+        
+        result = send_discord_alert(
+            message="テストメッセージ",
+            webhook_url="https://discord.com/api/webhooks/TEST"
+        )
+        
+        assert result is False
+    
+    @patch('komon.notification.requests.post')
+    @patch('komon.notification.os.getenv')
+    def test_send_discord_with_env_webhook(self, mock_getenv, mock_post):
+        """環境変数からWebhook URLを読み込む場合"""
+        mock_response = MagicMock()
+        mock_response.status_code = 204
+        mock_post.return_value = mock_response
+        mock_getenv.return_value = "https://discord.com/api/webhooks/REAL_WEBHOOK"
+        
+        result = send_discord_alert(
+            message="テストメッセージ",
+            webhook_url="env:KOMON_DISCORD_WEBHOOK"
+        )
+        
+        assert result is True
+        mock_getenv.assert_called_once_with("KOMON_DISCORD_WEBHOOK", "")
+        call_args = mock_post.call_args
+        assert call_args[0][0] == "https://discord.com/api/webhooks/REAL_WEBHOOK"
+    
+    @patch('komon.notification.os.getenv')
+    def test_send_discord_with_missing_env_webhook(self, mock_getenv):
+        """環境変数が設定されていない場合"""
+        mock_getenv.return_value = ""
+        
+        result = send_discord_alert(
+            message="テストメッセージ",
+            webhook_url="env:KOMON_DISCORD_WEBHOOK"
+        )
+        
+        assert result is False
+        mock_getenv.assert_called_once_with("KOMON_DISCORD_WEBHOOK", "")
+
+
+class TestSendTeamsAlert:
+    """Teams通知のテスト"""
+    
+    @patch('komon.notification.requests.post')
+    def test_send_teams_success(self, mock_post):
+        """Teams通知が成功する場合"""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        
+        result = send_teams_alert(
+            message="テストメッセージ",
+            webhook_url="https://outlook.office.com/webhook/TEST"
+        )
+        
+        assert result is True
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        assert call_args[0][0] == "https://outlook.office.com/webhook/TEST"
+        assert call_args[1]['json'] == {"text": "テストメッセージ"}
+    
+    @patch('komon.notification.requests.post')
+    def test_send_teams_failure_status_code(self, mock_post):
+        """Teams通知が失敗する場合（ステータスコードエラー）"""
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_post.return_value = mock_response
+        
+        result = send_teams_alert(
+            message="テストメッセージ",
+            webhook_url="https://outlook.office.com/webhook/INVALID"
+        )
+        
+        assert result is False
+    
+    @patch('komon.notification.requests.post')
+    def test_send_teams_exception(self, mock_post):
+        """Teams通知で例外が発生する場合"""
+        mock_post.side_effect = Exception("Network error")
+        
+        result = send_teams_alert(
+            message="テストメッセージ",
+            webhook_url="https://outlook.office.com/webhook/TEST"
+        )
+        
+        assert result is False
+    
+    @patch('komon.notification.requests.post')
+    @patch('komon.notification.os.getenv')
+    def test_send_teams_with_env_webhook(self, mock_getenv, mock_post):
+        """環境変数からWebhook URLを読み込む場合"""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+        mock_getenv.return_value = "https://outlook.office.com/webhook/REAL_WEBHOOK"
+        
+        result = send_teams_alert(
+            message="テストメッセージ",
+            webhook_url="env:KOMON_TEAMS_WEBHOOK"
+        )
+        
+        assert result is True
+        mock_getenv.assert_called_once_with("KOMON_TEAMS_WEBHOOK", "")
+        call_args = mock_post.call_args
+        assert call_args[0][0] == "https://outlook.office.com/webhook/REAL_WEBHOOK"
+    
+    @patch('komon.notification.os.getenv')
+    def test_send_teams_with_missing_env_webhook(self, mock_getenv):
+        """環境変数が設定されていない場合"""
+        mock_getenv.return_value = ""
+        
+        result = send_teams_alert(
+            message="テストメッセージ",
+            webhook_url="env:KOMON_TEAMS_WEBHOOK"
+        )
+        
+        assert result is False
+        mock_getenv.assert_called_once_with("KOMON_TEAMS_WEBHOOK", "")
 
 
 class TestSendEmailAlert:

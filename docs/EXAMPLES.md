@@ -454,7 +454,9 @@ $ komon advise --history 10
 
 ---
 
-## 💬 Slack通知の例
+## 💬 通知の例
+
+### Slack通知
 
 ### 警告レベル
 
@@ -516,6 +518,49 @@ CPUがかなり逼迫しています！（92.5%）
 - 古いログファイルを削除
 - 不要なファイルを確認
 - Dockerイメージをクリーンアップ
+```
+
+### Discord通知（v1.26.0〜）
+
+Discord通知は同じメッセージ内容で送信されますが、Discordの形式で表示されます：
+
+```
+💬 ちょっと気になることがあります
+
+CPUが頑張りすぎてるみたいです（72.3%）。
+そろそろ気にかけておいた方がいいかもしれません。
+```
+
+### Microsoft Teams通知（v1.26.0〜）
+
+Teams通知も同じメッセージ内容で送信されますが、Teamsの形式で表示されます：
+
+```
+💬 ちょっと気になることがあります
+
+メモリ使用率がちょっと気になる水準です（83.2%）。
+何か重い処理走ってます？
+```
+
+### 設定例
+
+```yaml
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+  
+  discord:
+    enabled: true
+    webhook_url: "env:KOMON_DISCORD_WEBHOOK"
+  
+  teams:
+    enabled: false
+    webhook_url: "env:KOMON_TEAMS_WEBHOOK"
+  
+  email:
+    enabled: false
+    # メール設定...
 ```
 
 ---

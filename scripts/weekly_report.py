@@ -7,7 +7,7 @@
 import yaml
 from komon.weekly_data import collect_weekly_data
 from komon.report_formatter import format_weekly_report
-from komon.notification import send_slack_alert, send_email_alert
+from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert
 
 
 def load_config(path: str = "settings.yml") -> dict:
@@ -92,6 +92,26 @@ def send_report(message: str, config: dict):
             send_slack_alert(message, webhook_url)
         else:
             print("⚠️ Slack Webhook URLが設定されていません")
+    
+    # Discord通知
+    discord_enabled = report_notifications.get("discord", notification_cfg.get("discord", {}).get("enabled", False))
+    if discord_enabled:
+        webhook_url = notification_cfg.get("discord", {}).get("webhook_url", "")
+        if webhook_url:
+            # 週次レポートは通知履歴に保存しない（メタデータなし）
+            send_discord_alert(message, webhook_url)
+        else:
+            print("⚠️ Discord Webhook URLが設定されていません")
+    
+    # Teams通知
+    teams_enabled = report_notifications.get("teams", notification_cfg.get("teams", {}).get("enabled", False))
+    if teams_enabled:
+        webhook_url = notification_cfg.get("teams", {}).get("webhook_url", "")
+        if webhook_url:
+            # 週次レポートは通知履歴に保存しない（メタデータなし）
+            send_teams_alert(message, webhook_url)
+        else:
+            print("⚠️ Teams Webhook URLが設定されていません")
     
     # メール通知
     email_enabled = report_notifications.get("email", notification_cfg.get("email", {}).get("enabled", False))

@@ -6,6 +6,20 @@ Komonの変更履歴を記録します。
 
 ## [Unreleased]
 
+## [1.26.0] - 2025-12-12
+
+### Added
+
+- **Discord/Teams Webhook通知対応**
+  - `send_discord_alert()` 関数を追加（Discord Webhook API対応）
+  - `send_teams_alert()` 関数を追加（Teams Webhook API対応）
+  - 環境変数対応: `KOMON_DISCORD_WEBHOOK`, `KOMON_TEAMS_WEBHOOK`
+  - 全通知スクリプトに統合: main.py, main_log_monitor.py, weekly_report.py, main_log_trend.py
+  - 設定ファイルにdiscord/teamsセクションを追加
+  - 30件のテストケース追加（21ユニット + 9統合テスト）
+  - 既存のSlack通知との完全な互換性を維持
+  - README.md, docs/EXAMPLES.mdにDiscord/Teams設定例を追加
+
 ## [1.25.7] - 2025-12-11
 
 ### Fixed

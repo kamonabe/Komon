@@ -312,15 +312,26 @@ python scripts/advise.py    # 対話型アドバイザー
 python scripts/weekly_report.py  # 週次健全性レポート
 ```
 
-### Slack通知の設定（オプション）
+### 通知設定（オプション）
 
-Slack通知を使う場合は、Webhook URLを取得してください：
+Komonは複数の通知方式に対応しています：
 
+#### Slack通知
 1. [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks)にアクセス
 2. "Create New App" → "Incoming Webhooks"を選択
 3. URLをコピーして`settings.yml`の`notifications.slack.webhook_url`に設定
 
-**注意**: Slack通知は必須ではありません。通知なしでも`komon advise`コマンドで状態確認できます。
+#### Discord通知（v1.26.0〜）
+1. Discordサーバーの設定 → 連携サービス → ウェブフック
+2. "ウェブフックを作成"をクリック
+3. URLをコピーして`settings.yml`の`notifications.discord.webhook_url`に設定
+
+#### Microsoft Teams通知（v1.26.0〜）
+1. Teamsチャンネルの設定 → コネクタ → Incoming Webhook
+2. "構成"をクリックしてWebhookを作成
+3. URLをコピーして`settings.yml`の`notifications.teams.webhook_url`に設定
+
+**注意**: 通知は必須ではありません。通知なしでも`komon advise`コマンドで状態確認できます。
 
 ### 主な機能
 

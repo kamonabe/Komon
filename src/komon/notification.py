@@ -61,6 +61,104 @@ def send_slack_alert(message: str, webhook_url: str, metadata: dict = None) -> b
     return success
 
 
+def send_discord_alert(message: str, webhook_url: str, metadata: dict = None) -> bool:
+    """
+    Discordに通知を送信し、履歴に保存します。
+    
+    Args:
+        message: 送信するメッセージ
+        webhook_url: Discord Webhook URL（env:で始まる場合は環境変数から読み込み）
+        metadata: 通知メタデータ（metric_type, metric_value等）
+        
+    Returns:
+        bool: 送信成功時True
+    """
+    try:
+        # 環境変数からWebhook URLを読み込む
+        if webhook_url.startswith("env:"):
+            env_var = webhook_url.split(":", 1)[1]
+            webhook_url = os.getenv(env_var, "")
+            if not webhook_url:
+                print(f"⚠️ 環境変数 {env_var} が設定されていません")
+                return False
+        
+        payload = {"content": message}
+        response = requests.post(webhook_url, json=payload, timeout=10)
+        
+        if response.status_code == 204:  # Discordは204を返す
+            print("✅ Discord通知を送信しました")
+            success = True
+        else:
+            print(f"⚠️ Discord通知の送信に失敗しました: {response.status_code}")
+            success = False
+    except Exception as e:
+        print(f"❌ Discord通知エラー: {e}")
+        success = False
+    
+    # 履歴に保存（失敗しても通知は継続）
+    if metadata:
+        try:
+            from komon.notification_history import save_notification
+            save_notification(
+                metric_type=metadata.get("metric_type", "unknown"),
+                metric_value=metadata.get("metric_value", 0),
+                message=message
+            )
+        except Exception as e:
+            print(f"⚠️ 通知履歴の保存に失敗: {e}")
+    
+    return success
+
+
+def send_teams_alert(message: str, webhook_url: str, metadata: dict = None) -> bool:
+    """
+    Microsoft Teamsに通知を送信し、履歴に保存します。
+    
+    Args:
+        message: 送信するメッセージ
+        webhook_url: Teams Webhook URL（env:で始まる場合は環境変数から読み込み）
+        metadata: 通知メタデータ（metric_type, metric_value等）
+        
+    Returns:
+        bool: 送信成功時True
+    """
+    try:
+        # 環境変数からWebhook URLを読み込む
+        if webhook_url.startswith("env:"):
+            env_var = webhook_url.split(":", 1)[1]
+            webhook_url = os.getenv(env_var, "")
+            if not webhook_url:
+                print(f"⚠️ 環境変数 {env_var} が設定されていません")
+                return False
+        
+        payload = {"text": message}
+        response = requests.post(webhook_url, json=payload, timeout=10)
+        
+        if response.status_code == 200:
+            print("✅ Teams通知を送信しました")
+            success = True
+        else:
+            print(f"⚠️ Teams通知の送信に失敗しました: {response.status_code}")
+            success = False
+    except Exception as e:
+        print(f"❌ Teams通知エラー: {e}")
+        success = False
+    
+    # 履歴に保存（失敗しても通知は継続）
+    if metadata:
+        try:
+            from komon.notification_history import save_notification
+            save_notification(
+                metric_type=metadata.get("metric_type", "unknown"),
+                metric_value=metadata.get("metric_value", 0),
+                message=message
+            )
+        except Exception as e:
+            print(f"⚠️ 通知履歴の保存に失敗: {e}")
+    
+    return success
+
+
 def send_email_alert(message: str, email_config: dict, metadata: dict = None) -> bool:
     """
     メールで通知を送信し、履歴に保存します。
