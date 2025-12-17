@@ -1,0 +1,334 @@
+# タスクリスト: CLIシステム
+
+metadata:
+  title: "CLIシステム"
+  feature: "cli-system"
+  status: "pending"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  completed: null
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+tasks:
+  - id: "T1"
+    title: "既存CLIコードの仕様適合性確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: []
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      現在のsrc/komon/cli.pyが設計仕様に適合しているかを確認し、
+      必要に応じて仕様に合わせて調整する。
+      設定ディレクトリ検出ロジック、エラーハンドリング、
+      サブコマンド実行の実装を検証する。
+    subtasks:
+      - "設定ディレクトリ検出の優先順位を確認"
+      - "エラーハンドリングの網羅性を確認"
+      - "サブコマンド実行フローを確認"
+      - "バージョン表示機能を確認"
+      - "仕様との差異があれば調整"
+    files:
+      - path: "src/komon/cli.py"
+        action: "update"
+        lines: 50
+    tests: []
+  
+  - id: "T2"
+    title: "設定ディレクトリ管理の強化"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-001"]
+    description: |
+      設定ディレクトリの検出・作成ロジックを仕様に従って強化する。
+      エラーハンドリングの改善、権限チェック、
+      適切なメッセージ表示を実装する。
+    subtasks:
+      - "権限チェック機能を追加"
+      - "エラーメッセージの改善"
+      - "ディレクトリ作成の冪等性を保証"
+      - "検出結果のログ出力を追加"
+    files:
+      - path: "src/komon/cli.py"
+        action: "update"
+        lines: 80
+    tests: []
+  
+  - id: "T3"
+    title: "引数解析とエラーハンドリングの改善"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-002", "AC-003"]
+    description: |
+      argparseの設定を見直し、より分かりやすいヘルプメッセージと
+      エラーメッセージを実装する。
+      無効な引数に対する適切な処理を追加する。
+    subtasks:
+      - "ヘルプメッセージの日本語化"
+      - "エラーメッセージの改善"
+      - "引数検証ロジックの追加"
+      - "終了コードの統一"
+    files:
+      - path: "src/komon/cli.py"
+        action: "update"
+        lines: 60
+    tests: []
+  
+  - id: "T4"
+    title: "プロパティベーステストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 4
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-003"]
+    description: |
+      設計書で定義された3つの正確性プロパティを検証する
+      プロパティベーステストを作成する。
+      hypothesisを使用して網羅的なテストを実装する。
+    subtasks:
+      - "tests/test_cli_properties.pyを作成"
+      - "P1: 設定ディレクトリ検出の優先順位テスト"
+      - "P2: サブコマンド実行の冪等性テスト"
+      - "P3: エラーハンドリングの完全性テスト"
+      - "テストデータ生成戦略の実装"
+    files:
+      - path: "tests/test_cli_properties.py"
+        action: "create"
+        lines: 200
+    tests:
+      - "tests/test_cli_properties.py"
+  
+  - id: "T5"
+    title: "統合テストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      CLIシステム全体のエンドツーエンドテストを作成する。
+      実際のコマンドライン実行をシミュレートし、
+      各サブコマンドが正しく動作することを確認する。
+    subtasks:
+      - "tests/test_cli_integration.pyを作成"
+      - "test_end_to_end_subcommand_execution"
+      - "test_error_scenarios"
+      - "test_version_display"
+      - "test_config_dir_scenarios"
+      - "テスト環境の分離"
+    files:
+      - path: "tests/test_cli_integration.py"
+        action: "create"
+        lines: 250
+    tests:
+      - "tests/test_cli_integration.py"
+  
+  - id: "T6"
+    title: "ユニットテストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002"]
+    description: |
+      個別関数のユニットテストを作成する。
+      get_config_dir、ensure_config_dir、引数解析の
+      各機能を詳細にテストする。
+    subtasks:
+      - "tests/test_cli_unit.pyを作成"
+      - "test_get_config_dir（環境別テスト）"
+      - "test_ensure_config_dir（作成・既存両方）"
+      - "test_argument_parsing（全オプション）"
+      - "test_error_conditions（異常系）"
+      - "モックを使用した分離テスト"
+    files:
+      - path: "tests/test_cli_unit.py"
+        action: "create"
+        lines: 300
+    tests:
+      - "tests/test_cli_unit.py"
+  
+  - id: "T7"
+    title: "パフォーマンステストの作成"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T4", "T5", "T6"]
+    validates: ["AC-001", "AC-002"]
+    description: |
+      CLI起動時間、設定ディレクトリ検出時間、
+      ヘルプ表示時間の性能要件を検証するテストを作成する。
+    subtasks:
+      - "tests/test_cli_performance.pyを作成"
+      - "CLI起動時間測定（< 500ms）"
+      - "設定ディレクトリ検出時間測定（< 100ms）"
+      - "ヘルプ表示時間測定（< 200ms）"
+      - "性能劣化の検出機能"
+    files:
+      - path: "tests/test_cli_performance.py"
+        action: "create"
+        lines: 150
+    tests:
+      - "tests/test_cli_performance.py"
+  
+  - id: "T8"
+    title: "ドキュメント更新"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      CLIシステムの仕様化に伴い、関連ドキュメントを更新する。
+      設定ディレクトリの説明、サブコマンドの使用方法、
+      エラー対処方法を追加する。
+    subtasks:
+      - "README.mdにCLI使用方法を追加"
+      - "docs/COMMAND_REFERENCE.mdを更新"
+      - "設定ディレクトリの説明を追加"
+      - "エラー対処方法を追加"
+      - "docs/CHANGELOG.mdに記録"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 50
+      - path: "docs/COMMAND_REFERENCE.md"
+        action: "update"
+        lines: 30
+      - path: "docs/CHANGELOG.md"
+        action: "update"
+        lines: 10
+    tests: []
+  
+  - id: "T9"
+    title: "全テスト実行とカバレッジ確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T4", "T5", "T6", "T7"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      作成した全テストを実行し、カバレッジを確認する。
+      全テストがパスし、カバレッジが95%以上であることを確認する。
+    subtasks:
+      - "python -m pytest tests/test_cli_*.py -v"
+      - "bash run_coverage.sh"
+      - "CLIモジュールのカバレッジが95%以上であることを確認"
+      - "テスト結果の分析と改善"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 1
+    tests: []
+  
+  - id: "T10"
+    title: "手動動作確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T8", "T9"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      実際のコマンドライン環境で手動動作確認を行い、
+      全ての受入基準が満たされていることを確認する。
+    subtasks:
+      - "各サブコマンドの動作確認"
+      - "エラーケースの動作確認"
+      - "設定ディレクトリ検出の確認"
+      - "バージョン表示の確認"
+      - "ヘルプメッセージの確認"
+    files: []
+    tests: []
+
+completion-criteria:
+  - id: "CC-001"
+    description: "全テストがパス"
+    status: "pending"
+    validation: "pytest tests/test_cli_*.py -v"
+    result: null
+  
+  - id: "CC-002"
+    description: "カバレッジ95%以上を維持"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-003"
+    description: "CLIモジュールのカバレッジ95%以上"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-004"
+    description: "パフォーマンス要件を満たす"
+    status: "pending"
+    validation: "pytest tests/test_cli_performance.py -v"
+    result: null
+  
+  - id: "CC-005"
+    description: "ドキュメント更新完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-006"
+    description: "手動動作確認完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-007"
+    description: "CHANGELOG.mdに記録"
+    status: "pending"
+    validation: "manual"
+    result: null
+
+execution-plan:
+  parallel-tasks:
+    - ["T4", "T5", "T6", "T7"]
+    - ["T8"]
+  
+  critical-path:
+    - "T1"
+    - "T2"
+    - "T3"
+    - "T5"
+    - "T9"
+    - "T10"
+  
+  total-estimated-hours: 23
+
+risks:
+  - task: "T1"
+    risk: "既存実装が仕様と大きく異なる可能性"
+    mitigation: "段階的な調整と既存機能の保持"
+    probability: "medium"
+    impact: "medium"
+  
+  - task: "T4"
+    risk: "プロパティテストの複雑性"
+    mitigation: "シンプルなプロパティから開始し段階的に拡張"
+    probability: "medium"
+    impact: "low"
+  
+  - task: "T7"
+    risk: "パフォーマンス要件を満たせない可能性"
+    mitigation: "要件の見直しと最適化の実施"
+    probability: "low"
+    impact: "medium"

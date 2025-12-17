@@ -1,0 +1,162 @@
+# 要件定義: 統合分析エンジン
+
+metadata:
+  title: "統合分析エンジン"
+  feature: "integrated-analysis-engine"
+  status: "draft"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+  complexity: "high"
+  estimated-hours: 20
+  dependencies: ["progressive-notification", "contextual-advice", "progressive-threshold"]
+
+overview:
+  description: |
+    Komonの中核となる分析エンジン。リソース使用率の閾値判定、
+    アラート生成、複数機能の統合制御を行う。
+    3段階閾値システム、段階的通知メッセージ、コンテキストアドバイスを
+    統合的に管理し、一貫性のあるアラート体験を提供する。
+  background: |
+    現在の分析エンジンは実装されているが仕様が明文化されていない。
+    複数の機能（段階的通知、コンテキストアドバイス、3段階閾値）が
+    統合されているが、その統合ロジックや制御方針が暗黙的になっている。
+    将来の機能拡張や保守性向上のため、統合分析エンジンの
+    仕様を明確に定義する必要がある。
+  goals:
+    - "リソース使用率の統合分析機能の仕様化"
+    - "複数機能の統合制御ロジックの明確化"
+    - "アラートメッセージ生成の一貫性保証"
+    - "機能の有効/無効制御の統一"
+    - "将来の機能追加に対する拡張性確保"
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "3段階閾値による分析"
+    priority: "high"
+    type: "functional"
+    description: |
+      CPU/メモリ/ディスク使用率を3段階閾値（警告/警戒/緊急）で
+      分析し、適切なレベル判定を行う
+    when: "リソース使用率データが入力された時"
+    then: "各リソースの閾値レベル（NORMAL/WARNING/ALERT/CRITICAL）が正しく判定される"
+    examples:
+      - input: "CPU: 75%, 閾値: 警告70%/警戒85%/緊急95%"
+        output: "WARNING レベルと判定"
+      - input: "メモリ: 90%, 閾値: 警告70%/警戒80%/緊急90%"
+        output: "CRITICAL レベルと判定"
+      - input: "ディスク: 60%, 閾値: 警告70%/警戒80%/緊急90%"
+        output: "NORMAL レベルと判定"
+
+  - id: "AC-002"
+    title: "機能統合制御"
+    priority: "high"
+    type: "functional"
+    description: |
+      段階的通知メッセージとコンテキストアドバイスの
+      有効/無効を制御し、適切に統合されたアラートを生成する
+    when: "機能の有効/無効フラグが設定された時"
+    then: "指定された機能のみが動作し、統合されたアラートが生成される"
+    examples:
+      - input: "use_progressive=True, use_contextual_advice=False"
+        output: "段階的メッセージのみ生成"
+      - input: "use_progressive=False, use_contextual_advice=True"
+        output: "コンテキストアドバイスのみ生成"
+      - input: "use_progressive=True, use_contextual_advice=True"
+        output: "両方の機能が統合されたアラート生成"
+
+  - id: "AC-003"
+    title: "アラートメッセージの一貫性"
+    priority: "high"
+    type: "functional"
+    description: |
+      レベル別のメッセージテンプレートに基づいて
+      一貫性のあるアラートメッセージを生成する
+    when: "閾値を超えたリソースが検出された時"
+    then: "レベルに応じた適切な絵文字、プレフィックス、詳細メッセージが生成される"
+    examples:
+      - input: "CPU WARNING レベル"
+        output: "💛 そろそろ気にかけておいた方がいいかも + CPU詳細メッセージ"
+      - input: "メモリ CRITICAL レベル"
+        output: "❤️ かなり逼迫しています！ + メモリ詳細メッセージ"
+
+  - id: "AC-004"
+    title: "レベル情報の提供"
+    priority: "medium"
+    type: "functional"
+    description: |
+      アラートメッセージと併せて、各リソースの
+      閾値レベル情報を構造化データとして提供する
+    when: "analyze_usage_with_levels関数が呼び出された時"
+    then: "アラートメッセージとレベル情報の両方が返される"
+    examples:
+      - input: "CPU 85%, メモリ 75%"
+        output: "アラート + {\"cpu\": (\"alert\", 85.0), \"memory\": (\"warning\", 75.0)}"
+
+non-functional-requirements:
+  performance:
+    - "分析処理時間が50ms以内"
+    - "メモリ使用量が10MB以内"
+    - "複数機能統合時も性能劣化なし"
+  reliability:
+    - "機能モジュールの読み込み失敗時も基本機能は継続"
+    - "不正な設定値でもクラッシュしない"
+    - "閾値設定エラー時は適切なデフォルト値を使用"
+  maintainability:
+    - "新しい機能を簡単に統合できる"
+    - "メッセージテンプレートが分離されている"
+    - "機能の有効/無効制御が統一されている"
+  usability:
+    - "アラートメッセージは日本語で分かりやすく"
+    - "レベル別に適切な緊急度を表現"
+    - "機能の組み合わせが直感的"
+
+constraints:
+  - "既存の段階的通知機能との互換性を保持"
+  - "既存のコンテキストアドバイス機能との互換性を保持"
+  - "既存の3段階閾値システムとの互換性を保持"
+  - "Python 3.10+以上"
+
+assumptions:
+  - "リソース使用率データは正常な範囲（0-100%）で提供される"
+  - "閾値設定は事前に検証済み"
+  - "機能モジュールは適切にインストールされている"
+
+risks:
+  - risk: "機能モジュールの読み込み失敗"
+    mitigation: "ImportErrorを適切にハンドリングし、基本機能で継続"
+    probability: "low"
+    impact: "medium"
+  
+  - risk: "複数機能の統合による複雑性増加"
+    mitigation: "明確な統合ロジックと分離された責務"
+    probability: "medium"
+    impact: "medium"
+
+scope:
+  in-scope:
+    - "リソース使用率の閾値判定"
+    - "複数機能の統合制御"
+    - "アラートメッセージの生成"
+    - "レベル情報の提供"
+    - "機能の有効/無効制御"
+  
+  out-of-scope:
+    - "リソース使用率データの収集（monitorモジュールで管理）"
+    - "閾値設定の検証（settings_validatorで管理）"
+    - "通知の送信（notificationモジュールで管理）"
+    - "履歴の保存（historyモジュールで管理）"
+
+success-metrics:
+  quantitative:
+    - "テストカバレッジ95%以上を維持"
+    - "全既存テストがパス"
+    - "分析処理時間50ms以内"
+    - "新規テスト20件以上を追加"
+  
+  qualitative:
+    - "開発者が新しい機能を簡単に統合できる"
+    - "アラートメッセージが一貫性を保っている"
+    - "機能の組み合わせが直感的で分かりやすい"

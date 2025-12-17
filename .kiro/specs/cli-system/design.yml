@@ -1,0 +1,308 @@
+# 設計書: CLIシステム
+
+metadata:
+  title: "CLIシステム"
+  feature: "cli-system"
+  status: "draft"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+architecture:
+  overview: |
+    CLIシステムは3層構造で設計されている：
+    1. エントリーポイント層（main関数）- 引数解析とルーティング
+    2. 設定管理層（config_dir管理）- 環境検出と初期化
+    3. サブコマンド実行層（各commandsモジュール）- 実際の処理実行
+    
+    設定ディレクトリの検出は優先順位付きで行い、
+    各サブコマンドには統一されたconfig_dirが渡される。
+  
+  components:
+    - name: "main"
+      type: "function"
+      responsibility: "引数解析、サブコマンドルーティング、エラーハンドリング"
+      dependencies: ["argparse", "commands.*"]
+    
+    - name: "get_config_dir"
+      type: "function"
+      responsibility: "設定ディレクトリの自動検出"
+      dependencies: ["os", "pathlib"]
+    
+    - name: "ensure_config_dir"
+      type: "function"
+      responsibility: "設定ディレクトリの作成と初期化"
+      dependencies: ["get_config_dir"]
+  
+  data-flow:
+    - from: "コマンドライン引数"
+      to: "argparse"
+      description: "引数の構造化解析"
+    
+    - from: "argparse"
+      to: "設定ディレクトリ検出"
+      description: "サブコマンド実行前の環境準備"
+    
+    - from: "設定ディレクトリ"
+      to: "サブコマンド実行"
+      description: "統一されたconfig_dirの提供"
+
+modules:
+  - name: "cli"
+    path: "src/komon/cli.py"
+    description: |
+      CLIシステムのメインモジュール。
+      引数解析、設定ディレクトリ管理、サブコマンドルーティングを担当。
+      全てのCLI操作の起点となる。
+    
+    functions:
+      - name: "main"
+        parameters: []
+        returns:
+          type: "None"
+          description: "プログラムの終了"
+        raises:
+          - "SystemExit: 引数エラーまたは正常終了時"
+      
+      - name: "get_config_dir"
+        parameters: []
+        returns:
+          type: "Path"
+          description: "検出された設定ディレクトリのパス"
+        raises: []
+      
+      - name: "ensure_config_dir"
+        parameters: []
+        returns:
+          type: "Path"
+          description: "作成・確認済みの設定ディレクトリのパス"
+        raises:
+          - "OSError: ディレクトリ作成失敗時"
+
+correctness-properties:
+  - id: "P1"
+    title: "設定ディレクトリ検出の優先順位"
+    type: "invariant"
+    description: |
+      設定ディレクトリの検出は常に以下の優先順位で行われる：
+      1. 環境変数 KOMON_CONFIG_DIR
+      2. カレントディレクトリ（settings.yml存在時）
+      3. ホームディレクトリ/.komon
+      この順序は変更されず、最初に条件を満たすものが選択される。
+    validates: ["AC-001"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.one_of(st.just('env'), st.just('current'), st.just('home'))"
+      assertion: "検出されたパスが優先順位に従っている"
+  
+  - id: "P2"
+    title: "サブコマンド実行の冪等性"
+    type: "idempotence"
+    description: |
+      同じサブコマンドを同じ引数で複数回実行しても、
+      設定ディレクトリの状態は一貫している。
+      ディレクトリ作成処理は冪等であり、既存ディレクトリに影響しない。
+    validates: ["AC-002"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.sampled_from(['initial', 'status', 'advise', 'guide'])"
+      assertion: "複数回実行後も設定ディレクトリの状態が一致"
+  
+  - id: "P3"
+    title: "エラーハンドリングの完全性"
+    type: "boundary"
+    description: |
+      全ての無効な入力（不正なサブコマンド、引数、オプション）に対して、
+      適切なエラーメッセージが表示され、プログラムがクラッシュしない。
+      SystemExitで適切な終了コードが返される。
+    validates: ["AC-003"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.text(min_size=1, max_size=50)"
+      assertion: "無効な入力でもSystemExitで終了し、適切なメッセージが出力"
+  
+  - id: "P4"
+    title: "バージョン表示の一貫性"
+    type: "invariant"
+    description: |
+      --version または -v オプションが指定された時、
+      常に正しいフォーマット（"Komon version X.Y.Z"）で
+      バージョン情報が表示される。
+    validates: ["AC-004"]
+    test-strategy: "unit"
+    implementation:
+      framework: "pytest"
+      strategy: "バージョンオプションのテスト"
+      assertion: "出力が期待されるフォーマットと一致する"
+
+data-structures:
+  - name: "config_dir_result"
+    type: "Path"
+    schema:
+      path:
+        type: "str"
+        required: true
+        description: "検出された設定ディレクトリの絶対パス"
+      source:
+        type: "str"
+        required: true
+        description: "検出方法（env/current/home）"
+      created:
+        type: "bool"
+        required: true
+        description: "新規作成されたかどうか"
+
+error-handling:
+  - error: "OSError"
+    handling: "stop"
+    message: "設定ディレクトリの作成に失敗しました: {path}"
+    log-level: "error"
+    exit-code: 1
+  
+  - error: "PermissionError"
+    handling: "stop"
+    message: "設定ディレクトリへの書き込み権限がありません: {path}"
+    log-level: "error"
+    exit-code: 1
+  
+  - error: "ImportError"
+    handling: "stop"
+    message: "必要なモジュールが見つかりません: {module}"
+    log-level: "error"
+    exit-code: 1
+
+configuration:
+  - name: "KOMON_CONFIG_DIR"
+    type: "str"
+    required: false
+    default: null
+    description: "設定ディレクトリの明示的な指定（環境変数）"
+    validation:
+      - "存在するディレクトリまたは作成可能なパス"
+      - "書き込み権限がある"
+
+dependencies:
+  internal:
+    - "komon.commands.initial"
+    - "komon.commands.status"
+    - "komon.commands.advise"
+    - "komon.commands.guide"
+    - "komon.__version__"
+  external:
+    - name: "argparse"
+      version: "標準ライブラリ"
+      purpose: "コマンドライン引数の解析"
+    - name: "pathlib"
+      version: "標準ライブラリ"
+      purpose: "パス操作"
+    - name: "os"
+      version: "標準ライブラリ"
+      purpose: "環境変数とファイルシステム操作"
+
+testing-strategy:
+  property-tests:
+    - property: "P1"
+      file: "tests/test_cli_properties.py"
+      function: "test_config_dir_priority"
+    
+    - property: "P2"
+      file: "tests/test_cli_properties.py"
+      function: "test_subcommand_idempotence"
+    
+    - property: "P3"
+      file: "tests/test_cli_properties.py"
+      function: "test_error_handling_completeness"
+  
+  integration-tests:
+    - validates: ["AC-001", "AC-002"]
+      file: "tests/test_cli_integration.py"
+      function: "test_end_to_end_subcommand_execution"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_cli_integration.py"
+      function: "test_error_scenarios"
+    
+    - validates: ["AC-004"]
+      file: "tests/test_cli_integration.py"
+      function: "test_version_display"
+  
+  unit-tests:
+    - validates: ["AC-001"]
+      file: "tests/test_cli_unit.py"
+      function: "test_get_config_dir"
+    
+    - validates: ["AC-001"]
+      file: "tests/test_cli_unit.py"
+      function: "test_ensure_config_dir"
+    
+    - validates: ["AC-002"]
+      file: "tests/test_cli_unit.py"
+      function: "test_argument_parsing"
+
+performance:
+  targets:
+    - metric: "CLI起動時間"
+      target: "< 500ms"
+      measurement: "time komonコマンド実行"
+    
+    - metric: "設定ディレクトリ検出時間"
+      target: "< 100ms"
+      measurement: "get_config_dir()の実行時間"
+    
+    - metric: "ヘルプ表示時間"
+      target: "< 200ms"
+      measurement: "komon --help の実行時間"
+
+security:
+  considerations:
+    - "環境変数KOMON_CONFIG_DIRの値を検証し、パストラバーサル攻撃を防ぐ"
+    - "設定ディレクトリ作成時の権限を適切に設定（755）"
+    - "ユーザー入力（サブコマンド、引数）のサニタイゼーション"
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"
+    rationale: |
+      CLIは短命なプロセスであり、継続的な接続や大量処理を行わない。
+      サーキットブレイカーが必要となるケースは想定されない。
+      エラー時は適切なメッセージを表示して終了する方が適切。
+    delegated-to: null
+    future-notes: |
+      将来デーモンモードを追加する場合は再検討が必要。
+  
+  notification-throttling:
+    considered: true
+    decision: "not-applicable"
+    rationale: |
+      CLIシステム自体は通知機能を持たない。
+      通知機能は各サブコマンド内で実装される。
+    implementation: []
+  
+  baseline-reset:
+    considered: true
+    decision: "not-applicable"
+    rationale: |
+      CLIシステムはbaselineを使用しない。
+    implementation: []
+  
+  other-considerations:
+    - consideration: "設定ディレクトリ作成失敗時のフォールバック"
+      decision: "not-adopted"
+      rationale: |
+        設定ディレクトリが作成できない場合は、
+        適切なエラーメッセージを表示して終了する。
+        一時ディレクトリ等のフォールバックは、
+        データ損失のリスクがあるため採用しない。
+    
+    - consideration: "引数解析エラー時のリトライ"
+      decision: "not-adopted"
+      rationale: |
+        引数解析エラーは設定ミスであり、
+        自動リトライは意味がない。
+        ヘルプメッセージを表示して終了する。

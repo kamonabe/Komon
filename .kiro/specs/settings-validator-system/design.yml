@@ -1,0 +1,232 @@
+metadata:
+  title: "設定バリデータシステム設計"
+  feature: "settings-validator-system"
+  status: "draft"
+  created: "2025-12-17"
+  updated: "2025-12-17"
+  version: "1.0.0"
+
+# 正確性特性
+correctness-properties:
+  - id: "P1"
+    description: "設定正規化の一貫性"
+    property: "単一値Tを正規化した場合、warning=T-10, alert=T, critical=T+10となる"
+    test_strategy: "プロパティベーステスト"
+    validates: ["AC-001"]
+
+  - id: "P2"
+    description: "閾値順序の不変性"
+    property: "検証済み設定では必ずwarning < alert < criticalが成立する"
+    test_strategy: "検証後の設定での順序確認"
+    validates: ["AC-002"]
+
+  - id: "P3"
+    description: "レベル判定の単調性"
+    property: "値が大きくなるほど、より高いレベル（またはそのまま）に判定される"
+    test_strategy: "昇順値での判定レベル確認"
+    validates: ["AC-004"]
+
+  - id: "P4"
+    description: "エラーハンドリングの完全性"
+    property: "無効な設定に対して必ず適切なValidationErrorが発生する"
+    test_strategy: "無効設定パターンでの例外確認"
+    validates: ["AC-002"]
+
+  - id: "P5"
+    description: "デフォルト値の一貫性"
+    property: "設定未指定時に必ず適切なデフォルト値が適用される"
+    test_strategy: "設定未指定パターンでのデフォルト値確認"
+    validates: ["AC-003"]
+
+# アーキテクチャ概要
+architecture:
+  pattern: "Validator Pattern + Factory Pattern"
+  description: "設定検証と正規化を責務分離し、拡張可能な設計"
+  
+  components:
+    validator:
+      description: "設定検証のメインエントリポイント"
+      responsibilities:
+        - "設定形式の判定と振り分け"
+        - "検証結果の統合"
+        - "エラーハンドリング"
+    
+    normalizer:
+      description: "設定正規化処理"
+      responsibilities:
+        - "単一値から3段階形式への変換"
+        - "デフォルト値の適用"
+        - "形式統一"
+    
+    three_tier_validator:
+      description: "3段階閾値の詳細検証"
+      responsibilities:
+        - "必須キーの存在確認"
+        - "数値型・範囲・順序の検証"
+        - "詳細エラーメッセージ生成"
+    
+    threshold_judge:
+      description: "閾値レベル判定"
+      responsibilities:
+        - "値と閾値の比較"
+        - "4段階レベルの判定"
+        - "境界値の適切な処理"
+
+# データ構造
+data_structures:
+  ThresholdLevel:
+    type: "Enum"
+    values:
+      - "NORMAL: 正常状態"
+      - "WARNING: 警告レベル（黄色）"
+      - "ALERT: 警戒レベル（オレンジ）"
+      - "CRITICAL: 緊急レベル（赤色）"
+  
+  ThresholdConfig:
+    type: "Dict"
+    structure:
+      cpu:
+        warning: "int/float (0-200)"
+        alert: "int/float (0-200)"
+        critical: "int/float (0-200)"
+      mem:
+        warning: "int/float (0-200)"
+        alert: "int/float (0-200)"
+        critical: "int/float (0-200)"
+      disk:
+        warning: "int/float (0-200)"
+        alert: "int/float (0-200)"
+        critical: "int/float (0-200)"
+
+# 処理フロー
+processing_flow:
+  validation_flow:
+    1: "設定ファイル読み込み"
+    2: "メトリクス別処理（cpu/mem/disk）"
+    3: "形式判定（単一値 or 3段階 or 未指定）"
+    4: "正規化処理"
+    5: "詳細検証"
+    6: "統合結果返却"
+  
+  judgment_flow:
+    1: "監視値取得"
+    2: "該当メトリクスの閾値取得"
+    3: "レベル判定（critical → alert → warning → normal）"
+    4: "ThresholdLevel返却"
+
+# アルゴリズム詳細
+algorithms:
+  single_to_three_tier:
+    description: "単一閾値の3段階正規化"
+    formula:
+      warning: "max(0, T - 10)"
+      alert: "T"
+      critical: "min(100, T + 10)"
+    rationale: "段階的な警告レベルを提供し、急激な状態変化を防ぐ"
+  
+  level_determination:
+    description: "閾値レベル判定アルゴリズム"
+    logic: |
+      if value < 0: return NORMAL
+      if value >= critical: return CRITICAL
+      if value >= alert: return ALERT
+      if value >= warning: return WARNING
+      return NORMAL
+    edge_cases:
+      - "負の値は正常として扱う"
+      - "境界値は上位レベルに分類"
+
+# エラーハンドリング戦略
+error_handling:
+  validation_errors:
+    missing_keys:
+      message: "閾値 '{metric}' に '{key}' が指定されていません"
+      recovery: "デフォルト値で継続"
+    
+    invalid_type:
+      message: "閾値 '{metric}.{key}' は数値で指定してください"
+      recovery: "設定無効として処理"
+    
+    out_of_range:
+      message: "閾値 '{metric}.{key}' は 0-200 の範囲で指定してください"
+      recovery: "設定無効として処理"
+    
+    invalid_order:
+      message: "閾値順序が無効です。warning < alert < critical である必要があります"
+      recovery: "設定無効として処理"
+
+# パフォーマンス設計
+performance_design:
+  optimization_strategies:
+    - "設定検証の一回実行（起動時のみ）"
+    - "判定処理の最適化（早期リターン）"
+    - "メモリ効率的なデータ構造"
+  
+  complexity_analysis:
+    validation: "O(1) - 固定メトリクス数"
+    judgment: "O(1) - 定数時間比較"
+    memory: "O(1) - 固定サイズ設定"
+
+# 拡張性設計
+extensibility:
+  new_metrics:
+    description: "新しいメトリクスの追加方法"
+    steps:
+      1: "_get_default_thresholds()にデフォルト値追加"
+      2: "validate_threshold_config()の処理対象に追加"
+      3: "テストケース追加"
+  
+  new_validation_rules:
+    description: "新しい検証ルールの追加"
+    approach: "_validate_three_tier()内に検証ロジック追加"
+    
+  new_threshold_levels:
+    description: "新しい閾値レベルの追加"
+    steps:
+      1: "ThresholdEnumに新レベル追加"
+      2: "determine_threshold_level()のロジック更新"
+      3: "判定順序の調整"
+
+# テスト戦略
+testing_strategy:
+  unit_tests:
+    - "各関数の正常系・異常系テスト"
+    - "境界値テスト"
+    - "エラーメッセージの確認"
+  
+  property_tests:
+    - "正規化の一貫性テスト"
+    - "順序不変性テスト"
+    - "判定単調性テスト"
+  
+  integration_tests:
+    - "実際の設定ファイルでの動作確認"
+    - "他コンポーネントとの連携テスト"
+
+# 設定例
+configuration_examples:
+  legacy_format:
+    description: "従来の単一値形式"
+    example: |
+      thresholds:
+        cpu: 80
+        mem: 75
+        disk: 85
+    normalized_result: |
+      cpu: {warning: 70, alert: 80, critical: 90}
+      mem: {warning: 65, alert: 75, critical: 85}
+      disk: {warning: 75, alert: 85, critical: 95}
+  
+  three_tier_format:
+    description: "新しい3段階形式"
+    example: |
+      thresholds:
+        cpu:
+          warning: 70
+          alert: 85
+          critical: 95
+        mem:
+          warning: 60
+          alert: 75
+          critical: 90
+    result: "そのまま使用（検証後）"

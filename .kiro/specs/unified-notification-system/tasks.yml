@@ -1,0 +1,428 @@
+# タスクリスト: 統合通知システム
+
+metadata:
+  title: "統合通知システム"
+  feature: "unified-notification-system"
+  status: "pending"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  completed: null
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+tasks:
+  - id: "T1"
+    title: "既存通知システムの仕様適合性確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: []
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    description: |
+      現在のsrc/komon/notification.pyが設計仕様に適合しているかを確認し、
+      必要に応じて仕様に合わせて調整する。
+      プラットフォーム対応、環境変数管理、履歴統合、頻度制御の実装を検証する。
+    subtasks:
+      - "4つのプラットフォーム対応の確認"
+      - "環境変数解決ロジックの確認"
+      - "履歴統合機能の確認"
+      - "頻度制御統合の確認"
+      - "エラーハンドリングの確認"
+      - "仕様との差異があれば調整"
+    files:
+      - path: "src/komon/notification.py"
+        action: "update"
+        lines: 100
+    tests: []
+  
+  - id: "T2"
+    title: "セキュリティ強化"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-002", "AC-005"]
+    description: |
+      環境変数管理のセキュリティ強化、URL検証、
+      タイムアウト設定の適切な実装を行う。
+      機密情報の安全な管理を実現する。
+    subtasks:
+      - "Webhook URL形式の検証"
+      - "環境変数存在チェックの強化"
+      - "タイムアウト設定の統一"
+      - "機密情報ログ出力の防止"
+      - "セキュリティテストの追加"
+    files:
+      - path: "src/komon/notification.py"
+        action: "update"
+        lines: 80
+    tests: []
+  
+  - id: "T3"
+    title: "エラーハンドリングの統一"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-005"]
+    description: |
+      全プラットフォームで統一されたエラーハンドリングを実装し、
+      適切なログ出力とエラーメッセージを提供する。
+    subtasks:
+      - "例外処理の統一"
+      - "エラーメッセージの改善"
+      - "ログレベルの適切な設定"
+      - "エラー時の継続処理確保"
+      - "エラー情報の構造化"
+    files:
+      - path: "src/komon/notification.py"
+        action: "update"
+        lines: 60
+    tests: []
+  
+  - id: "T4"
+    title: "通知頻度制御の改善"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-004"]
+    description: |
+      NotificationThrottleクラスの機能を改善し、
+      より柔軟で信頼性の高い頻度制御を実現する。
+    subtasks:
+      - "レベルエスカレーション判定の改善"
+      - "履歴ファイル破損時の復旧機能"
+      - "設定可能性の向上"
+      - "継続時間メッセージの改善"
+      - "パフォーマンスの最適化"
+    files:
+      - path: "src/komon/notification.py"
+        action: "update"
+        lines: 120
+    tests: []
+  
+  - id: "T5"
+    title: "プラットフォーム拡張フレームワーク"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001"]
+    description: |
+      新しいプラットフォームを簡単に追加できる
+      フレームワークを整備する。
+    subtasks:
+      - "共通インターフェースの定義"
+      - "プラットフォーム固有処理の分離"
+      - "設定スキーマの統一"
+      - "テストパターンの標準化"
+      - "ドキュメントテンプレートの作成"
+    files:
+      - path: "src/komon/notification.py"
+        action: "update"
+        lines: 80
+    tests: []
+  
+  - id: "T6"
+    title: "プロパティベーステストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 4
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4"]
+    validates: ["AC-001", "AC-002", "AC-004"]
+    description: |
+      設計書で定義された4つの正確性プロパティを検証する
+      プロパティベーステストを作成する。
+      hypothesisを使用して網羅的なテストを実装する。
+    subtasks:
+      - "tests/test_notification_properties.pyを作成"
+      - "P1: 通知送信の冪等性テスト"
+      - "P2: 環境変数解決の一貫性テスト"
+      - "P4: 頻度制御の単調性テスト"
+      - "テストデータ生成戦略の実装"
+      - "モックサーバーの構築"
+    files:
+      - path: "tests/test_notification_properties.py"
+        action: "create"
+        lines: 350
+    tests:
+      - "tests/test_notification_properties.py"
+  
+  - id: "T7"
+    title: "統合テストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 4
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4", "T5"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    description: |
+      統合通知システム全体のエンドツーエンドテストを作成する。
+      実際の使用シナリオをシミュレートし、
+      全機能の統合動作を検証する。
+    subtasks:
+      - "tests/test_notification_integration.pyを作成"
+      - "test_end_to_end_notification_flow"
+      - "test_history_and_throttle_integration"
+      - "test_error_handling_scenarios"
+      - "test_multi_platform_scenarios"
+      - "test_concurrent_notifications"
+    files:
+      - path: "tests/test_notification_integration.py"
+        action: "create"
+        lines: 400
+    tests:
+      - "tests/test_notification_integration.py"
+  
+  - id: "T8"
+    title: "ユニットテストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 4
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4"]
+    validates: ["AC-001", "AC-002", "AC-004"]
+    description: |
+      個別関数とクラスのユニットテストを作成する。
+      各プラットフォーム送信、環境変数解決、頻度制御の
+      各機能を詳細にテストする。
+    subtasks:
+      - "tests/test_notification_unit.pyを作成"
+      - "test_platform_specific_sending（4プラットフォーム）"
+      - "test_env_var_resolution（正常系・異常系）"
+      - "test_notification_throttle（全パターン）"
+      - "test_metadata_handling"
+      - "モックを使用した分離テスト"
+    files:
+      - path: "tests/test_notification_unit.py"
+        action: "create"
+        lines: 450
+    tests:
+      - "tests/test_notification_unit.py"
+  
+  - id: "T9"
+    title: "セキュリティテストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T2"]
+    validates: ["AC-002", "AC-005"]
+    description: |
+      セキュリティ関連の機能を詳細にテストする。
+      環境変数管理、URL検証、機密情報保護を検証する。
+    subtasks:
+      - "tests/test_notification_security.pyを作成"
+      - "test_env_var_security"
+      - "test_url_validation"
+      - "test_credential_protection"
+      - "test_timeout_enforcement"
+      - "test_injection_prevention"
+    files:
+      - path: "tests/test_notification_security.py"
+        action: "create"
+        lines: 250
+    tests:
+      - "tests/test_notification_security.py"
+  
+  - id: "T10"
+    title: "パフォーマンステストの作成"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T6", "T7", "T8"]
+    validates: ["AC-001", "AC-004"]
+    description: |
+      通知送信、履歴保存、頻度制御判定の
+      性能要件を検証するテストを作成する。
+    subtasks:
+      - "tests/test_notification_performance.pyを作成"
+      - "通知送信処理時間測定（< 10秒）"
+      - "履歴保存処理時間測定（< 100ms）"
+      - "頻度制御判定時間測定（< 50ms）"
+      - "大量通知での性能測定"
+      - "タイムアウト動作の検証"
+    files:
+      - path: "tests/test_notification_performance.py"
+        action: "create"
+        lines: 200
+    tests:
+      - "tests/test_notification_performance.py"
+  
+  - id: "T11"
+    title: "ドキュメント更新"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4", "T5"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    description: |
+      統合通知システムの仕様化に伴い、関連ドキュメントを更新する。
+      設定方法、使用例、トラブルシューティングを追加する。
+    subtasks:
+      - "README.mdに統合通知システムの説明を追加"
+      - "docs/EXAMPLES.mdに設定例を追加"
+      - "環境変数設定の説明を追加"
+      - "トラブルシューティングガイドを追加"
+      - "docs/CHANGELOG.mdに記録"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 60
+      - path: "docs/EXAMPLES.md"
+        action: "update"
+        lines: 50
+      - path: "docs/CHANGELOG.md"
+        action: "update"
+        lines: 10
+    tests: []
+  
+  - id: "T12"
+    title: "全テスト実行とカバレッジ確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T6", "T7", "T8", "T9", "T10"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    description: |
+      作成した全テストを実行し、カバレッジを確認する。
+      全テストがパスし、カバレッジが95%以上であることを確認する。
+    subtasks:
+      - "python -m pytest tests/test_notification_*.py -v"
+      - "bash run_coverage.sh"
+      - "notificationモジュールのカバレッジが95%以上であることを確認"
+      - "テスト結果の分析と改善"
+      - "性能テスト結果の評価"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 1
+    tests: []
+  
+  - id: "T13"
+    title: "手動動作確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4", "T5", "T11", "T12"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004", "AC-005"]
+    description: |
+      実際の使用環境で手動動作確認を行い、
+      全ての受入基準が満たされていることを確認する。
+    subtasks:
+      - "各プラットフォームへの通知送信確認"
+      - "環境変数設定の動作確認"
+      - "頻度制御機能の動作確認"
+      - "エラーケースの動作確認"
+      - "セキュリティ機能の確認"
+      - "性能要件の確認"
+    files: []
+    tests: []
+
+completion-criteria:
+  - id: "CC-001"
+    description: "全テストがパス"
+    status: "pending"
+    validation: "pytest tests/test_notification_*.py -v"
+    result: null
+  
+  - id: "CC-002"
+    description: "カバレッジ95%以上を維持"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-003"
+    description: "notificationモジュールのカバレッジ95%以上"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-004"
+    description: "パフォーマンス要件を満たす"
+    status: "pending"
+    validation: "pytest tests/test_notification_performance.py -v"
+    result: null
+  
+  - id: "CC-005"
+    description: "セキュリティテストがパス"
+    status: "pending"
+    validation: "pytest tests/test_notification_security.py -v"
+    result: null
+  
+  - id: "CC-006"
+    description: "ドキュメント更新完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-007"
+    description: "手動動作確認完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-008"
+    description: "CHANGELOG.mdに記録"
+    status: "pending"
+    validation: "manual"
+    result: null
+
+execution-plan:
+  parallel-tasks:
+    - ["T6", "T7", "T8", "T9", "T10"]
+    - ["T11"]
+  
+  critical-path:
+    - "T1"
+    - "T2"
+    - "T3"
+    - "T4"
+    - "T7"
+    - "T12"
+    - "T13"
+  
+  total-estimated-hours: 34
+
+risks:
+  - task: "T1"
+    risk: "既存実装が仕様と大きく異なる可能性"
+    mitigation: "段階的な調整と既存機能の保持"
+    probability: "medium"
+    impact: "medium"
+  
+  - task: "T2"
+    risk: "セキュリティ要件の複雑性"
+    mitigation: "段階的な実装と専門知識の活用"
+    probability: "medium"
+    impact: "high"
+  
+  - task: "T6"
+    risk: "プロパティテストの複雑性"
+    mitigation: "シンプルなプロパティから開始し段階的に拡張"
+    probability: "medium"
+    impact: "low"
+  
+  - task: "T10"
+    risk: "パフォーマンス要件を満たせない可能性"
+    mitigation: "要件の見直しと最適化の実施"
+    probability: "low"
+    impact: "medium"
+  
+  - task: "T13"
+    risk: "外部サービス依存による動作確認困難"
+    mitigation: "モックサーバーとテスト環境の活用"
+    probability: "medium"
+    impact: "low"

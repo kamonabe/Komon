@@ -1,0 +1,362 @@
+# タスクリスト: 履歴管理システム
+
+metadata:
+  title: "履歴管理システム"
+  feature: "history-management-system"
+  status: "pending"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  completed: null
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+tasks:
+  - id: "T1"
+    title: "既存履歴管理コードの仕様適合性確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: []
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      現在のsrc/komon/history.pyが設計仕様に適合しているかを確認し、
+      必要に応じて仕様に合わせて調整する。
+      データ保存形式、ローテーション戦略、取得方法の実装を検証する。
+    subtasks:
+      - "CSV保存形式の確認"
+      - "ローテーション世代数の確認"
+      - "履歴取得順序の確認"
+      - "エラーハンドリングの確認"
+      - "仕様との差異があれば調整"
+    files:
+      - path: "src/komon/history.py"
+        action: "update"
+        lines: 50
+    tests: []
+  
+  - id: "T2"
+    title: "エラーハンドリングの強化"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-004"]
+    description: |
+      ファイル操作エラー、権限エラー、ディスク容量不足に対する
+      適切なエラーハンドリングを実装する。
+      システムの継続性を重視した処理を実現する。
+    subtasks:
+      - "OSErrorの適切なハンドリング"
+      - "PermissionErrorの処理"
+      - "FileNotFoundErrorの処理"
+      - "ディスク容量不足時の処理"
+      - "エラーメッセージの改善"
+    files:
+      - path: "src/komon/history.py"
+        action: "update"
+        lines: 60
+    tests: []
+  
+  - id: "T3"
+    title: "設定可能性の向上"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-002"]
+    description: |
+      履歴ディレクトリとローテーション世代数を
+      設定可能にし、柔軟性を向上させる。
+    subtasks:
+      - "HISTORY_DIRの設定可能化"
+      - "MAX_HISTORY_FILESの設定可能化"
+      - "設定値の検証機能追加"
+      - "デフォルト値の適切な設定"
+    files:
+      - path: "src/komon/history.py"
+        action: "update"
+        lines: 30
+    tests: []
+  
+  - id: "T4"
+    title: "プロパティベーステストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-003"]
+    description: |
+      設計書で定義された3つの正確性プロパティを検証する
+      プロパティベーステストを作成する。
+      hypothesisを使用して網羅的なテストを実装する。
+    subtasks:
+      - "tests/test_history_properties.pyを作成"
+      - "P1: ローテーションの世代数保証テスト"
+      - "P2: 履歴取得の順序性テスト"
+      - "P3: データ保存の冪等性テスト"
+      - "テストデータ生成戦略の実装"
+    files:
+      - path: "tests/test_history_properties.py"
+        action: "create"
+        lines: 200
+    tests:
+      - "tests/test_history_properties.py"
+  
+  - id: "T5"
+    title: "統合テストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      履歴管理システム全体のエンドツーエンドテストを作成する。
+      実際の使用シナリオをシミュレートし、
+      ライフサイクル全体の動作を検証する。
+    subtasks:
+      - "tests/test_history_integration.pyを作成"
+      - "test_end_to_end_history_lifecycle"
+      - "test_history_retrieval_scenarios"
+      - "test_error_handling_scenarios"
+      - "test_concurrent_operations"
+      - "テスト環境の分離"
+    files:
+      - path: "tests/test_history_integration.py"
+        action: "create"
+        lines: 250
+    tests:
+      - "tests/test_history_integration.py"
+  
+  - id: "T6"
+    title: "ユニットテストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-003"]
+    description: |
+      個別関数のユニットテストを作成する。
+      save_current_usage、rotate_history、get_historyの
+      各機能を詳細にテストする。
+    subtasks:
+      - "tests/test_history_unit.pyを作成"
+      - "test_save_current_usage（正常系・異常系）"
+      - "test_rotate_history（各種ファイル数パターン）"
+      - "test_get_history（制限値・空データ）"
+      - "test_csv_format_validation"
+      - "モックを使用した分離テスト"
+    files:
+      - path: "tests/test_history_unit.py"
+        action: "create"
+        lines: 300
+    tests:
+      - "tests/test_history_unit.py"
+  
+  - id: "T7"
+    title: "パフォーマンステストの作成"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T4", "T5", "T6"]
+    validates: ["AC-001", "AC-002", "AC-003"]
+    description: |
+      履歴保存、取得、ローテーション処理の
+      性能要件を検証するテストを作成する。
+    subtasks:
+      - "tests/test_history_performance.pyを作成"
+      - "履歴保存処理時間測定（< 100ms）"
+      - "履歴取得処理時間測定（< 50ms）"
+      - "ローテーション処理時間測定（< 500ms）"
+      - "大量データでの性能測定"
+      - "性能劣化の検出機能"
+    files:
+      - path: "tests/test_history_performance.py"
+        action: "create"
+        lines: 150
+    tests:
+      - "tests/test_history_performance.py"
+  
+  - id: "T8"
+    title: "ファイル形式検証テストの作成"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-001"]
+    description: |
+      保存されるCSVファイルの形式と内容を
+      詳細に検証するテストを作成する。
+    subtasks:
+      - "tests/test_history_file_format.pyを作成"
+      - "CSV形式の妥当性検証"
+      - "タイムスタンプ形式の検証"
+      - "プロセス情報の形式検証"
+      - "ファイル名形式の検証"
+      - "文字エンコーディングの検証"
+    files:
+      - path: "tests/test_history_file_format.py"
+        action: "create"
+        lines: 180
+    tests:
+      - "tests/test_history_file_format.py"
+  
+  - id: "T9"
+    title: "ドキュメント更新"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      履歴管理システムの仕様化に伴い、関連ドキュメントを更新する。
+      履歴データの形式、ローテーション戦略、設定方法を説明する。
+    subtasks:
+      - "README.mdに履歴管理システムの説明を追加"
+      - "履歴データ形式の説明を追加"
+      - "ローテーション戦略の説明を追加"
+      - "設定方法の説明を追加"
+      - "docs/CHANGELOG.mdに記録"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 40
+      - path: "docs/CHANGELOG.md"
+        action: "update"
+        lines: 10
+    tests: []
+  
+  - id: "T10"
+    title: "全テスト実行とカバレッジ確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T4", "T5", "T6", "T7", "T8"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      作成した全テストを実行し、カバレッジを確認する。
+      全テストがパスし、カバレッジが95%以上であることを確認する。
+    subtasks:
+      - "python -m pytest tests/test_history_*.py -v"
+      - "bash run_coverage.sh"
+      - "historyモジュールのカバレッジが95%以上であることを確認"
+      - "テスト結果の分析と改善"
+      - "性能テスト結果の評価"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 1
+    tests: []
+  
+  - id: "T11"
+    title: "手動動作確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T9", "T10"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      実際の使用環境で手動動作確認を行い、
+      全ての受入基準が満たされていることを確認する。
+    subtasks:
+      - "履歴保存機能の動作確認"
+      - "ローテーション機能の動作確認"
+      - "履歴取得機能の動作確認"
+      - "エラーケースの動作確認"
+      - "性能要件の確認"
+    files: []
+    tests: []
+
+completion-criteria:
+  - id: "CC-001"
+    description: "全テストがパス"
+    status: "pending"
+    validation: "pytest tests/test_history_*.py -v"
+    result: null
+  
+  - id: "CC-002"
+    description: "カバレッジ95%以上を維持"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-003"
+    description: "historyモジュールのカバレッジ95%以上"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-004"
+    description: "パフォーマンス要件を満たす"
+    status: "pending"
+    validation: "pytest tests/test_history_performance.py -v"
+    result: null
+  
+  - id: "CC-005"
+    description: "ファイル形式検証テストがパス"
+    status: "pending"
+    validation: "pytest tests/test_history_file_format.py -v"
+    result: null
+  
+  - id: "CC-006"
+    description: "ドキュメント更新完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-007"
+    description: "手動動作確認完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-008"
+    description: "CHANGELOG.mdに記録"
+    status: "pending"
+    validation: "manual"
+    result: null
+
+execution-plan:
+  parallel-tasks:
+    - ["T4", "T5", "T6", "T7", "T8"]
+    - ["T9"]
+  
+  critical-path:
+    - "T1"
+    - "T2"
+    - "T3"
+    - "T5"
+    - "T10"
+    - "T11"
+  
+  total-estimated-hours: 21
+
+risks:
+  - task: "T1"
+    risk: "既存実装が仕様と異なる可能性"
+    mitigation: "段階的な調整と既存機能の保持"
+    probability: "low"
+    impact: "medium"
+  
+  - task: "T4"
+    risk: "プロパティテストの複雑性"
+    mitigation: "シンプルなプロパティから開始し段階的に拡張"
+    probability: "medium"
+    impact: "low"
+  
+  - task: "T7"
+    risk: "パフォーマンス要件を満たせない可能性"
+    mitigation: "要件の見直しと最適化の実施"
+    probability: "low"
+    impact: "medium"

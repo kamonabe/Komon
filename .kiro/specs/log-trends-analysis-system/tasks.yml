@@ -1,0 +1,263 @@
+metadata:
+  title: "ログ傾向分析システム実装タスク"
+  feature: "log-trends-analysis-system"
+  status: "draft"
+  created: "2025-12-17"
+  updated: "2025-12-17"
+  version: "1.0.0"
+
+# 実装タスク
+tasks:
+  - id: "TASK-001"
+    title: "履歴ファイル管理機能の実装 (要件: AC-001)"
+    description: "_get_history_file, _load_history, _save_history関数を実装"
+    acceptance_criteria: ["AC-001"]
+    estimated_hours: 3
+    priority: "high"
+    dependencies: []
+    
+    subtasks:
+      - "履歴ファイルパス生成機能"
+      - "JSON形式での履歴読み込み"
+      - "履歴データの保存機能"
+      - "ディレクトリ自動作成"
+    
+    validation:
+      - "履歴ファイルが適切なパスに作成される"
+      - "JSON形式での読み書きが正常動作"
+      - "ファイル不存在時に空リストを返す"
+      - "保存エラー時に適切な警告表示"
+
+  - id: "TASK-002"
+    title: "状態ファイル読み込み機能の実装 (要件: AC-001,AC-004)"
+    description: "pickle形式の状態ファイルから行数を取得する機能を実装"
+    acceptance_criteria: ["AC-001", "AC-004"]
+    estimated_hours: 2
+    priority: "high"
+    dependencies: []
+    
+    subtasks:
+      - "pickle形式ファイルの読み込み"
+      - "辞書形式データの処理（last_line取得）"
+      - "数値形式データの処理"
+      - "ファイル不存在・破損時のエラーハンドリング"
+    
+    validation:
+      - "辞書形式の状態データから正しく行数取得"
+      - "数値形式の状態データを正しく処理"
+      - "ファイル不存在時に適切なメッセージ"
+      - "ファイル破損時にエラーメッセージ表示"
+
+  - id: "TASK-003"
+    title: "履歴データ管理ロジックの実装 (要件: AC-001)"
+    description: "30日分の履歴データ管理と新エントリ追加機能を実装"
+    acceptance_criteria: ["AC-001"]
+    estimated_hours: 2
+    priority: "high"
+    dependencies: ["TASK-001"]
+    
+    subtasks:
+      - "新しい履歴エントリの追加"
+      - "日付での昇順ソート"
+      - "30日制限での古いデータ削除"
+      - "重複日付の防止"
+    
+    validation:
+      - "履歴は常に30エントリ以下"
+      - "日付昇順でソートされている"
+      - "重複日付が存在しない"
+      - "古いデータが自動削除される"
+
+  - id: "TASK-004"
+    title: "増加率計算機能の実装 (要件: AC-002)"
+    description: "前日比での増加率を正確に計算する機能を実装"
+    acceptance_criteria: ["AC-002"]
+    estimated_hours: 2
+    priority: "high"
+    dependencies: ["TASK-003"]
+    
+    subtasks:
+      - "増加率計算式の実装"
+      - "ゼロ除算対策（分母最小値1）"
+      - "負の値への対応"
+      - "データ型混在への対応"
+    
+    validation:
+      - "増加率 = ((current - previous) / max(previous, 1)) * 100"
+      - "previous=0時に適切に計算"
+      - "負の値でも正常に計算"
+      - "辞書・数値両形式で動作"
+
+  - id: "TASK-005"
+    title: "傾向分析メイン機能の実装 (要件: AC-001,AC-002,AC-004)"
+    description: "analyze_log_trend関数でメイン分析ロジックを実装"
+    acceptance_criteria: ["AC-001", "AC-002", "AC-004"]
+    estimated_hours: 3
+    priority: "high"
+    dependencies: ["TASK-002", "TASK-004"]
+    
+    subtasks:
+      - "現在行数の取得"
+      - "履歴データとの統合"
+      - "増加率の計算と判定"
+      - "結果メッセージの生成"
+    
+    validation:
+      - "初回実行時に適切なメッセージ"
+      - "データ不足時に蓄積状況表示"
+      - "急増時に警告メッセージ"
+      - "正常範囲時に増加率表示"
+
+  - id: "TASK-006"
+    title: "連続急増検出機能の実装 (要件: AC-003)"
+    description: "detect_repeated_spikes関数で複数日の急増パターンを検出"
+    acceptance_criteria: ["AC-003"]
+    estimated_hours: 2
+    priority: "high"
+    dependencies: ["TASK-003", "TASK-004"]
+    
+    subtasks:
+      - "指定日数分のデータ存在確認"
+      - "各日の増加率計算"
+      - "20%閾値での急増カウント"
+      - "連続急増判定ロジック"
+    
+    validation:
+      - "データ不足時にFalseを返す"
+      - "N日間でN回以上急増時にTrue"
+      - "20%閾値で正確に判定"
+      - "境界値での適切な動作"
+
+  - id: "TASK-007"
+    title: "エラーハンドリングの実装 (要件: AC-004)"
+    description: "ファイルI/Oエラーや異常データへの対応を実装"
+    acceptance_criteria: ["AC-004"]
+    estimated_hours: 2
+    priority: "medium"
+    dependencies: ["TASK-005", "TASK-006"]
+    
+    subtasks:
+      - "状態ファイル読み込みエラー処理"
+      - "履歴保存エラー処理"
+      - "データ形式エラー処理"
+      - "適切なエラーメッセージ生成"
+    
+    validation:
+      - "ファイル不存在時に適切なメッセージ"
+      - "保存エラー時に警告表示して継続"
+      - "データ破損時にエラーメッセージ"
+      - "システムが停止しない"
+
+  - id: "TASK-008"
+    title: "単体テストの実装 (要件: AC-001,AC-002,AC-003,AC-004)"
+    description: "全関数の単体テストを実装"
+    acceptance_criteria: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    estimated_hours: 4
+    priority: "medium"
+    dependencies: ["TASK-007"]
+    
+    subtasks:
+      - "履歴管理機能のテスト"
+      - "増加率計算のテスト"
+      - "連続急増検出のテスト"
+      - "エラーハンドリングのテスト"
+    
+    validation:
+      - "テストカバレッジ95%以上"
+      - "全ての境界値をテスト"
+      - "エラー条件での動作確認"
+      - "データ形式変換のテスト"
+
+  - id: "TASK-009"
+    title: "統合テストの実装 (要件: AC-001,AC-002,AC-003,AC-004)"
+    description: "実際のログファイルでの動作確認テストを実装"
+    acceptance_criteria: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    estimated_hours: 3
+    priority: "medium"
+    dependencies: ["TASK-008"]
+    
+    subtasks:
+      - "実ログファイルでのテスト"
+      - "長期間データでの性能テスト"
+      - "ファイルI/Oエラー時のテスト"
+      - "メモリ使用量テスト"
+    
+    validation:
+      - "実際のログで正常動作"
+      - "100ms以内での分析完了"
+      - "メモリ使用量の最小化"
+      - "エラー時の適切な回復"
+
+  - id: "TASK-010"
+    title: "プロパティベーステストの実装 (要件: AC-001,AC-002,AC-003)"
+    description: "正確性特性を検証するプロパティテストを実装"
+    acceptance_criteria: ["AC-001", "AC-002", "AC-003"]
+    estimated_hours: 3
+    priority: "medium"
+    dependencies: ["TASK-008"]
+    
+    subtasks:
+      - "履歴データ整合性のプロパティテスト"
+      - "増加率計算正確性のプロパティテスト"
+      - "連続急増検出一貫性のプロパティテスト"
+      - "エラー耐性のプロパティテスト"
+    
+    validation:
+      - "P1: 履歴データ整合性確認"
+      - "P2: 増加率計算正確性確認"
+      - "P3: 連続急増検出一貫性確認"
+      - "P4: エラー耐性保証確認"
+
+  - id: "TASK-011"
+    title: "パフォーマンス最適化 (要件: AC-001,AC-002)"
+    description: "分析処理のパフォーマンス最適化"
+    acceptance_criteria: ["AC-001", "AC-002"]
+    estimated_hours: 2
+    priority: "low"
+    dependencies: ["TASK-009"]
+    
+    subtasks:
+      - "履歴ファイルサイズの最適化"
+      - "メモリ使用量の最適化"
+      - "不要な計算の削除"
+      - "ベンチマークテスト"
+    
+    validation:
+      - "分析処理100ms以内完了"
+      - "履歴ファイル最小サイズ"
+      - "メモリ使用量削減"
+      - "パフォーマンス回帰なし"
+
+  - id: "TASK-012"
+    title: "ドキュメントとサンプルの作成 (要件: AC-002,AC-003)"
+    description: "使用方法のドキュメントと設定サンプルを作成"
+    acceptance_criteria: ["AC-002", "AC-003"]
+    estimated_hours: 2
+    priority: "low"
+    dependencies: ["TASK-010"]
+    
+    subtasks:
+      - "API使用方法ドキュメント"
+      - "閾値設定ガイド"
+      - "トラブルシューティングガイド"
+      - "実用例とサンプルコード"
+    
+    validation:
+      - "明確な使用方法説明"
+      - "実用的な設定例"
+      - "トラブル対応手順"
+      - "サンプルコードの動作確認"
+
+# タスク統計
+task_summary:
+  total_tasks: 12
+  estimated_total_hours: 30
+  priority_breakdown:
+    high: 6
+    medium: 4
+    low: 2
+  
+  milestone_breakdown:
+    core_implementation: ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006"]
+    quality_assurance: ["TASK-007", "TASK-008", "TASK-009", "TASK-010"]
+    optimization_phase: ["TASK-011", "TASK-012"]

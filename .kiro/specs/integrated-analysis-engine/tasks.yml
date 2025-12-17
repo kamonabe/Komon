@@ -1,0 +1,396 @@
+# タスクリスト: 統合分析エンジン
+
+metadata:
+  title: "統合分析エンジン"
+  feature: "integrated-analysis-engine"
+  status: "pending"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  completed: null
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+tasks:
+  - id: "T1"
+    title: "既存分析エンジンの仕様適合性確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: []
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      現在のsrc/komon/analyzer.pyが設計仕様に適合しているかを確認し、
+      必要に応じて仕様に合わせて調整する。
+      閾値判定ロジック、機能統合制御、メッセージ生成の実装を検証する。
+    subtasks:
+      - "閾値判定の単調性を確認"
+      - "機能統合制御の冪等性を確認"
+      - "メッセージテンプレートの完全性を確認"
+      - "レベル情報提供の一貫性を確認"
+      - "仕様との差異があれば調整"
+    files:
+      - path: "src/komon/analyzer.py"
+        action: "update"
+        lines: 100
+    tests: []
+  
+  - id: "T2"
+    title: "エラーハンドリングの強化"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-002"]
+    description: |
+      機能モジュールの読み込み失敗、不正なデータ入力、
+      設定エラーに対する適切なエラーハンドリングを実装する。
+      システムの可用性を優先した継続処理を実現する。
+    subtasks:
+      - "ImportErrorの適切なハンドリング"
+      - "不正なリソース使用率データのクランプ処理"
+      - "KeyErrorの適切なハンドリング"
+      - "ログ出力の追加"
+    files:
+      - path: "src/komon/analyzer.py"
+        action: "update"
+        lines: 80
+    tests: []
+  
+  - id: "T3"
+    title: "機能統合制御の改善"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-002"]
+    description: |
+      段階的通知メッセージとコンテキストアドバイスの
+      統合制御ロジックを改善し、より柔軟で拡張性の高い
+      機能組み合わせを実現する。
+    subtasks:
+      - "機能フラグの統一的な管理"
+      - "機能の動的な有効/無効制御"
+      - "新機能追加のためのフレームワーク整備"
+      - "機能間の依存関係管理"
+    files:
+      - path: "src/komon/analyzer.py"
+        action: "update"
+        lines: 120
+    tests: []
+  
+  - id: "T4"
+    title: "メッセージテンプレートの拡張"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1"]
+    validates: ["AC-003"]
+    description: |
+      レベル別メッセージテンプレートを拡張し、
+      より分かりやすく親しみやすいメッセージを生成する。
+      メッセージの一貫性と品質を向上させる。
+    subtasks:
+      - "メッセージテンプレートの見直し"
+      - "詳細メッセージの改善"
+      - "絵文字とプレフィックスの最適化"
+      - "メッセージの国際化対応準備"
+    files:
+      - path: "src/komon/analyzer.py"
+        action: "update"
+        lines: 60
+    tests: []
+  
+  - id: "T5"
+    title: "プロパティベーステストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 5
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3"]
+    validates: ["AC-001", "AC-002", "AC-004"]
+    description: |
+      設計書で定義された4つの正確性プロパティを検証する
+      プロパティベーステストを作成する。
+      hypothesisを使用して網羅的なテストを実装する。
+    subtasks:
+      - "tests/test_analyzer_properties.pyを作成"
+      - "P1: 閾値判定の単調性テスト"
+      - "P2: 機能統合の冪等性テスト"
+      - "P4: レベル情報の一貫性テスト"
+      - "テストデータ生成戦略の実装"
+      - "エッジケースの網羅"
+    files:
+      - path: "tests/test_analyzer_properties.py"
+        action: "create"
+        lines: 300
+    tests:
+      - "tests/test_analyzer_properties.py"
+  
+  - id: "T6"
+    title: "統合テストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 4
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4"]
+    validates: ["AC-001", "AC-002", "AC-004"]
+    description: |
+      統合分析エンジン全体のエンドツーエンドテストを作成する。
+      実際の使用シナリオをシミュレートし、
+      複数機能の統合動作を検証する。
+    subtasks:
+      - "tests/test_analyzer_integration.pyを作成"
+      - "test_end_to_end_analysis"
+      - "test_feature_combinations"
+      - "test_level_info_provision"
+      - "test_error_scenarios"
+      - "test_performance_requirements"
+    files:
+      - path: "tests/test_analyzer_integration.py"
+        action: "create"
+        lines: 350
+    tests:
+      - "tests/test_analyzer_integration.py"
+  
+  - id: "T7"
+    title: "ユニットテストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 4
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4"]
+    validates: ["AC-001", "AC-003"]
+    description: |
+      個別関数のユニットテストを作成する。
+      load_thresholds、analyze_usage、_generate_messageの
+      各機能を詳細にテストする。
+    subtasks:
+      - "tests/test_analyzer_unit.pyを作成"
+      - "test_load_thresholds（正常系・異常系）"
+      - "test_generate_message（全レベル・全リソース）"
+      - "test_threshold_level_determination"
+      - "test_message_template_completeness"
+      - "モックを使用した分離テスト"
+    files:
+      - path: "tests/test_analyzer_unit.py"
+        action: "create"
+        lines: 400
+    tests:
+      - "tests/test_analyzer_unit.py"
+  
+  - id: "T8"
+    title: "パフォーマンステストの作成"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T5", "T6", "T7"]
+    validates: ["AC-001", "AC-002"]
+    description: |
+      分析処理時間、メモリ使用量、機能統合オーバーヘッドの
+      性能要件を検証するテストを作成する。
+    subtasks:
+      - "tests/test_analyzer_performance.pyを作成"
+      - "分析処理時間測定（< 50ms）"
+      - "メモリ使用量測定（< 10MB）"
+      - "機能統合オーバーヘッド測定（< 10ms）"
+      - "性能劣化の検出機能"
+      - "ベンチマーク結果の記録"
+    files:
+      - path: "tests/test_analyzer_performance.py"
+        action: "create"
+        lines: 200
+    tests:
+      - "tests/test_analyzer_performance.py"
+  
+  - id: "T9"
+    title: "機能統合テストの作成"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 3
+    actual-hours: null
+    depends-on: ["T3"]
+    validates: ["AC-002"]
+    description: |
+      段階的通知メッセージとコンテキストアドバイスとの
+      統合動作を詳細にテストする。
+      機能の組み合わせパターンを網羅的に検証する。
+    subtasks:
+      - "tests/test_analyzer_feature_integration.pyを作成"
+      - "段階的通知メッセージ単体テスト"
+      - "コンテキストアドバイス単体テスト"
+      - "両機能統合テスト"
+      - "機能無効時のテスト"
+      - "機能モジュール読み込み失敗テスト"
+    files:
+      - path: "tests/test_analyzer_feature_integration.py"
+        action: "create"
+        lines: 250
+    tests:
+      - "tests/test_analyzer_feature_integration.py"
+  
+  - id: "T10"
+    title: "ドキュメント更新"
+    status: "pending"
+    priority: "medium"
+    estimated-hours: 2
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      統合分析エンジンの仕様化に伴い、関連ドキュメントを更新する。
+      機能統合の説明、使用方法、設定例を追加する。
+    subtasks:
+      - "README.mdに統合分析エンジンの説明を追加"
+      - "docs/EXAMPLES.mdに機能統合例を追加"
+      - "機能フラグの使用方法を説明"
+      - "エラーハンドリングの説明を追加"
+      - "docs/CHANGELOG.mdに記録"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 60
+      - path: "docs/EXAMPLES.md"
+        action: "update"
+        lines: 40
+      - path: "docs/CHANGELOG.md"
+        action: "update"
+        lines: 10
+    tests: []
+  
+  - id: "T11"
+    title: "全テスト実行とカバレッジ確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T5", "T6", "T7", "T8", "T9"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      作成した全テストを実行し、カバレッジを確認する。
+      全テストがパスし、カバレッジが95%以上であることを確認する。
+    subtasks:
+      - "python -m pytest tests/test_analyzer_*.py -v"
+      - "bash run_coverage.sh"
+      - "analyzerモジュールのカバレッジが95%以上であることを確認"
+      - "テスト結果の分析と改善"
+      - "性能テスト結果の評価"
+    files:
+      - path: "README.md"
+        action: "update"
+        lines: 1
+    tests: []
+  
+  - id: "T12"
+    title: "手動動作確認"
+    status: "pending"
+    priority: "high"
+    estimated-hours: 1
+    actual-hours: null
+    depends-on: ["T1", "T2", "T3", "T4", "T10", "T11"]
+    validates: ["AC-001", "AC-002", "AC-003", "AC-004"]
+    description: |
+      実際の使用環境で手動動作確認を行い、
+      全ての受入基準が満たされていることを確認する。
+    subtasks:
+      - "各機能の組み合わせパターンの動作確認"
+      - "エラーケースの動作確認"
+      - "メッセージ品質の確認"
+      - "性能要件の確認"
+      - "既存機能との互換性確認"
+    files: []
+    tests: []
+
+completion-criteria:
+  - id: "CC-001"
+    description: "全テストがパス"
+    status: "pending"
+    validation: "pytest tests/test_analyzer_*.py -v"
+    result: null
+  
+  - id: "CC-002"
+    description: "カバレッジ95%以上を維持"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-003"
+    description: "analyzerモジュールのカバレッジ95%以上"
+    status: "pending"
+    validation: "bash run_coverage.sh"
+    result: null
+  
+  - id: "CC-004"
+    description: "パフォーマンス要件を満たす"
+    status: "pending"
+    validation: "pytest tests/test_analyzer_performance.py -v"
+    result: null
+  
+  - id: "CC-005"
+    description: "機能統合テストがパス"
+    status: "pending"
+    validation: "pytest tests/test_analyzer_feature_integration.py -v"
+    result: null
+  
+  - id: "CC-006"
+    description: "ドキュメント更新完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-007"
+    description: "手動動作確認完了"
+    status: "pending"
+    validation: "manual"
+    result: null
+  
+  - id: "CC-008"
+    description: "CHANGELOG.mdに記録"
+    status: "pending"
+    validation: "manual"
+    result: null
+
+execution-plan:
+  parallel-tasks:
+    - ["T5", "T6", "T7", "T8", "T9"]
+    - ["T10"]
+  
+  critical-path:
+    - "T1"
+    - "T2"
+    - "T3"
+    - "T6"
+    - "T11"
+    - "T12"
+  
+  total-estimated-hours: 32
+
+risks:
+  - task: "T1"
+    risk: "既存実装が仕様と大きく異なる可能性"
+    mitigation: "段階的な調整と既存機能の保持"
+    probability: "medium"
+    impact: "medium"
+  
+  - task: "T3"
+    risk: "機能統合の複雑性による実装困難"
+    mitigation: "シンプルな統合ロジックから開始し段階的に拡張"
+    probability: "medium"
+    impact: "medium"
+  
+  - task: "T5"
+    risk: "プロパティテストの複雑性"
+    mitigation: "基本的なプロパティから開始し段階的に拡張"
+    probability: "medium"
+    impact: "low"
+  
+  - task: "T8"
+    risk: "パフォーマンス要件を満たせない可能性"
+    mitigation: "要件の見直しと最適化の実施"
+    probability: "low"
+    impact: "medium"

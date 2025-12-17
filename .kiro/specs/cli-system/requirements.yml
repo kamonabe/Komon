@@ -1,0 +1,166 @@
+# 要件定義: CLIシステム
+
+metadata:
+  title: "CLIシステム"
+  feature: "cli-system"
+  status: "draft"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+  complexity: "high"
+  estimated-hours: 16
+  dependencies: []
+
+overview:
+  description: |
+    Komonのコマンドラインインターフェース全体を管理するシステム。
+    設定ディレクトリの自動検出・作成、サブコマンド管理、
+    引数処理、エラーハンドリングを統合的に提供する。
+    開発環境とインストール環境の両方に対応し、
+    ユーザーが直感的にKomonを使用できるようにする。
+  background: |
+    現在のCLIシステムは実装されているが仕様が明文化されていない。
+    設定ディレクトリの検出ロジック、サブコマンドの動作、
+    エラーハンドリングの方針が暗黙的になっている。
+    将来の機能拡張や保守性向上のため、
+    CLIシステム全体の仕様を明確に定義する必要がある。
+  goals:
+    - "設定ディレクトリの自動検出・作成機能の仕様化"
+    - "全サブコマンドの動作仕様の明確化"
+    - "エラーハンドリング方針の統一"
+    - "開発環境とインストール環境の両対応"
+    - "将来の拡張性を考慮した設計"
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "設定ディレクトリの自動検出"
+    priority: "high"
+    type: "functional"
+    description: |
+      環境変数、開発環境、ホームディレクトリの優先順位で
+      設定ディレクトリを自動検出し、存在しない場合は作成する
+    when: "komonコマンドが実行された時"
+    then: "適切な設定ディレクトリが検出または作成される"
+    examples:
+      - input: "KOMON_CONFIG_DIR=/custom/path が設定済み"
+        output: "/custom/path を使用"
+      - input: "カレントディレクトリに settings.yml が存在"
+        output: "カレントディレクトリを使用（開発環境）"
+      - input: "上記のいずれも該当しない"
+        output: "~/.komon を作成して使用"
+
+  - id: "AC-002"
+    title: "サブコマンドの実行"
+    priority: "high"
+    type: "functional"
+    description: |
+      initial/status/advise/guideの各サブコマンドが
+      適切な引数とオプションで実行できる
+    when: "有効なサブコマンドが指定された時"
+    then: "対応するモジュールが正しい引数で実行される"
+    examples:
+      - input: "komon status --verbose"
+        output: "status.run_status(config_dir, verbose=True)"
+      - input: "komon advise --history 10"
+        output: "advise.run_advise(config_dir, history=10)"
+      - input: "komon initial"
+        output: "initial.run_initial_setup(config_dir)"
+
+  - id: "AC-003"
+    title: "エラーハンドリング"
+    priority: "high"
+    type: "functional"
+    description: |
+      無効なコマンド、引数エラー、設定エラーに対して
+      適切なエラーメッセージとヘルプを表示する
+    when: "エラーが発生した時"
+    then: "分かりやすいエラーメッセージとヘルプが表示される"
+    examples:
+      - input: "komon invalid-command"
+        output: "エラーメッセージ + ヘルプ表示"
+      - input: "komon advise --invalid-option"
+        output: "無効なオプションエラー + 使用方法"
+      - input: "設定ディレクトリ作成失敗"
+        output: "権限エラーメッセージ + 対処方法"
+
+  - id: "AC-004"
+    title: "バージョン情報の表示"
+    priority: "medium"
+    type: "functional"
+    description: |
+      --version/-v オプションで現在のバージョンを表示する
+    when: "--version または -v が指定された時"
+    then: "Komon version X.Y.Z が表示される"
+    examples:
+      - input: "komon --version"
+        output: "Komon version 1.24.0"
+      - input: "komon -v"
+        output: "Komon version 1.24.0"
+
+non-functional-requirements:
+  performance:
+    - "CLI起動時間が500ms以内"
+    - "設定ディレクトリ検出が100ms以内"
+    - "ヘルプ表示が200ms以内"
+  reliability:
+    - "設定ディレクトリ作成失敗時も適切にエラー処理"
+    - "権限不足時も分かりやすいメッセージを表示"
+    - "不正な引数でもクラッシュしない"
+  maintainability:
+    - "新しいサブコマンドを簡単に追加できる"
+    - "引数パーサーの設定が分離されている"
+    - "エラーメッセージが一元管理されている"
+  usability:
+    - "ヘルプメッセージは日本語で分かりやすく"
+    - "エラーメッセージに具体的な対処方法を含む"
+    - "開発者と一般ユーザーの両方が使いやすい"
+
+constraints:
+  - "Python 3.10+以上"
+  - "argparseライブラリを使用"
+  - "既存のサブコマンド構造を維持"
+  - "後方互換性を保持"
+
+assumptions:
+  - "ユーザーはコマンドラインの基本操作ができる"
+  - "設定ディレクトリへの書き込み権限がある"
+  - "Python環境が適切にセットアップされている"
+
+risks:
+  - risk: "設定ディレクトリの権限不足"
+    mitigation: "適切なエラーメッセージと代替案を提示"
+    probability: "medium"
+    impact: "medium"
+  
+  - risk: "環境変数の設定ミス"
+    mitigation: "検証ロジックと警告メッセージを追加"
+    probability: "low"
+    impact: "medium"
+
+scope:
+  in-scope:
+    - "設定ディレクトリの自動検出・作成"
+    - "全サブコマンドの引数処理"
+    - "エラーハンドリングとヘルプ表示"
+    - "バージョン情報の表示"
+    - "開発環境とインストール環境の対応"
+  
+  out-of-scope:
+    - "各サブコマンドの内部実装（別モジュールで管理）"
+    - "設定ファイルの内容検証（settings_validatorで管理）"
+    - "ログ出力機能（将来の拡張として検討）"
+    - "自動補完機能（将来の拡張として検討）"
+
+success-metrics:
+  quantitative:
+    - "テストカバレッジ95%以上を維持"
+    - "全既存テストがパス"
+    - "CLI起動時間500ms以内"
+    - "新規テスト15件以上を追加"
+  
+  qualitative:
+    - "開発者が新しいサブコマンドを簡単に追加できる"
+    - "ユーザーがエラー時に適切な対処ができる"
+    - "設定ディレクトリの管理が透明で分かりやすい"

@@ -1,0 +1,348 @@
+# 設計書: 履歴管理システム
+
+metadata:
+  title: "履歴管理システム"
+  feature: "history-management-system"
+  status: "draft"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+architecture:
+  overview: |
+    履歴管理システムは3層構造で設計されている：
+    1. ファイル管理層（ディレクトリ作成・ファイル操作）- 基盤的なファイル操作
+    2. データ永続化層（CSV保存・読み込み）- 構造化データの永続化
+    3. ライフサイクル管理層（ローテーション・取得）- データの生存期間管理
+    
+    各層は独立性を保ち、エラー時の影響を局所化する設計となっている。
+  
+  components:
+    - name: "save_current_usage"
+      type: "function"
+      responsibility: "リソース使用履歴の保存"
+      dependencies: ["csv", "datetime"]
+    
+    - name: "rotate_history"
+      type: "function"
+      responsibility: "履歴ファイルのローテーション"
+      dependencies: ["pathlib", "os"]
+    
+    - name: "get_history"
+      type: "function"
+      responsibility: "履歴データの取得"
+      dependencies: ["pathlib", "csv"]
+  
+  data-flow:
+    - from: "リソース使用率データ"
+      to: "CSV形式変換"
+      description: "構造化データの永続化形式への変換"
+    
+    - from: "CSV形式データ"
+      to: "ファイル保存"
+      description: "タイムスタンプ付きファイルとして保存"
+    
+    - from: "保存済みファイル"
+      to: "ローテーション処理"
+      description: "世代管理による古いファイルの削除"
+    
+    - from: "履歴ファイル群"
+      to: "データ取得"
+      description: "指定件数の履歴データ読み込み"
+
+modules:
+  - name: "history"
+    path: "src/komon/history.py"
+    description: |
+      履歴管理システムのメインモジュール。
+      リソース使用履歴の保存、ローテーション、取得を担当する。
+      CSV形式でのデータ永続化とファイルライフサイクル管理を提供する。
+    
+    functions:
+      - name: "save_current_usage"
+        parameters:
+          - name: "usage"
+            type: "dict"
+            description: "リソース使用率データ"
+        returns:
+          type: "None"
+          description: "なし（副作用としてファイル保存）"
+        raises:
+          - "OSError: ファイル作成・書き込み失敗時"
+      
+      - name: "rotate_history"
+        parameters: []
+        returns:
+          type: "None"
+          description: "なし（副作用としてファイル削除）"
+        raises:
+          - "OSError: ファイル削除失敗時（継続）"
+      
+      - name: "get_history"
+        parameters:
+          - name: "limit"
+            type: "int"
+            description: "取得する履歴の件数"
+        returns:
+          type: "list"
+          description: "履歴データのリスト"
+        raises:
+          - "OSError: ファイル読み込み失敗時（継続）"
+
+correctness-properties:
+  - id: "P1"
+    title: "ローテーションの世代数保証"
+    type: "invariant"
+    description: |
+      ローテーション処理後、履歴ファイル数は常に95個以下である。
+      MAX_HISTORY_FILES定数で定義された上限を超えることはない。
+    validates: ["AC-002"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.integers(min_value=0, max_value=200)"
+      assertion: "ローテーション後のファイル数 <= MAX_HISTORY_FILES"
+  
+  - id: "P2"
+    title: "履歴取得の順序性"
+    type: "monotonicity"
+    description: |
+      get_history関数で取得される履歴データは、
+      常に新しい順（タイムスタンプ降順）でソートされている。
+    validates: ["AC-003"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.lists(st.datetimes())"
+      assertion: "取得データのタイムスタンプが降順"
+  
+  - id: "P3"
+    title: "データ保存の冪等性"
+    type: "idempotence"
+    description: |
+      同じリソース使用率データを複数回保存しても、
+      各回で独立したファイルが作成され、データの整合性が保たれる。
+    validates: ["AC-001"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.dictionaries() for usage data"
+      assertion: "複数回保存で独立したファイルが作成"
+  
+  - id: "P4"
+    title: "エラー処理の継続性"
+    type: "invariant"
+    description: |
+      ファイル操作エラーが発生しても、システムは適切にエラーを処理し、
+      可能な処理は継続される。エラーが一部の機能に影響しても、
+      他の機能は正常に動作し続ける。
+    validates: ["AC-004"]
+    test-strategy: "unit"
+    implementation:
+      framework: "pytest"
+      strategy: "エラー注入テスト"
+      assertion: "エラー発生時も処理が継続される"
+
+data-structures:
+  - name: "usage_data"
+    type: "dict"
+    schema:
+      cpu:
+        type: "float"
+        required: true
+        description: "CPU使用率（0-100%）"
+      mem:
+        type: "float"
+        required: true
+        description: "メモリ使用率（0-100%）"
+      disk:
+        type: "float"
+        required: true
+        description: "ディスク使用率（0-100%）"
+      cpu_by_process:
+        type: "list"
+        required: false
+        description: "プロセス別CPU使用率"
+      mem_by_process:
+        type: "list"
+        required: false
+        description: "プロセス別メモリ使用率"
+  
+  - name: "history_record"
+    type: "dict"
+    schema:
+      timestamp:
+        type: "str"
+        required: true
+        description: "ISO形式のタイムスタンプ"
+      cpu:
+        type: "float"
+        required: true
+        description: "CPU使用率"
+      mem:
+        type: "float"
+        required: true
+        description: "メモリ使用率"
+      disk:
+        type: "float"
+        required: true
+        description: "ディスク使用率"
+
+error-handling:
+  - error: "OSError"
+    handling: "continue"
+    message: "履歴ファイルの操作に失敗しました: {operation}"
+    log-level: "error"
+  
+  - error: "PermissionError"
+    handling: "continue"
+    message: "履歴ディレクトリへの書き込み権限がありません: {path}"
+    log-level: "error"
+  
+  - error: "FileNotFoundError"
+    handling: "continue"
+    message: "履歴ファイルが見つかりません: {path}"
+    log-level: "warning"
+
+configuration:
+  - name: "HISTORY_DIR"
+    type: "str"
+    required: false
+    default: "data/usage_history"
+    description: "履歴ファイルの保存ディレクトリ"
+    validation:
+      - "有効なディレクトリパス"
+  
+  - name: "MAX_HISTORY_FILES"
+    type: "int"
+    required: false
+    default: 95
+    description: "保持する履歴ファイルの最大数"
+    validation:
+      - "1以上の整数"
+
+dependencies:
+  internal: []
+  external:
+    - name: "csv"
+      version: "標準ライブラリ"
+      purpose: "CSV形式でのデータ保存・読み込み"
+    - name: "datetime"
+      version: "標準ライブラリ"
+      purpose: "タイムスタンプ生成"
+    - name: "pathlib"
+      version: "標準ライブラリ"
+      purpose: "ファイルパス操作"
+    - name: "os"
+      version: "標準ライブラリ"
+      purpose: "ディレクトリ作成・ファイル操作"
+
+testing-strategy:
+  property-tests:
+    - property: "P1"
+      file: "tests/test_history_properties.py"
+      function: "test_rotation_file_count_invariant"
+    
+    - property: "P2"
+      file: "tests/test_history_properties.py"
+      function: "test_history_retrieval_order"
+    
+    - property: "P3"
+      file: "tests/test_history_properties.py"
+      function: "test_data_save_idempotence"
+  
+  integration-tests:
+    - validates: ["AC-001", "AC-002"]
+      file: "tests/test_history_integration.py"
+      function: "test_end_to_end_history_lifecycle"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_history_integration.py"
+      function: "test_history_retrieval_scenarios"
+    
+    - validates: ["AC-004"]
+      file: "tests/test_history_integration.py"
+      function: "test_error_handling_scenarios"
+  
+  unit-tests:
+    - validates: ["AC-001"]
+      file: "tests/test_history_unit.py"
+      function: "test_save_current_usage"
+    
+    - validates: ["AC-002"]
+      file: "tests/test_history_unit.py"
+      function: "test_rotate_history"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_history_unit.py"
+      function: "test_get_history"
+
+performance:
+  targets:
+    - metric: "履歴保存処理時間"
+      target: "< 100ms"
+      measurement: "save_current_usage()の実行時間"
+    
+    - metric: "履歴取得処理時間"
+      target: "< 50ms"
+      measurement: "get_history()の実行時間"
+    
+    - metric: "ローテーション処理時間"
+      target: "< 500ms"
+      measurement: "rotate_history()の実行時間"
+
+security:
+  considerations:
+    - "履歴ディレクトリのパス検証（パストラバーサル攻撃防止）"
+    - "ファイル作成時の適切な権限設定（644）"
+    - "機密情報の履歴への記録防止"
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"
+    rationale: |
+      履歴管理は短時間の処理であり、継続的な接続や
+      大量処理を行わない。サーキットブレイカーが必要となる
+      ケースは想定されない。
+    delegated-to: null
+    future-notes: |
+      将来リアルタイム履歴記録機能を追加する場合は再検討が必要。
+  
+  notification-throttling:
+    considered: true
+    decision: "not-applicable"
+    rationale: |
+      履歴管理システム自体は通知機能を持たない。
+    implementation: []
+  
+  baseline-reset:
+    considered: true
+    decision: "not-applicable"
+    rationale: |
+      履歴管理システムはbaselineを使用しない。
+    implementation: []
+  
+  other-considerations:
+    - consideration: "ディスク容量不足時の処理"
+      decision: "adopted"
+      rationale: |
+        ディスク容量不足でファイル作成に失敗した場合、
+        エラーメッセージを表示して処理を継続する。
+        古いファイルの自動削除を促進する。
+    
+    - consideration: "ファイル破損時の処理"
+      decision: "adopted"
+      rationale: |
+        CSV読み込み時にファイル破損を検出した場合、
+        該当ファイルをスキップして処理を継続する。
+        破損ファイルの情報をログに記録する。
+    
+    - consideration: "同時アクセス制御"
+      decision: "not-adopted"
+      rationale: |
+        Komonは単一プロセスでの実行を前提とし、
+        同時アクセスは発生しない。
+        将来マルチプロセス対応する場合は再検討が必要。

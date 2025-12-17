@@ -1,0 +1,431 @@
+# 設計書: 統合通知システム
+
+metadata:
+  title: "統合通知システム"
+  feature: "unified-notification-system"
+  status: "draft"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+architecture:
+  overview: |
+    統合通知システムは4層構造で設計されている：
+    1. プラットフォーム層（各サービスAPI）- 個別プラットフォームへの送信
+    2. 統合インターフェース層（統一API）- 共通の送信インターフェース
+    3. 制御層（頻度制御・履歴管理）- 通知の制御と記録
+    4. 設定管理層（環境変数・設定）- セキュアな設定管理
+    
+    各層は独立性を保ち、新しいプラットフォームの追加が容易な設計となっている。
+  
+  components:
+    - name: "send_slack_alert"
+      type: "function"
+      responsibility: "Slack通知の送信"
+      dependencies: ["requests", "notification_history"]
+    
+    - name: "send_discord_alert"
+      type: "function"
+      responsibility: "Discord通知の送信"
+      dependencies: ["requests", "notification_history"]
+    
+    - name: "send_teams_alert"
+      type: "function"
+      responsibility: "Teams通知の送信"
+      dependencies: ["requests", "notification_history"]
+    
+    - name: "send_email_alert"
+      type: "function"
+      responsibility: "メール通知の送信"
+      dependencies: ["smtplib", "email", "notification_history"]
+    
+    - name: "NotificationThrottle"
+      type: "class"
+      responsibility: "通知頻度制御"
+      dependencies: ["json", "datetime", "pathlib"]
+  
+  data-flow:
+    - from: "通知要求"
+      to: "環境変数解決"
+      description: "機密情報の安全な取得"
+    
+    - from: "環境変数解決"
+      to: "プラットフォーム送信"
+      description: "各サービスAPIへの送信"
+    
+    - from: "プラットフォーム送信"
+      to: "履歴記録"
+      description: "送信結果の記録"
+    
+    - from: "頻度制御判定"
+      to: "通知送信制御"
+      description: "スパム防止制御"
+
+modules:
+  - name: "notification"
+    path: "src/komon/notification.py"
+    description: |
+      統合通知システムのメインモジュール。
+      複数プラットフォームへの通知送信、通知頻度制御、
+      履歴管理との統合を担当する。
+    
+    functions:
+      - name: "send_slack_alert"
+        parameters:
+          - name: "message"
+            type: "str"
+            description: "送信するメッセージ"
+          - name: "webhook_url"
+            type: "str"
+            description: "Slack Webhook URL（env:プレフィックス対応）"
+          - name: "metadata"
+            type: "dict"
+            description: "通知メタデータ"
+        returns:
+          type: "bool"
+          description: "送信成功時True"
+        raises:
+          - "requests.RequestException: ネットワークエラー時（継続）"
+      
+      - name: "send_discord_alert"
+        parameters:
+          - name: "message"
+            type: "str"
+            description: "送信するメッセージ"
+          - name: "webhook_url"
+            type: "str"
+            description: "Discord Webhook URL（env:プレフィックス対応）"
+          - name: "metadata"
+            type: "dict"
+            description: "通知メタデータ"
+        returns:
+          type: "bool"
+          description: "送信成功時True"
+        raises:
+          - "requests.RequestException: ネットワークエラー時（継続）"
+      
+      - name: "send_teams_alert"
+        parameters:
+          - name: "message"
+            type: "str"
+            description: "送信するメッセージ"
+          - name: "webhook_url"
+            type: "str"
+            description: "Teams Webhook URL（env:プレフィックス対応）"
+          - name: "metadata"
+            type: "dict"
+            description: "通知メタデータ"
+        returns:
+          type: "bool"
+          description: "送信成功時True"
+        raises:
+          - "requests.RequestException: ネットワークエラー時（継続）"
+      
+      - name: "send_email_alert"
+        parameters:
+          - name: "message"
+            type: "str"
+            description: "送信するメッセージ"
+          - name: "email_config"
+            type: "dict"
+            description: "メール設定（SMTP情報等）"
+          - name: "metadata"
+            type: "dict"
+            description: "通知メタデータ"
+        returns:
+          type: "bool"
+          description: "送信成功時True"
+        raises:
+          - "smtplib.SMTPException: メール送信エラー時（継続）"
+
+correctness-properties:
+  - id: "P1"
+    title: "通知送信の冪等性"
+    type: "idempotence"
+    description: |
+      同じメッセージと設定で複数回通知を送信しても、
+      各回で独立した送信が行われ、副作用が一貫している。
+      履歴記録も各回で適切に行われる。
+    validates: ["AC-001", "AC-003"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.text() for messages, st.dictionaries() for config"
+      assertion: "複数回送信で一貫した結果"
+  
+  - id: "P2"
+    title: "環境変数解決の一貫性"
+    type: "invariant"
+    description: |
+      env:プレフィックス付きの設定値は、常に対応する環境変数から
+      値が読み込まれる。環境変数が存在しない場合は適切にエラー処理される。
+    validates: ["AC-002"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.text(regex=r'env:[A-Z_]+')"
+      assertion: "環境変数が適切に解決される"
+  
+  - id: "P3"
+    title: "エラー処理の継続性"
+    type: "invariant"
+    description: |
+      通知送信でエラーが発生しても、システムは適切にエラーを処理し、
+      処理を継続する。履歴保存の失敗も通知送信を阻害しない。
+    validates: ["AC-005"]
+    test-strategy: "unit"
+    implementation:
+      framework: "pytest"
+      strategy: "エラー注入テスト"
+      assertion: "エラー発生時も処理が継続される"
+  
+  - id: "P4"
+    title: "頻度制御の単調性"
+    type: "monotonicity"
+    description: |
+      通知頻度制御において、閾値レベルが上昇した場合は
+      常に通知が送信される。時間経過により抑制が解除される。
+    validates: ["AC-004"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.sampled_from(['warning', 'alert', 'critical'])"
+      assertion: "レベル上昇時は必ず通知される"
+
+data-structures:
+  - name: "notification_metadata"
+    type: "dict"
+    schema:
+      metric_type:
+        type: "str"
+        required: true
+        description: "メトリクスタイプ（cpu/memory/disk）"
+      metric_value:
+        type: "float"
+        required: true
+        description: "メトリクス値"
+      threshold_level:
+        type: "str"
+        required: false
+        description: "閾値レベル（warning/alert/critical）"
+  
+  - name: "email_config"
+    type: "dict"
+    schema:
+      smtp_server:
+        type: "str"
+        required: true
+        description: "SMTPサーバーアドレス"
+      smtp_port:
+        type: "int"
+        required: false
+        description: "SMTPポート番号（デフォルト: 587）"
+      from:
+        type: "str"
+        required: true
+        description: "送信者メールアドレス"
+      to:
+        type: "str"
+        required: true
+        description: "受信者メールアドレス"
+      username:
+        type: "str"
+        required: false
+        description: "SMTP認証ユーザー名"
+      password:
+        type: "str"
+        required: false
+        description: "SMTP認証パスワード（env:プレフィックス対応）"
+      use_tls:
+        type: "bool"
+        required: false
+        description: "TLS使用フラグ（デフォルト: True）"
+  
+  - name: "throttle_history"
+    type: "dict"
+    schema:
+      metric_type:
+        type: "dict"
+        required: false
+        description: "メトリクス別の履歴情報"
+
+error-handling:
+  - error: "requests.RequestException"
+    handling: "continue"
+    message: "通知送信に失敗しました: {platform} - {error}"
+    log-level: "error"
+  
+  - error: "smtplib.SMTPException"
+    handling: "continue"
+    message: "メール送信に失敗しました: {error}"
+    log-level: "error"
+  
+  - error: "KeyError"
+    handling: "continue"
+    message: "設定項目が不足しています: {key}"
+    log-level: "warning"
+  
+  - error: "ImportError"
+    handling: "continue"
+    message: "履歴モジュールの読み込みに失敗しました: {module}"
+    log-level: "warning"
+
+configuration:
+  - name: "webhook_url"
+    type: "str"
+    required: true
+    default: null
+    description: "Webhook URL（env:プレフィックスで環境変数指定可能）"
+    validation:
+      - "有効なURL形式またはenv:プレフィックス"
+  
+  - name: "throttle.enabled"
+    type: "bool"
+    required: false
+    default: true
+    description: "通知頻度制御の有効/無効"
+    validation:
+      - "boolean値である"
+  
+  - name: "throttle.interval_minutes"
+    type: "int"
+    required: false
+    default: 60
+    description: "通知間隔（分）"
+    validation:
+      - "1以上の整数"
+  
+  - name: "throttle.escalation_minutes"
+    type: "int"
+    required: false
+    default: 180
+    description: "エスカレーション時間（分）"
+    validation:
+      - "1以上の整数"
+
+dependencies:
+  internal:
+    - "komon.notification_history"
+  external:
+    - name: "requests"
+      version: ">=2.25.0"
+      purpose: "HTTP通信（Webhook送信）"
+    - name: "smtplib"
+      version: "標準ライブラリ"
+      purpose: "メール送信"
+    - name: "email"
+      version: "標準ライブラリ"
+      purpose: "メールメッセージ作成"
+
+testing-strategy:
+  property-tests:
+    - property: "P1"
+      file: "tests/test_notification_properties.py"
+      function: "test_notification_idempotence"
+    
+    - property: "P2"
+      file: "tests/test_notification_properties.py"
+      function: "test_env_var_resolution_consistency"
+    
+    - property: "P4"
+      file: "tests/test_notification_properties.py"
+      function: "test_throttle_monotonicity"
+  
+  integration-tests:
+    - validates: ["AC-001", "AC-002"]
+      file: "tests/test_notification_integration.py"
+      function: "test_end_to_end_notification_flow"
+    
+    - validates: ["AC-003", "AC-004"]
+      file: "tests/test_notification_integration.py"
+      function: "test_history_and_throttle_integration"
+    
+    - validates: ["AC-005"]
+      file: "tests/test_notification_integration.py"
+      function: "test_error_handling_scenarios"
+  
+  unit-tests:
+    - validates: ["AC-001"]
+      file: "tests/test_notification_unit.py"
+      function: "test_platform_specific_sending"
+    
+    - validates: ["AC-002"]
+      file: "tests/test_notification_unit.py"
+      function: "test_env_var_resolution"
+    
+    - validates: ["AC-004"]
+      file: "tests/test_notification_unit.py"
+      function: "test_notification_throttle"
+
+performance:
+  targets:
+    - metric: "通知送信処理時間"
+      target: "< 10秒"
+      measurement: "各send_*_alert()の実行時間（タイムアウト含む）"
+    
+    - metric: "履歴保存処理時間"
+      target: "< 100ms"
+      measurement: "履歴保存処理の実行時間"
+    
+    - metric: "頻度制御判定時間"
+      target: "< 50ms"
+      measurement: "should_send_notification()の実行時間"
+
+security:
+  considerations:
+    - "Webhook URLの検証（有効なURL形式）"
+    - "環境変数による機密情報管理"
+    - "通信時のタイムアウト設定（DoS攻撃防止）"
+    - "メール認証情報の安全な管理"
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"
+    rationale: |
+      通知システムは短時間の処理であり、継続的な接続を維持しない。
+      各通知は独立しており、失敗時は単純にエラーを返すことで十分。
+      上位システムで通知の再試行を制御する方が適切。
+    delegated-to: "upstream-system"
+    future-notes: |
+      将来大量通知機能を追加する場合は再検討が必要。
+  
+  notification-throttling:
+    considered: true
+    decision: "adopted"
+    rationale: |
+      通知スパム防止は通知システムの重要な機能。
+      NotificationThrottleクラスで実装済み。
+    implementation:
+      - "同一メトリクスの通知間隔制御"
+      - "閾値レベル上昇時の即座通知"
+      - "エスカレーション機能"
+  
+  baseline-reset:
+    considered: true
+    decision: "not-applicable"
+    rationale: |
+      通知システムはbaselineを使用しない。
+    implementation: []
+  
+  other-considerations:
+    - consideration: "外部サービス障害時の処理"
+      decision: "adopted"
+      rationale: |
+        外部サービス（Slack、Discord等）の障害時は、
+        適切なタイムアウト設定でエラーを検出し、
+        エラーメッセージを表示して処理を継続する。
+    
+    - consideration: "ネットワーク分断時の処理"
+      decision: "adopted"
+      rationale: |
+        ネットワーク接続不可時は、タイムアウトでエラーを検出し、
+        ローカルログに記録して処理を継続する。
+        
+    - consideration: "設定ファイル破損時の処理"
+      decision: "adopted"
+      rationale: |
+        頻度制御の履歴ファイルが破損した場合、
+        ファイルを削除して新規作成し、処理を継続する。

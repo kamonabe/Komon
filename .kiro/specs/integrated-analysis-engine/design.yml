@@ -1,0 +1,397 @@
+# 設計書: 統合分析エンジン
+
+metadata:
+  title: "統合分析エンジン"
+  feature: "integrated-analysis-engine"
+  status: "draft"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+
+architecture:
+  overview: |
+    統合分析エンジンは4層構造で設計されている：
+    1. 設定層（閾値読み込み・正規化）- 3段階閾値の統一管理
+    2. 分析層（閾値判定・レベル決定）- 各リソースの状態判定
+    3. 統合層（機能統合・制御）- 複数機能の組み合わせ制御
+    4. 出力層（メッセージ生成・フォーマット）- 一貫性のあるアラート生成
+    
+    各層は明確に分離され、機能の追加・変更が容易な設計となっている。
+  
+  components:
+    - name: "load_thresholds"
+      type: "function"
+      responsibility: "閾値設定の読み込みと正規化"
+      dependencies: ["settings_validator"]
+    
+    - name: "analyze_usage"
+      type: "function"
+      responsibility: "統合分析とアラート生成"
+      dependencies: ["progressive_message", "contextual_advisor"]
+    
+    - name: "analyze_usage_with_levels"
+      type: "function"
+      responsibility: "分析とレベル情報の提供"
+      dependencies: ["settings_validator"]
+    
+    - name: "_generate_message"
+      type: "function"
+      responsibility: "レベル別メッセージの生成"
+      dependencies: ["MESSAGE_TEMPLATES"]
+  
+  data-flow:
+    - from: "設定ファイル"
+      to: "閾値正規化"
+      description: "3段階閾値への統一変換"
+    
+    - from: "リソース使用率データ"
+      to: "閾値判定"
+      description: "各リソースのレベル判定"
+    
+    - from: "レベル判定結果"
+      to: "機能統合制御"
+      description: "有効な機能の組み合わせ実行"
+    
+    - from: "統合制御結果"
+      to: "アラート生成"
+      description: "一貫性のあるメッセージ出力"
+
+modules:
+  - name: "analyzer"
+    path: "src/komon/analyzer.py"
+    description: |
+      統合分析エンジンのメインモジュール。
+      リソース使用率の分析、複数機能の統合制御、
+      アラートメッセージの生成を担当する。
+    
+    functions:
+      - name: "load_thresholds"
+        parameters:
+          - name: "config"
+            type: "dict"
+            description: "設定ファイルの内容"
+        returns:
+          type: "dict"
+          description: "正規化された3段階閾値設定"
+        raises:
+          - "ValidationError: 閾値設定が無効な場合"
+      
+      - name: "analyze_usage"
+        parameters:
+          - name: "usage"
+            type: "dict"
+            description: "リソース使用率データ"
+          - name: "thresholds"
+            type: "dict"
+            description: "3段階閾値設定"
+          - name: "use_progressive"
+            type: "bool"
+            description: "段階的メッセージの使用フラグ"
+          - name: "use_contextual_advice"
+            type: "bool"
+            description: "コンテキストアドバイスの使用フラグ"
+          - name: "config"
+            type: "dict"
+            description: "設定ファイルの内容"
+        returns:
+          type: "list"
+          description: "アラートメッセージのリスト"
+        raises:
+          - "ImportError: 機能モジュールの読み込み失敗時（継続）"
+      
+      - name: "analyze_usage_with_levels"
+        parameters:
+          - name: "usage"
+            type: "dict"
+            description: "リソース使用率データ"
+          - name: "thresholds"
+            type: "dict"
+            description: "3段階閾値設定"
+        returns:
+          type: "tuple"
+          description: "(アラートメッセージリスト, レベル情報辞書)"
+        raises: []
+
+correctness-properties:
+  - id: "P1"
+    title: "閾値判定の単調性"
+    type: "monotonicity"
+    description: |
+      リソース使用率が増加すると、閾値レベルは単調に増加する。
+      NORMAL → WARNING → ALERT → CRITICAL の順序は保たれ、
+      逆方向への遷移は使用率が減少した場合のみ発生する。
+    validates: ["AC-001"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.floats(min_value=0.0, max_value=100.0)"
+      assertion: "使用率増加時にレベルが単調増加"
+  
+  - id: "P2"
+    title: "機能統合の冪等性"
+    type: "idempotence"
+    description: |
+      同じ入力データと機能設定で複数回分析を実行しても、
+      生成されるアラートメッセージは一致する。
+      機能の有効/無効状態は分析結果に一貫して反映される。
+    validates: ["AC-002"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.booleans() for feature flags"
+      assertion: "同じ入力で同じ出力が生成される"
+  
+  - id: "P3"
+    title: "メッセージテンプレートの完全性"
+    type: "invariant"
+    description: |
+      全ての閾値レベル（WARNING/ALERT/CRITICAL）に対して、
+      適切なメッセージテンプレートが存在し、
+      必要な要素（絵文字、プレフィックス、詳細）が含まれる。
+    validates: ["AC-003"]
+    test-strategy: "unit"
+    implementation:
+      framework: "pytest"
+      strategy: "全レベルのテンプレート検証"
+      assertion: "全レベルで必要な要素が存在"
+  
+  - id: "P4"
+    title: "レベル情報の一貫性"
+    type: "invariant"
+    description: |
+      analyze_usage_with_levels関数で返されるレベル情報は、
+      生成されたアラートメッセージと一致する。
+      レベル情報に含まれるリソースは、アラートが生成されたリソースと同じ。
+    validates: ["AC-004"]
+    test-strategy: "property-based"
+    implementation:
+      framework: "hypothesis"
+      strategy: "st.dictionaries() for usage data"
+      assertion: "アラートとレベル情報が一致"
+
+data-structures:
+  - name: "usage_data"
+    type: "dict"
+    schema:
+      cpu:
+        type: "float"
+        required: true
+        description: "CPU使用率（0-100%）"
+      mem:
+        type: "float"
+        required: true
+        description: "メモリ使用率（0-100%）"
+      disk:
+        type: "float"
+        required: true
+        description: "ディスク使用率（0-100%）"
+      cpu_by_process:
+        type: "list"
+        required: false
+        description: "プロセス別CPU使用率（コンテキストアドバイス用）"
+      mem_by_process:
+        type: "list"
+        required: false
+        description: "プロセス別メモリ使用率（コンテキストアドバイス用）"
+  
+  - name: "threshold_config"
+    type: "dict"
+    schema:
+      cpu:
+        type: "dict"
+        required: true
+        description: "CPU閾値設定（3段階）"
+      mem:
+        type: "dict"
+        required: true
+        description: "メモリ閾値設定（3段階）"
+      disk:
+        type: "dict"
+        required: true
+        description: "ディスク閾値設定（3段階）"
+      proc_cpu:
+        type: "float"
+        required: false
+        description: "プロセス別CPU閾値（単一値）"
+  
+  - name: "level_info"
+    type: "dict"
+    schema:
+      resource_name:
+        type: "tuple"
+        required: false
+        description: "(レベル名, 使用率値) のタプル"
+
+error-handling:
+  - error: "ImportError"
+    handling: "continue"
+    message: "機能モジュールの読み込みに失敗しました: {module}"
+    log-level: "warning"
+  
+  - error: "ValidationError"
+    handling: "stop"
+    message: "閾値設定が無効です: {details}"
+    log-level: "error"
+    exit-code: 1
+  
+  - error: "KeyError"
+    handling: "continue"
+    message: "必要なデータが不足しています: {key}"
+    log-level: "warning"
+
+configuration:
+  - name: "use_progressive"
+    type: "bool"
+    required: false
+    default: false
+    description: "段階的通知メッセージの使用フラグ"
+    validation:
+      - "boolean値である"
+  
+  - name: "use_contextual_advice"
+    type: "bool"
+    required: false
+    default: false
+    description: "コンテキストアドバイスの使用フラグ"
+    validation:
+      - "boolean値である"
+  
+  - name: "contextual_advice.enabled"
+    type: "bool"
+    required: false
+    default: true
+    description: "コンテキストアドバイス機能の有効/無効"
+    validation:
+      - "boolean値である"
+  
+  - name: "contextual_advice.advice_level"
+    type: "str"
+    required: false
+    default: "normal"
+    description: "アドバイスの詳細度"
+    validation:
+      - "minimal, normal, detailed のいずれか"
+
+dependencies:
+  internal:
+    - "komon.settings_validator"
+    - "komon.progressive_message"
+    - "komon.contextual_advisor"
+  external:
+    - name: "typing"
+      version: "標準ライブラリ"
+      purpose: "型ヒント"
+
+testing-strategy:
+  property-tests:
+    - property: "P1"
+      file: "tests/test_analyzer_properties.py"
+      function: "test_threshold_monotonicity"
+    
+    - property: "P2"
+      file: "tests/test_analyzer_properties.py"
+      function: "test_feature_integration_idempotence"
+    
+    - property: "P4"
+      file: "tests/test_analyzer_properties.py"
+      function: "test_level_info_consistency"
+  
+  integration-tests:
+    - validates: ["AC-001", "AC-002"]
+      file: "tests/test_analyzer_integration.py"
+      function: "test_end_to_end_analysis"
+    
+    - validates: ["AC-002"]
+      file: "tests/test_analyzer_integration.py"
+      function: "test_feature_combinations"
+    
+    - validates: ["AC-004"]
+      file: "tests/test_analyzer_integration.py"
+      function: "test_level_info_provision"
+  
+  unit-tests:
+    - validates: ["AC-001"]
+      file: "tests/test_analyzer_unit.py"
+      function: "test_load_thresholds"
+    
+    - validates: ["AC-003"]
+      file: "tests/test_analyzer_unit.py"
+      function: "test_generate_message"
+    
+    - validates: ["AC-001"]
+      file: "tests/test_analyzer_unit.py"
+      function: "test_threshold_level_determination"
+
+performance:
+  targets:
+    - metric: "分析処理時間"
+      target: "< 50ms"
+      measurement: "analyze_usage()の実行時間"
+    
+    - metric: "メモリ使用量"
+      target: "< 10MB"
+      measurement: "分析処理中の最大メモリ使用量"
+    
+    - metric: "機能統合オーバーヘッド"
+      target: "< 10ms"
+      measurement: "機能有効時と無効時の処理時間差"
+
+security:
+  considerations:
+    - "リソース使用率データの範囲検証（0-100%）"
+    - "設定値の妥当性検証"
+    - "機能モジュールの安全な読み込み"
+
+resilience:
+  circuit-breaker:
+    considered: true
+    decision: "not-adopted"
+    rationale: |
+      分析エンジンは短時間の処理であり、継続的な接続や
+      大量処理を行わない。サーキットブレイカーが必要となる
+      ケースは想定されない。
+    delegated-to: null
+    future-notes: |
+      将来リアルタイム分析機能を追加する場合は再検討が必要。
+  
+  notification-throttling:
+    considered: true
+    decision: "delegated"
+    rationale: |
+      通知頻度制御は分析エンジンの責務ではなく、
+      通知システム（notification.py）で実装される。
+      分析エンジンはアラートの生成のみを担当する。
+    delegated-to: "notification-system"
+    implementation: []
+  
+  baseline-reset:
+    considered: true
+    decision: "not-applicable"
+    rationale: |
+      分析エンジンはbaselineを使用しない。
+      閾値との比較のみを行う。
+    implementation: []
+  
+  other-considerations:
+    - consideration: "機能モジュール読み込み失敗時のフォールバック"
+      decision: "adopted"
+      rationale: |
+        ImportErrorが発生した場合、該当機能を無効化して
+        基本的な分析機能で継続する。
+        システム全体の可用性を優先する。
+    
+    - consideration: "不正なリソース使用率データの処理"
+      decision: "adopted"
+      rationale: |
+        範囲外の値（負数、100%超）が入力された場合、
+        適切な範囲（0-100%）にクランプして処理を継続する。
+        
+    - consideration: "閾値設定エラー時のデフォルト値使用"
+      decision: "delegated"
+      rationale: |
+        閾値設定の検証とデフォルト値の提供は
+        settings_validatorモジュールの責務。
+        分析エンジンは検証済みの設定を受け取る前提。
+      delegated-to: "settings-validator"

@@ -1,0 +1,112 @@
+metadata:
+  title: "ログ傾向分析システム"
+  feature: "log-trends-analysis-system"
+  status: "draft"
+  created: "2025-12-17"
+  updated: "2025-12-17"
+  version: "1.0.0"
+  description: "ログの時系列データから傾向を分析し、急増パターンを検出するシステム"
+  priority: "medium"
+  category: "analysis-feature"
+
+# 受け入れ基準
+acceptance-criteria:
+  - id: "AC-001"
+    description: "ログの時系列データを継続的に蓄積・管理する"
+    details:
+      - "日次でログ行数を記録し、JSON形式で履歴保存"
+      - "最大30日分の履歴を自動管理（古いデータは自動削除）"
+      - "状態ファイル（.pkl）からの行数取得をサポート"
+      - "辞書形式と数値形式の両方の状態データに対応"
+    validation_method: "履歴ファイルの作成・更新・削除確認"
+
+  - id: "AC-002"
+    description: "前日比での急増パターンを検出する"
+    details:
+      - "前日比での増加率を計算（デフォルト閾値30%）"
+      - "閾値を超えた場合に急増として警告"
+      - "増加率の正確な計算（ゼロ除算対策含む）"
+      - "負の値や異常値への適切な対応"
+    validation_method: "様々な増加率パターンでの検出確認"
+
+  - id: "AC-003"
+    description: "複数日にわたる連続急増パターンを検出する"
+    details:
+      - "指定日数（デフォルト3日）での連続急増を検出"
+      - "各日の増加率が20%以上の場合を急増とカウント"
+      - "連続急増回数が指定日数以上の場合にTrue返却"
+      - "システム異常の早期発見をサポート"
+    validation_method: "連続急増シナリオでの検出確認"
+
+  - id: "AC-004"
+    description: "データ不足や異常状態での安全な動作を保証する"
+    details:
+      - "初回実行時の適切なメッセージ表示"
+      - "データ不足時（2日未満）の情報提供"
+      - "状態ファイル読み込みエラーの適切な処理"
+      - "履歴保存エラー時の警告表示と処理継続"
+    validation_method: "エラー条件での動作確認"
+
+# 正確性特性
+correctness_properties:
+  P1:
+    description: "履歴データの整合性"
+    property: "保存された履歴データは常に日付昇順で、最大30日分以内である"
+    test_strategy: "履歴データの構造と件数確認"
+    validates: ["AC-001"]
+
+  P2:
+    description: "増加率計算の正確性"
+    property: "増加率 = ((現在値 - 前日値) / max(前日値, 1)) * 100 の式で正確に計算される"
+    test_strategy: "既知の値での計算結果確認"
+    validates: ["AC-002"]
+
+  P3:
+    description: "連続急増検出の一貫性"
+    property: "N日間でN回以上の急増（20%以上）があった場合、必ずTrueを返す"
+    test_strategy: "連続急増パターンでの検出確認"
+    validates: ["AC-003"]
+
+  P4:
+    description: "エラー耐性の保証"
+    property: "ファイル読み込み・保存エラーが発生しても、システムは適切なメッセージで継続動作する"
+    test_strategy: "ファイルアクセスエラー時の動作確認"
+    validates: ["AC-004"]
+
+# 依存関係
+dependencies:
+  internal:
+    - "状態管理ファイル（data/logstats/*.pkl）"
+    - "履歴保存ディレクトリ（data/logstats/history/）"
+  external:
+    - "json (Python標準ライブラリ)"
+    - "pickle (Python標準ライブラリ)"
+    - "datetime (Python標準ライブラリ)"
+    - "os (Python標準ライブラリ)"
+
+# 影響範囲
+impact_analysis:
+  affected_components:
+    - "monitor.py (傾向分析結果の表示)"
+    - "analyzer.py (分析結果の統合)"
+    - "notification.py (急増時の通知)"
+  risk_level: "low"
+  backward_compatibility: "maintained"
+
+# 品質要件
+quality_requirements:
+  performance:
+    - "履歴分析は100ms以内で完了"
+    - "履歴ファイルサイズは最小限（30日×50バイト程度）"
+  reliability:
+    - "ファイルI/Oエラーでの安全な失敗"
+    - "データ欠損時の部分的な分析継続"
+  maintainability:
+    - "新しい検出パターンの追加が容易"
+    - "閾値設定の外部化が可能"
+
+# セキュリティ考慮事項
+security_considerations:
+  - "履歴ファイルの適切な権限設定"
+  - "ファイルパス操作での安全性確保"
+  - "ログ内容の機密情報漏洩防止"

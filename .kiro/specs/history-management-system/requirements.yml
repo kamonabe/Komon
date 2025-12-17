@@ -1,0 +1,160 @@
+# 要件定義: 履歴管理システム
+
+metadata:
+  title: "履歴管理システム"
+  feature: "history-management-system"
+  status: "draft"
+  created: "2025-12-16"
+  updated: "2025-12-16"
+  version: "1.0.0"
+  last_validated: null
+  validation_passed: null
+  complexity: "medium"
+  estimated-hours: 12
+  dependencies: []
+
+overview:
+  description: |
+    Komonのリソース使用履歴を管理するシステム。
+    リソース使用率データの保存、ローテーション、取得機能を提供し、
+    週次レポートやトレンド分析の基盤となるデータを管理する。
+    CSV形式での保存、95世代までの自動ローテーション、
+    プロセス情報を含む詳細履歴を実現する。
+  background: |
+    現在の履歴管理システムは実装されているが仕様が明文化されていない。
+    データ保存形式、ローテーション戦略、取得方法が暗黙的になっている。
+    週次レポートやディスク予測機能の基盤として重要な役割を果たすため、
+    履歴管理システムの仕様を明確に定義する必要がある。
+  goals:
+    - "リソース使用履歴の永続化機能の仕様化"
+    - "自動ローテーション戦略の明確化"
+    - "履歴データ取得インターフェースの統一"
+    - "データ形式とスキーマの標準化"
+    - "ストレージ効率と検索性能の最適化"
+
+acceptance-criteria:
+  - id: "AC-001"
+    title: "履歴データの保存"
+    priority: "high"
+    type: "functional"
+    description: |
+      リソース使用率データ（CPU/メモリ/ディスク）と
+      プロセス情報を含む詳細履歴をCSV形式で保存する
+    when: "save_current_usage関数が呼び出された時"
+    then: "タイムスタンプ付きのCSVファイルが作成され、リソース使用率とプロセス情報が記録される"
+    examples:
+      - input: "usage={\"cpu\": 75.0, \"mem\": 60.0, \"disk\": 45.0}"
+        output: "usage_20251216_143022.csv に基本データ + プロセス情報を保存"
+      - input: "プロセス情報を含むusageデータ"
+        output: "CPU上位プロセス、メモリ上位プロセスも併せて保存"
+
+  - id: "AC-002"
+    title: "自動ローテーション"
+    priority: "high"
+    type: "functional"
+    description: |
+      履歴ファイルを95世代まで保持し、
+      古いファイルを自動的に削除する
+    when: "rotate_history関数が呼び出された時"
+    then: "95世代を超える古いファイルが削除され、適切なメッセージが表示される"
+    examples:
+      - input: "100個の履歴ファイルが存在"
+        output: "最古の6個のファイルが削除され、94個が残る"
+      - input: "50個の履歴ファイルが存在"
+        output: "削除は行われない"
+
+  - id: "AC-003"
+    title: "履歴データの取得"
+    priority: "high"
+    type: "functional"
+    description: |
+      指定された件数の履歴データを
+      新しい順に取得する
+    when: "get_history関数が呼び出された時"
+    then: "指定された件数の履歴データが新しい順に返される"
+    examples:
+      - input: "limit=10"
+        output: "最新10件の履歴データを返す"
+      - input: "limit=5, 履歴が3件のみ"
+        output: "存在する3件の履歴データを返す"
+
+  - id: "AC-004"
+    title: "エラーハンドリング"
+    priority: "medium"
+    type: "functional"
+    description: |
+      ファイル操作エラー、権限エラー、ディスク容量不足に対して
+      適切なエラーハンドリングを行う
+    when: "ファイル操作でエラーが発生した時"
+    then: "適切なエラーメッセージが表示され、システムが継続動作する"
+    examples:
+      - input: "ディスク容量不足でファイル作成失敗"
+        output: "エラーメッセージ表示、処理継続"
+      - input: "権限不足でファイル削除失敗"
+        output: "警告メッセージ表示、他のファイルは処理継続"
+
+non-functional-requirements:
+  performance:
+    - "履歴保存処理が100ms以内"
+    - "履歴取得処理が50ms以内"
+    - "ローテーション処理が500ms以内"
+  reliability:
+    - "ファイル操作エラー時もシステム継続"
+    - "部分的な失敗でも可能な処理は継続"
+    - "データ損失を防ぐ安全な操作"
+  maintainability:
+    - "履歴ディレクトリの設定が可能"
+    - "ローテーション世代数の設定が可能"
+    - "CSV形式の拡張が容易"
+  usability:
+    - "エラーメッセージは日本語で分かりやすく"
+    - "ファイル名は日時で識別しやすく"
+    - "プロセス情報も含む詳細な履歴"
+
+constraints:
+  - "CSV形式での保存（既存ツールとの互換性）"
+  - "ファイル名にタイムスタンプを含む"
+  - "95世代までの保持（ディスク容量との兼ね合い）"
+  - "Python 3.10+以上"
+
+assumptions:
+  - "履歴ディレクトリへの書き込み権限がある"
+  - "十分なディスク容量がある"
+  - "ファイルシステムがタイムスタンプをサポート"
+
+risks:
+  - risk: "ディスク容量不足"
+    mitigation: "ローテーション処理の確実な実行とエラーハンドリング"
+    probability: "medium"
+    impact: "medium"
+  
+  - risk: "ファイル権限エラー"
+    mitigation: "適切なエラーメッセージと処理継続"
+    probability: "low"
+    impact: "low"
+
+scope:
+  in-scope:
+    - "リソース使用履歴の保存"
+    - "プロセス情報を含む詳細履歴"
+    - "自動ローテーション機能"
+    - "履歴データの取得"
+    - "エラーハンドリング"
+  
+  out-of-scope:
+    - "履歴データの分析（weekly_dataモジュールで管理）"
+    - "履歴データの可視化（将来の拡張として検討）"
+    - "履歴データの圧縮（現状は非圧縮で管理）"
+    - "リモートストレージへの保存（ローカルファイルのみ）"
+
+success-metrics:
+  quantitative:
+    - "テストカバレッジ95%以上を維持"
+    - "全既存テストがパス"
+    - "履歴保存処理100ms以内"
+    - "新規テスト15件以上を追加"
+  
+  qualitative:
+    - "開発者が履歴データを簡単に取得できる"
+    - "ローテーション処理が透明で信頼できる"
+    - "エラー時も適切に処理が継続される"
