@@ -233,8 +233,14 @@ class TestInitialCommands(unittest.TestCase):
                 }
             }
             
-            # config/settings.yml.sampleを実際に作成
+            # 既存のconfig/settings.yml.sampleをバックアップ
             sample_file = Path("config/settings.yml.sample")
+            backup_content = None
+            if sample_file.exists():
+                with open(sample_file, "r") as f:
+                    backup_content = f.read()
+            
+            # テスト用の設定でファイルを上書き
             sample_file.parent.mkdir(parents=True, exist_ok=True)
             with open(sample_file, "w") as f:
                 yaml.dump(sample_config, f)
@@ -261,11 +267,15 @@ class TestInitialCommands(unittest.TestCase):
                 self.assertFalse(created_config["notifications"]["email"]["enabled"])
             
             finally:
-                # クリーンアップ
-                if sample_file.exists():
+                # 元のファイルを復元
+                if backup_content is not None:
+                    with open(sample_file, "w") as f:
+                        f.write(backup_content)
+                elif sample_file.exists():
                     sample_file.unlink()
-                if sample_file.parent.exists() and not any(sample_file.parent.iterdir()):
-                    sample_file.parent.rmdir()
+                    # 空のディレクトリも削除
+                    if sample_file.parent.exists() and not any(sample_file.parent.iterdir()):
+                        sample_file.parent.rmdir()
 
     def test_get_input_type_conversion(self):
         """型変換のテスト"""
