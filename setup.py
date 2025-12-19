@@ -20,6 +20,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="kamonabe",
+    author_email="kamonabe1927@gmail.com",
     url="https://github.com/kamonabe/Komon",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
@@ -42,13 +43,13 @@ setup(
         "Intended Audience :: System Administrators",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Operating System :: POSIX :: Linux",
         "Topic :: System :: Monitoring",
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     include_package_data=True,
 )
 
