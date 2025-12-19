@@ -1,0 +1,197 @@
+# Komon の設定ファイルサンプルです。
+# このファイルを settings.yml としてコピーして使用してください。
+
+profile:
+  usage: "dev"  # "production" または "dev"。本番環境では一部の助言が変化します。
+
+system:  # システム環境設定
+  os_family: "auto"  # OS判定: auto / rhel / debian / suse / arch / unknown
+                     # auto: 自動判定（推奨）
+                     # rhel: RHEL系（AlmaLinux, Rocky Linux, Amazon Linux 2023等）
+                     # debian: Debian系（Ubuntu, Raspberry Pi OS, Debian等）
+                     # suse: SUSE系（openSUSE等）
+                     # arch: Arch系（Arch Linux, Manjaro等）
+                     # unknown: 不明なOS（アドバイスが制限されます）
+
+thresholds:  # リソース使用率に対する警告の閾値（％）
+  # 3段階閾値形式（推奨）
+  cpu:
+    warning: 70   # 💛 警告: そろそろ気にかけておいた方がいいかも
+    alert: 85     # 🧡 警戒: ちょっと気になる水準です
+    critical: 95  # ❤️ 緊急: かなり逼迫しています！
+  mem:
+    warning: 70
+    alert: 80
+    critical: 90
+  disk:
+    warning: 70
+    alert: 80
+    critical: 90
+  
+  # 従来の単一値形式も引き続きサポート（後方互換性）
+  # cpu: 85
+  # mem: 80
+  # disk: 80
+  
+  proc_cpu: 20  # ← 各プロセスの高負荷判定に使う閾値
+
+notifications:
+  slack:
+    enabled: true
+    # Webhook URLは環境変数からの読み込みを推奨（セキュリティ向上）
+    webhook_url: "env:KOMON_SLACK_WEBHOOK"
+    # または直接指定（Gitにコミットしないよう注意）
+    # webhook_url: "https://hooks.slack.com/services/xxxx/yyyy/zzzz"
+
+  discord:
+    enabled: false  # Discord通知を有効にする場合は true にしてください
+    # Webhook URLは環境変数からの読み込みを推奨（セキュリティ向上）
+    webhook_url: "env:KOMON_DISCORD_WEBHOOK"
+    # または直接指定（Gitにコミットしないよう注意）
+    # webhook_url: "https://discord.com/api/webhooks/xxxx/yyyy"
+
+  teams:
+    enabled: false  # Teams通知を有効にする場合は true にしてください
+    # Webhook URLは環境変数からの読み込みを推奨（セキュリティ向上）
+    webhook_url: "env:KOMON_TEAMS_WEBHOOK"
+    # または直接指定（Gitにコミットしないよう注意）
+    # webhook_url: "https://outlook.office.com/webhook/xxxx/yyyy"
+
+  email:
+    enabled: false  # メール通知を有効にする場合は true にしてください
+    smtp_server: "smtp.example.com"  # SMTP サーバのホスト名
+    smtp_port: 587
+    use_tls: true  # STARTTLS を使うかどうか（セキュリティのため必ず有効化）
+    from: "komon@example.com"
+    to: "user@example.com"
+    username: "komon@example.com"
+    password: "env:KOMON_EMAIL_PASSWORD"  # パスワードは環境変数からの読み込みを推奨
+
+log_monitor_targets:  # 監視対象のログファイル（true: 監視する / false: 無視する）
+  /var/log/messages: true
+  /var/log/nginx/error.log: true
+  systemd journal: false  # systemd journal を監視する場合は true に
+
+output:  # 出力フォーマットの設定
+  default_mode: "normal"  # "normal" または "verbose"
+  history_limit: 5  # 通知履歴のデフォルト表示件数
+  show_zero_cpu: false  # CPU/メモリ0.0%のプロセスを表示するか
+
+  # 任意で追加のログも指定可能（絶対パス推奨）
+  # /home/user/logs/custom.log: true
+
+log_analysis:
+  anomaly_threshold_percent: 30     # 急増とみなす割合（前日比）
+  baseline_learning_rate: 0.1       # ベースライン更新の反映率（0〜1）
+  tail_lines: 10                    # ログ急増時に表示する末尾行数（0で無効化）
+  max_line_length: 500              # 1行あたりの最大文字数（超過時は切り詰め）
+
+weekly_report:  # 週次健全性レポート設定
+  enabled: true  # 週次レポートを有効にする場合は true
+  day_of_week: 1  # レポート送信曜日（0=日曜, 1=月曜, 2=火曜, ..., 6=土曜）
+  hour: 9         # レポート送信時刻（時）
+  minute: 0       # レポート送信時刻（分）
+  notifications:
+    slack: true   # Slack通知を有効化
+    email: false  # メール通知を無効化
+
+throttle:  # 通知頻度制御設定
+  enabled: true  # 通知頻度制御を有効にする場合は true
+  interval_minutes: 60  # 同一アラートの通知間隔（分）デフォルト: 60分
+  escalation_minutes: 180  # 長時間継続する問題の再通知間隔（分）デフォルト: 180分（3時間）
+
+progressive_notification:  # 段階的通知メッセージ設定
+  enabled: true  # 段階的メッセージを有効にする場合は true
+  time_window_hours: 24  # 通知回数をカウントする時間窓（時間）デフォルト: 24時間
+  
+  # カスタムテンプレート（オプション）
+  # 通知回数に応じてメッセージが変化します
+  # {metric_name}: メトリクス名（CPU使用率、メモリ使用率、ディスク使用率）
+  # {value}: 現在の値
+  # {unit}: 単位（%）
+  templates:
+    1: "ちょっと気になることがあります。{metric_name}が {value}{unit} になっています。"
+    2: "まだ続いてますね。{metric_name}が {value}{unit} のままです。"
+    3: "そろそろ見た方がいいかも。{metric_name}が {value}{unit} の状態が続いています。"
+
+contextual_advice:  # コンテキストに応じた具体的アドバイス設定
+  enabled: true  # コンテキストアドバイスを有効にする場合は true
+  advice_level: normal  # minimal / normal / detailed
+  top_processes_count: 3  # 表示する上位プロセス数（1-10）
+  
+  # パターン定義（カスタマイズ可能）
+  patterns:
+    node:
+      keywords: [node, npm, yarn, webpack]
+      advice: "開発サーバーが起動しっぱなしかも？不要なら停止してみてください"
+      detailed_advice: "停止方法: kill {pid} または Ctrl+C"
+    
+    docker:
+      keywords: [docker, containerd]
+      advice: "不要なコンテナが残っているかも？`docker ps` で確認してみてください"
+      detailed_advice: "確認方法: docker ps\n停止方法: docker stop <container_id>"
+    
+    python:
+      keywords: [python, python3]
+      advice: "学習プロセスや長時間スクリプトが動いているかも？確認してみてください"
+      detailed_advice: "確認方法: ps aux | grep python"
+    
+    java:
+      keywords: [java, javac]
+      advice: "Javaアプリケーションが動いているかも？不要なら停止してみてください"
+      detailed_advice: "確認方法: jps -l"
+    
+    database:
+      keywords: [mysql, postgres, mongod, redis]
+      advice: "データベースが高負荷かも？クエリやインデックスを確認してみてください"
+      detailed_advice: "確認方法: データベースのスロークエリログを確認"
+
+duplicate_process_detection:  # 多重実行プロセス検出設定
+  enabled: true  # 多重実行プロセスの検出を有効にする場合は true
+  threshold: 3   # 警告閾値（この数以上で警告）デフォルト: 3
+  target_extensions:  # 対象とするスクリプト拡張子
+    - .py
+    - .sh
+    - .rb
+    - .pl
+
+long_running_detection:  # 長時間実行プロセス検出設定
+  enabled: true  # 長時間実行プロセスの検出を有効にする場合は true
+  threshold_seconds: 3600  # 警告閾値（秒）デフォルト: 3600（1時間）
+  target_extensions:  # 対象とするスクリプト拡張子
+    - .py
+    - .sh
+    - .rb
+    - .pl
+
+network_check:  # ネットワーク疎通チェック設定（opt-in機能）
+  enabled: false  # デフォルトは無効（CLI引数で有効化）
+  
+  ping:
+    targets:
+      - host: "127.0.0.1"
+        description: "ローカルホスト（例）"
+      # 実際の監視対象を追加してください
+      # - host: "8.8.8.8"
+      #   description: "Google DNS"
+      # - host: "192.168.1.1"
+      #   description: "デフォルトゲートウェイ"
+    timeout: 3  # タイムアウト（秒）
+    
+  http:
+    targets:
+      - url: "https://komon-example.com"
+        description: "例示URL（実在しない - 必ず差し替えてください）"
+        method: "GET"
+      # 実際の監視対象を追加してください
+      # - url: "https://api.example.com/health"
+      #   description: "APIヘルスチェック"
+      #   method: "GET"
+      # - url: "https://www.google.com"
+      #   description: "外部接続確認"
+      #   method: "HEAD"
+    timeout: 10  # タイムアウト（秒）
+    
+  state:
+    retention_hours: 24  # NG状態の保持期間（時間）
+    file_path: "data/network_state.json"  # 状態ファイルのパス
