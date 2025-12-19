@@ -2,14 +2,19 @@
 通知モジュール
 
 Slack、メールなどの通知機能を提供します。
+統一Webhook機能（TASK-020）と旧形式の両方をサポートします。
 """
 
 import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from typing import Dict, Any, Optional, List
+import logging
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def send_slack_alert(message: str, webhook_url: str, metadata: dict = None) -> bool:
@@ -219,6 +224,167 @@ def send_email_alert(message: str, email_config: dict, metadata: dict = None) ->
             print(f"⚠️ 通知履歴の保存に失敗: {e}")
     
     return success
+
+
+def send_unified_webhook_notification(
+    message: str,
+    webhooks_config: List[Dict[str, Any]],
+    metadata: Optional[Dict[str, Any]] = None,
+    title: Optional[str] = None,
+    level: str = "info"
+) -> bool:
+    """
+    統一Webhook方式で通知を送信します（TASK-020新機能）
+    
+    Args:
+        message: 送信するメッセージ
+        webhooks_config: Webhook設定のリスト
+        metadata: 通知メタデータ（metric_type, metric_value等）
+        title: 通知タイトル（オプション）
+        level: 通知レベル（info, warning, error）
+        
+    Returns:
+        bool: 少なくとも1つのWebhookが成功した場合True
+    """
+    try:
+        from .webhook_notifier import WebhookNotifier
+        
+        # WebhookNotifierを初期化
+        notifier = WebhookNotifier(webhooks_config)
+        
+        # 通知データを作成
+        notification = {
+            "message": message,
+            "title": title,
+            "level": level
+        }
+        
+        # 通知送信
+        result = notifier.send(notification)
+        
+        # 結果を表示
+        if result["success_count"] > 0:
+            print(f"✅ 統一Webhook通知を送信しました ({result['success_count']}件成功)")
+            success = True
+        else:
+            print(f"⚠️ 統一Webhook通知の送信に失敗しました ({result['error_count']}件失敗)")
+            success = False
+            
+        # エラーがあった場合は詳細を表示
+        if result["error_count"] > 0:
+            for res in result["results"]:
+                if not res["success"]:
+                    print(f"  - {res['webhook_name']}: {res.get('error', 'Unknown error')}")
+        
+    except Exception as e:
+        print(f"❌ 統一Webhook通知エラー: {e}")
+        success = False
+    
+    # 履歴に保存（失敗しても通知は継続）
+    if metadata and success:
+        try:
+            from komon.notification_history import save_notification
+            save_notification(
+                metric_type=metadata.get("metric_type", "unknown"),
+                metric_value=metadata.get("metric_value", 0),
+                message=message
+            )
+        except Exception as e:
+            print(f"⚠️ 通知履歴の保存に失敗: {e}")
+    
+    return success
+
+
+def send_notification_with_fallback(
+    message: str,
+    settings: Dict[str, Any],
+    metadata: Optional[Dict[str, Any]] = None,
+    title: Optional[str] = None,
+    level: str = "info"
+) -> bool:
+    """
+    統一Webhook方式と旧形式のフォールバック機能付き通知送信
+    
+    新形式（notifiers.webhooks）が設定されていれば新方式を使用、
+    未設定なら旧形式（notifications）を使用します。
+    
+    Args:
+        message: 送信するメッセージ
+        settings: 設定辞書
+        metadata: 通知メタデータ
+        title: 通知タイトル
+        level: 通知レベル
+        
+    Returns:
+        bool: 通知送信成功時True
+    """
+    # 新形式の設定を確認
+    notifiers_config = settings.get("notifiers", {})
+    webhooks_config = notifiers_config.get("webhooks", [])
+    
+    if webhooks_config:
+        # 新形式（統一Webhook）を使用
+        logger.info("Using unified webhook notification system")
+        return send_unified_webhook_notification(
+            message=message,
+            webhooks_config=webhooks_config,
+            metadata=metadata,
+            title=title,
+            level=level
+        )
+    else:
+        # 旧形式（個別関数）を使用
+        logger.info("Using legacy notification system (fallback)")
+        return _send_legacy_notifications(message, settings, metadata)
+
+
+def _send_legacy_notifications(
+    message: str,
+    settings: Dict[str, Any],
+    metadata: Optional[Dict[str, Any]] = None
+) -> bool:
+    """
+    旧形式の通知送信（フォールバック用）
+    
+    Args:
+        message: 送信するメッセージ
+        settings: 設定辞書
+        metadata: 通知メタデータ
+        
+    Returns:
+        bool: 少なくとも1つの通知が成功した場合True
+    """
+    notifications_config = settings.get("notifications", {})
+    success_count = 0
+    
+    # Slack通知
+    slack_config = notifications_config.get("slack", {})
+    if slack_config.get("enabled", False):
+        webhook_url = slack_config.get("webhook_url", "")
+        if send_slack_alert(message, webhook_url, metadata):
+            success_count += 1
+    
+    # Discord通知
+    discord_config = notifications_config.get("discord", {})
+    if discord_config.get("enabled", False):
+        webhook_url = discord_config.get("webhook_url", "")
+        if send_discord_alert(message, webhook_url, metadata):
+            success_count += 1
+    
+    # Teams通知
+    teams_config = notifications_config.get("teams", {})
+    if teams_config.get("enabled", False):
+        webhook_url = teams_config.get("webhook_url", "")
+        if send_teams_alert(message, webhook_url, metadata):
+            success_count += 1
+    
+    # メール通知
+    email_config = notifications_config.get("email", {})
+    if email_config.get("enabled", False):
+        if send_email_alert(message, email_config, metadata):
+            success_count += 1
+    
+    return success_count > 0
 
 
 import json

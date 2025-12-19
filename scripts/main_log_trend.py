@@ -1,6 +1,6 @@
 import yaml
 from komon.log_trends import analyze_log_trend
-from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert
+from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert, send_notification_with_fallback
 
 def main():
     # 設定ファイルの読み込み
@@ -37,21 +37,14 @@ def main():
         message = "⚠️ Komon ログ傾向警戒情報:\n" + "\n".join(alerts)
         notification_cfg = config.get("notifications", {})
 
-        if notification_cfg.get("slack", {}).get("enabled"):
-            webhook_url = notification_cfg["slack"]["webhook_url"]
-            send_slack_alert(message, webhook_url)
-
-        if notification_cfg.get("discord", {}).get("enabled"):
-            webhook_url = notification_cfg["discord"]["webhook_url"]
-            send_discord_alert(message, webhook_url)
-
-        if notification_cfg.get("teams", {}).get("enabled"):
-            webhook_url = notification_cfg["teams"]["webhook_url"]
-            send_teams_alert(message, webhook_url)
-
-        if notification_cfg.get("email", {}).get("enabled"):
-            email_cfg = notification_cfg["email"]
-            send_email_alert(message, email_cfg)
+        # 統一Webhook通知（新形式 + フォールバック）
+        send_notification_with_fallback(
+            message=message,
+            settings=config,
+            metadata=None,
+            title="Komon ログ傾向警戒情報",
+            level="warning"
+        )
 
     else:
         print("✅ 異常な傾向は検出されませんでした。")

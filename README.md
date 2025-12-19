@@ -316,17 +316,51 @@ python scripts/weekly_report.py  # 週次健全性レポート
 
 Komonは複数の通知方式に対応しています：
 
-#### Slack通知
+#### 🆕 統一Webhook通知（v1.26.0〜）- 推奨
+
+複数の通知サービスを統一されたインターフェースで管理できます：
+
+```yaml
+# settings.yml
+notifiers:
+  webhooks:
+    - name: "slack"
+      url: "env:KOMON_SLACK_WEBHOOK"
+      kind: "slack"
+      enabled: true
+    
+    - name: "discord"
+      url: "env:KOMON_DISCORD_WEBHOOK"
+      kind: "discord"
+      enabled: false
+    
+    - name: "teams"
+      url: "env:KOMON_TEAMS_WEBHOOK"
+      kind: "teams"
+      enabled: false
+```
+
+**メリット**:
+- 複数サービスの一元管理
+- サービス別の最適化されたメッセージフォーマット
+- 新しい通知サービスの追加が容易
+- 旧形式との完全な互換性（フォールバック機能）
+
+#### 個別通知設定（従来形式）
+
+旧形式も引き続きサポートされています：
+
+**Slack通知**
 1. [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks)にアクセス
 2. "Create New App" → "Incoming Webhooks"を選択
 3. URLをコピーして`settings.yml`の`notifications.slack.webhook_url`に設定
 
-#### Discord通知（v1.26.0〜）
+**Discord通知（v1.26.0〜）**
 1. Discordサーバーの設定 → 連携サービス → ウェブフック
 2. "ウェブフックを作成"をクリック
 3. URLをコピーして`settings.yml`の`notifications.discord.webhook_url`に設定
 
-#### Microsoft Teams通知（v1.26.0〜）
+**Microsoft Teams通知（v1.26.0〜）**
 1. Teamsチャンネルの設定 → コネクタ → Incoming Webhook
 2. "構成"をクリックしてWebhookを作成
 3. URLをコピーして`settings.yml`の`notifications.teams.webhook_url`に設定

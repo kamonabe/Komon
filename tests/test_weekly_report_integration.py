@@ -109,18 +109,14 @@ class TestWeeklyReportIntegration:
         from scripts.weekly_report import send_report
         
         # モック設定
-        slack_called = {'called': False, 'message': None}
+        fallback_called = {'called': False, 'message': None}
         
-        def mock_slack(message, webhook_url, metadata=None):
-            slack_called['called'] = True
-            slack_called['message'] = message
+        def mock_fallback(message, settings, metadata=None, title=None, level="info"):
+            fallback_called['called'] = True
+            fallback_called['message'] = message
             return True
         
-        def mock_email(message, config, metadata=None):
-            pytest.fail("Email should not be called")
-        
-        monkeypatch.setattr('scripts.weekly_report.send_slack_alert', mock_slack)
-        monkeypatch.setattr('scripts.weekly_report.send_email_alert', mock_email)
+        monkeypatch.setattr('scripts.weekly_report.send_notification_with_fallback', mock_fallback)
         
         # 設定
         config = {
@@ -144,27 +140,23 @@ class TestWeeklyReportIntegration:
         # レポート送信
         send_report('Test report', config)
         
-        # Slackが呼ばれたことを確認
-        assert slack_called['called']
-        assert slack_called['message'] == 'Test report'
+        # フォールバック通知が呼ばれたことを確認
+        assert fallback_called['called']
+        assert fallback_called['message'] == 'Test report'
     
     def test_notification_delivery_both(self, monkeypatch):
         """Slack/メール両方の配信テスト"""
         from scripts.weekly_report import send_report
         
         # モック設定
-        calls = {'slack': False, 'email': False}
+        fallback_called = {'called': False, 'message': None}
         
-        def mock_slack(message, webhook_url, metadata=None):
-            calls['slack'] = True
+        def mock_fallback(message, settings, metadata=None, title=None, level="info"):
+            fallback_called['called'] = True
+            fallback_called['message'] = message
             return True
         
-        def mock_email(message, config, metadata=None):
-            calls['email'] = True
-            return True
-        
-        monkeypatch.setattr('scripts.weekly_report.send_slack_alert', mock_slack)
-        monkeypatch.setattr('scripts.weekly_report.send_email_alert', mock_email)
+        monkeypatch.setattr('scripts.weekly_report.send_notification_with_fallback', mock_fallback)
         
         # 設定
         config = {
@@ -189,9 +181,9 @@ class TestWeeklyReportIntegration:
         # レポート送信
         send_report('Test report', config)
         
-        # 両方が呼ばれたことを確認
-        assert calls['slack']
-        assert calls['email']
+        # フォールバック通知が呼ばれたことを確認
+        assert fallback_called['called']
+        assert fallback_called['message'] == 'Test report'
     
     def test_configuration_loading(self, tmp_path):
         """設定ファイル読み込みテスト"""

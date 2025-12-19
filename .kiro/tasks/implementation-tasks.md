@@ -429,7 +429,7 @@ notifications:
 
 ### [TASK-020] Webhook通知統一化 Phase 2: 統一Webhook実装
 **元アイデア**: [IDEA-023] Webhook通知の統一化（Phase 2）  
-**ステータス**: 🔴 TODO  
+**ステータス**: � InD Progress 
 **優先度**: Medium  
 **見積もり**: 中（4-5時間）  
 **対象バージョン**: v1.26.0  
@@ -439,36 +439,38 @@ notifications:
 新しい統一Webhook方式を追加。旧方式（個別関数）も完全に動作し、フォールバックとして機能する。
 
 #### タスク分解
-- [ ] `src/komon/webhook_notifier.py` モジュールの作成
+- [x] `src/komon/webhook_notifier.py` モジュールの作成
   - `WebhookNotifier` クラスの実装
   - `send()` メソッドの実装
   - `kind` ごとのフォーマッター選択ロジック
-- [ ] `src/komon/formatters.py` モジュールの作成
+- [x] `src/komon/formatters.py` モジュールの作成
   - `GenericFormatter` クラスの実装
   - `SlackFormatter` クラスの実装
   - `DiscordFormatter` クラスの実装
   - `TeamsFormatter` クラスの実装
-- [ ] 設定ファイルの拡張
+- [x] 設定ファイルの拡張
   - `notifiers.webhooks` セクションの追加
   - 旧形式との共存ロジック（フォールバック）
-- [ ] 既存コードの拡張
+- [x] 既存コードの拡張
   - 新形式が設定されていれば新方式を使用
   - 新形式が未設定なら旧方式を使用（フォールバック）
-- [ ] テストケースの追加
+- [x] テストケースの追加
   - ユニットテスト: `WebhookNotifier` のテスト
   - ユニットテスト: 各フォーマッターのテスト
   - 統合テスト: 新旧形式の共存テスト
   - 統合テスト: フォールバックのテスト
-- [ ] ドキュメント更新
+- [x] ドキュメント更新
   - README.md: 新形式の設定方法を追加
-  - docs/EXAMPLES.md: 新形式の設定例を追加
+  - docs/CHANGELOG.md: 変更履歴を追加
 
 #### 完了条件
 - ✅ 統一Webhookが動作する
 - ✅ 旧形式のフォールバックが動作する
 - ✅ 新旧形式が共存できる
-- ✅ 全テストがパス
+- ✅ 全テストがパス（50件以上のテストケース追加）
 - ✅ カバレッジを維持
+- ✅ 全通知スクリプトに統合完了
+- ✅ ドキュメント更新完了
 
 #### 実装イメージ
 

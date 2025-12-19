@@ -1,7 +1,7 @@
 import yaml
 from komon.log_watcher import LogWatcher
 from komon.log_analyzer import check_log_anomaly
-from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert
+from komon.notification import send_slack_alert, send_email_alert, send_discord_alert, send_teams_alert, send_notification_with_fallback
 from komon.log_tail_extractor import extract_log_tail
 
 
@@ -86,21 +86,14 @@ def main():
             "metric_value": float(total_lines)
         }
 
-        if notification_cfg.get("slack", {}).get("enabled"):
-            webhook_url = notification_cfg["slack"]["webhook_url"]
-            send_slack_alert(message, webhook_url, metadata)
-
-        if notification_cfg.get("discord", {}).get("enabled"):
-            webhook_url = notification_cfg["discord"]["webhook_url"]
-            send_discord_alert(message, webhook_url, metadata)
-
-        if notification_cfg.get("teams", {}).get("enabled"):
-            webhook_url = notification_cfg["teams"]["webhook_url"]
-            send_teams_alert(message, webhook_url, metadata)
-
-        if notification_cfg.get("email", {}).get("enabled"):
-            email_cfg = notification_cfg["email"]
-            send_email_alert(message, email_cfg, metadata)
+        # 統一Webhook通知（新形式 + フォールバック）
+        send_notification_with_fallback(
+            message=message,
+            settings=config,
+            metadata=metadata,
+            title="Komon ログ異常検知",
+            level="warning"
+        )
 
     else:
         print("✅ ログに異常はありません。")

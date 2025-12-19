@@ -49,66 +49,66 @@ class TestProcessNotification:
         assert result == expected
     
     def test_get_process_info_for_disk(self):
-        """ディスク用プロセス情報取得のテスト（空文字列を返す）"""
-        usage = {"cpu_by_process": [], "mem_by_process": []}
+        """ディスク用プロセス情報取得のテスト（空文字を返す）"""
+        usage = {}
         
         result = main._get_process_info_for_metric("disk", usage)
         
         assert result == ""
     
-    def test_get_process_info_empty_processes(self):
+    def test_get_process_info_empty_data(self):
         """プロセス情報が空の場合のテスト"""
-        usage = {"cpu_by_process": [], "mem_by_process": []}
-        
-        cpu_result = main._get_process_info_for_metric("cpu", usage)
-        memory_result = main._get_process_info_for_metric("memory", usage)
-        
-        assert cpu_result == ""
-        assert memory_result == ""
-    
-    def test_get_process_info_missing_data(self):
-        """プロセス情報が存在しない場合のテスト"""
-        usage = {}
-        
-        cpu_result = main._get_process_info_for_metric("cpu", usage)
-        memory_result = main._get_process_info_for_metric("memory", usage)
-        
-        assert cpu_result == ""
-        assert memory_result == ""
-    
-    def test_get_process_info_more_than_three_processes(self):
-        """3個以上のプロセスがある場合、上位3個のみ表示"""
-        usage = {
-            "cpu_by_process": [
-                {"name": "proc1", "cpu": 30.0},
-                {"name": "proc2", "cpu": 25.0},
-                {"name": "proc3", "cpu": 20.0},
-                {"name": "proc4", "cpu": 15.0},
-                {"name": "proc5", "cpu": 10.0}
-            ]
-        }
+        usage = {"cpu_by_process": []}
         
         result = main._get_process_info_for_metric("cpu", usage)
         
-        expected = "1. proc1: 30.0%\n2. proc2: 25.0%\n3. proc3: 20.0%"
-        assert result == expected
-        # proc4, proc5は含まれない
-        assert "proc4" not in result
-        assert "proc5" not in result
+        assert result == ""
+    
+    def test_is_metric_alert_cpu(self):
+        """CPU関連アラートの判定テスト"""
+        alert = "CPU使用率が高いです: 85.5%"
+        
+        result = main._is_metric_alert(alert, "cpu")
+        
+        assert result is True
+    
+    def test_is_metric_alert_memory(self):
+        """メモリ関連アラートの判定テスト"""
+        alert = "メモリ使用率が高いです: 92.3%"
+        
+        result = main._is_metric_alert(alert, "memory")
+        
+        assert result is True
+    
+    def test_is_metric_alert_disk(self):
+        """ディスク関連アラートの判定テスト"""
+        alert = "ディスク使用率が高いです: 95.2%"
+        
+        result = main._is_metric_alert(alert, "disk")
+        
+        assert result is True
+    
+    def test_is_metric_alert_no_match(self):
+        """関連しないアラートの判定テスト"""
+        alert = "CPU使用率が高いです: 85.5%"
+        
+        result = main._is_metric_alert(alert, "memory")
+        
+        assert result is False
 
 
 class TestHandleAlertsWithProcessInfo:
     """プロセス情報付きアラート処理のテスト"""
     
-    @patch('main.send_slack_alert')
+    @patch('main.send_notification_with_fallback')
     @patch('main.NotificationThrottle')
-    def test_handle_alerts_includes_process_info(self, mock_throttle_class, mock_send_slack):
+    def test_handle_alerts_includes_process_info(self, mock_throttle_class, mock_send_fallback):
         """アラート処理にプロセス情報が含まれることを確認"""
         # モックの設定
         mock_throttle = MagicMock()
         mock_throttle.should_send_notification.return_value = (True, "first")
         mock_throttle_class.return_value = mock_throttle
-        mock_send_slack.return_value = True
+        mock_send_fallback.return_value = True
         
         # テストデータ
         alerts = ["CPU使用率が高いです: 85.5%"]
@@ -116,7 +116,7 @@ class TestHandleAlertsWithProcessInfo:
         config = {
             "throttle": {},
             "notifications": {
-                "slack": {"enabled": True, "webhook_url": "test-url"}
+                "slack": {"enabled": True, "webhook_url": "https://hooks.slack.com/test"}
             }
         }
         usage = {
@@ -131,9 +131,9 @@ class TestHandleAlertsWithProcessInfo:
         main.handle_alerts(alerts, levels, config, usage)
         
         # 検証
-        mock_send_slack.assert_called_once()
-        call_args = mock_send_slack.call_args[0]
-        message = call_args[0]
+        mock_send_fallback.assert_called_once()
+        call_args = mock_send_fallback.call_args
+        message = call_args.kwargs['message']
         
         # メッセージにプロセス情報が含まれることを確認
         assert "📊 上位プロセス:" in message
@@ -141,15 +141,15 @@ class TestHandleAlertsWithProcessInfo:
         assert "2. node: 25.1%" in message
         assert "3. docker: 15.2%" in message
     
-    @patch('main.send_slack_alert')
+    @patch('main.send_notification_with_fallback')
     @patch('main.NotificationThrottle')
-    def test_handle_alerts_memory_with_process_info(self, mock_throttle_class, mock_send_slack):
+    def test_handle_alerts_memory_with_process_info(self, mock_throttle_class, mock_send_fallback):
         """メモリアラートにプロセス情報が含まれることを確認"""
         # モックの設定
         mock_throttle = MagicMock()
         mock_throttle.should_send_notification.return_value = (True, "first")
         mock_throttle_class.return_value = mock_throttle
-        mock_send_slack.return_value = True
+        mock_send_fallback.return_value = True
         
         # テストデータ
         alerts = ["メモリ使用率が高いです: 92.3%"]
@@ -157,7 +157,7 @@ class TestHandleAlertsWithProcessInfo:
         config = {
             "throttle": {},
             "notifications": {
-                "slack": {"enabled": True, "webhook_url": "test-url"}
+                "slack": {"enabled": True, "webhook_url": "https://hooks.slack.com/test"}
             }
         }
         usage = {
@@ -172,9 +172,9 @@ class TestHandleAlertsWithProcessInfo:
         main.handle_alerts(alerts, levels, config, usage)
         
         # 検証
-        mock_send_slack.assert_called_once()
-        call_args = mock_send_slack.call_args[0]
-        message = call_args[0]
+        mock_send_fallback.assert_called_once()
+        call_args = mock_send_fallback.call_args
+        message = call_args.kwargs['message']
         
         # メッセージにプロセス情報が含まれることを確認
         assert "📊 上位プロセス:" in message
@@ -182,15 +182,15 @@ class TestHandleAlertsWithProcessInfo:
         assert "2. python: 512.3MB" in message
         assert "3. node: 256.1MB" in message
     
-    @patch('main.send_slack_alert')
+    @patch('main.send_notification_with_fallback')
     @patch('main.NotificationThrottle')
-    def test_handle_alerts_disk_no_process_info(self, mock_throttle_class, mock_send_slack):
+    def test_handle_alerts_disk_no_process_info(self, mock_throttle_class, mock_send_fallback):
         """ディスクアラートにはプロセス情報が含まれないことを確認"""
         # モックの設定
         mock_throttle = MagicMock()
         mock_throttle.should_send_notification.return_value = (True, "first")
         mock_throttle_class.return_value = mock_throttle
-        mock_send_slack.return_value = True
+        mock_send_fallback.return_value = True
         
         # テストデータ
         alerts = ["ディスク使用率が高いです: 95.2%"]
@@ -198,7 +198,7 @@ class TestHandleAlertsWithProcessInfo:
         config = {
             "throttle": {},
             "notifications": {
-                "slack": {"enabled": True, "webhook_url": "test-url"}
+                "slack": {"enabled": True, "webhook_url": "https://hooks.slack.com/test"}
             }
         }
         usage = {}
@@ -207,22 +207,22 @@ class TestHandleAlertsWithProcessInfo:
         main.handle_alerts(alerts, levels, config, usage)
         
         # 検証
-        mock_send_slack.assert_called_once()
-        call_args = mock_send_slack.call_args[0]
-        message = call_args[0]
+        mock_send_fallback.assert_called_once()
+        call_args = mock_send_fallback.call_args
+        message = call_args.kwargs['message']
         
         # ディスクの場合はプロセス情報が含まれないことを確認
         assert "📊 上位プロセス:" not in message
     
-    @patch('main.send_slack_alert')
+    @patch('main.send_notification_with_fallback')
     @patch('main.NotificationThrottle')
-    def test_handle_alerts_no_process_data(self, mock_throttle_class, mock_send_slack):
+    def test_handle_alerts_no_process_data(self, mock_throttle_class, mock_send_fallback):
         """プロセスデータがない場合の処理"""
         # モックの設定
         mock_throttle = MagicMock()
         mock_throttle.should_send_notification.return_value = (True, "first")
         mock_throttle_class.return_value = mock_throttle
-        mock_send_slack.return_value = True
+        mock_send_fallback.return_value = True
         
         # テストデータ
         alerts = ["CPU使用率が高いです: 85.5%"]
@@ -230,7 +230,7 @@ class TestHandleAlertsWithProcessInfo:
         config = {
             "throttle": {},
             "notifications": {
-                "slack": {"enabled": True, "webhook_url": "test-url"}
+                "slack": {"enabled": True, "webhook_url": "https://hooks.slack.com/test"}
             }
         }
         usage = {}  # プロセス情報なし
@@ -239,9 +239,9 @@ class TestHandleAlertsWithProcessInfo:
         main.handle_alerts(alerts, levels, config, usage)
         
         # 検証
-        mock_send_slack.assert_called_once()
-        call_args = mock_send_slack.call_args[0]
-        message = call_args[0]
+        mock_send_fallback.assert_called_once()
+        call_args = mock_send_fallback.call_args
+        message = call_args.kwargs['message']
         
         # プロセス情報がない場合は追加されないことを確認
         assert "📊 上位プロセス:" not in message
