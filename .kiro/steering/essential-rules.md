@@ -108,24 +108,24 @@ git branch  # 必ず確認！
 
 ### 開発関連キーワード
 **検知語**: 「実装」「コード」「テスト」「品質」「カバレッジ」
-- **開発ワークフロー**: `steering-detailed/development/workflow.md`
-- **テスト戦略**: `steering-detailed/development/testing-strategy.md`
-- **品質管理**: `steering-detailed/development/quality-management.md`
+- **開発ワークフロー**: `steering-detailed/development-workflow.md`
+- **テスト戦略**: `steering-detailed/testing-strategy.md`
+- **品質管理**: （将来作成予定）
 
 ### Git操作キーワード
 **検知語**: 「ブランチ」「マージ」「コミット」「push」「pull」
-- **Git運用**: `steering-detailed/git/git-workflow.md`
-- **ブランチ戦略**: `steering-detailed/git/branch-strategy.md`
+- **Git運用**: `steering-detailed/git-workflow.md`
+- **ブランチ戦略**: （git-workflow.md に含む）
 
 ### タスク管理キーワード
 **検知語**: 「タスク」「進捗」「TASK-」「やること」「スケジュール」
-- **タスク管理**: `steering-detailed/task/task-management.md`
-- **進捗追跡**: `steering-detailed/task/progress-tracking.md`
+- **タスク管理**: `steering-detailed/task-management.md`
+- **進捗追跡**: （task-management.md に含む）
 
 ### リリース関連キーワード
 **検知語**: 「リリース」「バージョン」「公開」「タグ」「PyPI」
-- **バージョニング**: `steering-detailed/release/versioning-rules.md`
-- **リリースプロセス**: `steering-detailed/release/release-process.md`
+- **バージョニング**: `steering-detailed/versioning-rules.md`
+- **リリースプロセス**: `steering-detailed/release-process.md`
 
 ---
 

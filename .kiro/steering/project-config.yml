@@ -44,9 +44,9 @@ git:
 spec:
   location: ".kiro/specs/"
   required_files:
-    - "requirements.md"
-    - "design.md"
-    - "tasks.md"
+    - "requirements.yml"
+    - "design.yml"
+    - "tasks.yml"
   validation_scripts:
     - "scripts/validate_specs.py"
     - "scripts/check_spec_consistency.py"
