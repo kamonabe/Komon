@@ -36,6 +36,10 @@ git:
     feature: "feature/task-"
     bugfix: "bugfix/"
     refactor: "refactor/"
+  user:
+    name: "<GIT_USER_NAME>"
+    email: "<GIT_USER_EMAIL>"
+    github_account: "<GITHUB_ACCOUNT>"
 
 spec:
   location: ".kiro/specs/"
