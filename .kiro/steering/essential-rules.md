@@ -1,157 +1,78 @@
 ---
-rule-id: essential-rules
-priority: critical
-applies-to: [all-projects]
-triggers: [always]
-description: 全プロジェクト共通の必須ルール（軽量版）
+inclusion: always
 ---
 
-# 全プロジェクト共通 必須ルール
+# 開発基本ルール
 
-このファイルには**全プロジェクト共通**の最低限の必須ルールのみを記載しています。
-詳細なルールは必要に応じて `.kiro/steering-detailed/` から読み込みます。
+## プロジェクト概要
 
----
+設定値は `project-config.yml` を参照。このファイルには判断基準のみ記載する。
 
-## 🌍 基本環境
+## コミュニケーション
 
-### 開発に必要なもの
-- **コンピューター**: Windows/Mac/Linux どれでもOK
-- **インターネット**: GitHubに接続するため
-- **やる気**: これが一番大事！
+- ユーザーとの会話: 日本語
+- コード（変数名・関数名）: 英語
+- コミットメッセージ: 日本語（type部分は英語）
+- ユーザー向けエラーメッセージ: 日本語（原因と対処法を記載）
+- ログ・例外メッセージ: 英語
 
-### 初めての方へ
-👉 **[初心者向けオンボーディングガイド](.kiro/steering-detailed/onboarding/00-welcome.md)**
+## セキュリティ（最優先・即時中断）
 
-Linux/Git初心者でも1週間で開発に参加できるようになります！
+以下のパターンを検知したら即座に処理を中断し警告する:
 
-### 経験者の方へ（技術仕様）
-- **プラットフォーム**: AlmaLinux 9（RHEL系Linux）
-- **シェル**: bash
-- **パッケージ管理**: dnf/yum
-- **Python**: 3.10+以上
+- APIキー: `sk-`, `AKIA[0-9A-Z]{16}`
+- Webhook URL: `https://hooks.slack.com/services/`
+- パスワード: `password\s*[:=]\s*["'][^"']+["']`
+- 秘密鍵: `BEGIN PRIVATE KEY`
+- トークン: `ghp_`, `gho_`, `github_pat_`
 
-### 基本コマンド
-```bash
-# 使用可能
-ls, cat, grep, git, python, pip
-
-# 使用禁止
-findstr, dir, type (Windowsコマンド)
-```
-
----
-
-## 💬 コミュニケーション
-
-### 言語ルール
-- **ユーザーとの会話**: 必ず日本語
-- **コード**: 変数名・関数名は英語
-- **コミットメッセージ**: 日本語推奨
-
-### エラーメッセージ
-- **ユーザー向け**: 日本語、原因と対処法を記載
-- **ログ**: 英語、詳細な技術情報
-
----
-
-## 🚨 セキュリティ（最重要）
-
-### 機密情報検知（即座に処理中断）
-以下を検知したら**即座に処理を中断**し警告：
-
-- **APIキー**: `sk-`, `AKIA[0-9A-Z]{16}`
-- **Webhook URL**: `https://hooks.slack.com/services/`
-- **パスワード**: `password\s*[:=]\s*["'][^"']+["']`
-- **秘密鍵**: `BEGIN PRIVATE KEY`
-
-### 対応方法
+検知時の対応:
 ```
 🚨 機密情報を検知しました
-
-【推奨対応】
-1. 環境変数に移行: webhook_url: "env:SLACK_WEBHOOK"
-2. 既存の情報を無効化
-
-処理を中断します。安全化してから再度お試しください。
+1. 環境変数に移行してください
+2. 既にコミットした場合は即座に無効化してください
+処理を中断します。
 ```
 
----
+## 開発フローの原則
 
-## 🔧 開発の基本フロー
+1. アイデア → `future-ideas.md` に記録
+2. 実装決定 → `implementation-tasks.md` に TASK-XXX として追加
+3. Spec作成 → `.kiro/specs/{feature-name}/` に YAML形式で作成（mainブランチでOK）
+4. 実装 → 開発ブランチで実施（hookが自動でブランチ安全性を検証）
+5. 完了 → テスト・カバレッジ確認後、mainにマージ・タグ作成
 
-### 1. アイデア → タスク化
-- `future-ideas.md` でアイデア管理
-- 実装決定 → `implementation-tasks.md` に TASK-XXX として追加
+## ブランチルール
 
-### 2. Spec作成（mainブランチ）
-- `.kiro/specs/{feature-name}/` フォルダ作成
-- `requirements.yml`, `design.yml`, `tasks.yml` を作成（YAML構造化形式）
+- mainブランチ: ドキュメント・Spec作成のみ
+- 開発ブランチ: コード実装・テスト追加（`feature/task-XXX-{name}`, `bugfix/{desc}`, `refactor/{module}`）
+- コード変更時のmainブランチ保護はhookで自動検証される
 
-### 3. 実装開始前の必須チェック
-```bash
-git branch  # 必ず確認！
-```
-- ✅ 開発ブランチ → 実装開始
-- ❌ mainブランチ → 危険警告、ブランチ作成を指示
+## テスト基準
 
-### 4. 実装 → テスト → リリース
-- コード実装（開発ブランチ）
-- テスト作成（カバレッジ90%以上目標）
-- mainにマージ → タグ作成
+- カバレッジ目標: `project-config.yml` の `testing.coverage_target` を参照
+- 3層構造: プロパティテスト（hypothesis）→ 統合テスト → ユニットテスト
+- 外部API: モック必須、ファイルI/O: `tmp_path` 使用、内部モジュール: モックしない
 
----
+## バージョニング
 
-## 📚 詳細ルール参照（キーワード検知）
+Semantic Versioning準拠。判断フロー:
+1. 破壊的変更あり → MAJOR
+2. 新機能追加あり → MINOR
+3. バグ修正・小改善 → PATCH
+4. 開発者向け改善のみ → バージョンアップなし
 
-詳細が必要な場合は以下を読み込み：
+## ルール参照テーブル
 
-### 開発関連キーワード
-**検知語**: 「実装」「コード」「テスト」「品質」「カバレッジ」
-- **開発ワークフロー**: `steering-detailed/development-workflow.md`
-- **テスト戦略**: `steering-detailed/testing-strategy.md`
-- **品質管理**: （将来作成予定）
-
-### Git操作キーワード
-**検知語**: 「ブランチ」「マージ」「コミット」「push」「pull」
-- **Git運用**: `steering-detailed/git-workflow.md`
-- **ブランチ戦略**: （git-workflow.md に含む）
-
-### タスク管理キーワード
-**検知語**: 「タスク」「進捗」「TASK-」「やること」「スケジュール」
-- **タスク管理**: `steering-detailed/task-management.md`
-- **進捗追跡**: （task-management.md に含む）
-
-### リリース関連キーワード
-**検知語**: 「リリース」「バージョン」「公開」「タグ」「PyPI」
-- **バージョニング**: `steering-detailed/versioning-rules.md`
-- **リリースプロセス**: `steering-detailed/release-process.md`
-
----
-
-## ⚡ Context効率化
-
-| シーン | 読み込み量 | 削減率 |
-|--------|-----------|--------|
-| 簡単な質問 | 200行 | **96%削減** |
-| 開発作業 | 200行 + 開発ルール | **70%削減** |
-| Git操作 | 200行 + Gitルール | **85%削減** |
-| リリース作業 | 200行 + リリースルール | **75%削減** |
-
-**メリット**:
-- 初期応答が超高速
-- 必要な情報だけ読み込み
-- セッション時間の大幅延長
-
----
-
-## 🎯 適用プロジェクト
-
-- ✅ Komon
-- ✅ Okina
-- 🔄 今後の新プロジェクト全て
-
----
-
-**最終更新**: 2025-01-05
-**ファイルサイズ**: 約200行
+| 状況 | 参照ファイル | inclusion |
+|------|-------------|-----------|
+| コード実装時 | `development-workflow.md` | auto |
+| Git操作時 | `git-workflow.md` | auto |
+| テスト作成時 | `testing-strategy.md` | auto |
+| Pythonファイル編集時 | `error-handling-and-logging.md` | fileMatch: src/**/*.py |
+| タスクファイル編集時 | `task-management.md` | fileMatch: .kiro/tasks/** |
+| Specファイル編集時 | `spec-quality-assurance.md` | fileMatch: .kiro/specs/** |
+| バージョン決定時 | `#versioning-rules` | manual |
+| リリース作業時 | `#release-process` | manual |
+| コミット作成時 | `#commit-message-rules` | manual |
+| Git/SSH設定時 | `#git-ssh-setup` | manual |

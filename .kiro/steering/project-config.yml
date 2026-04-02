@@ -1,34 +1,71 @@
-# Komonプロジェクト設定
-# このファイルはステアリングルールのテンプレート生成に使用されます
+# ==============================================================================
+# プロジェクト設定ファイル
+# ==============================================================================
+# このファイルはステアリングルール全体の「唯一の真実の情報源」です。
+# カバレッジ目標、ブランチ名、バージョンなどの数値・設定はここで一元管理します。
+# 各ルールファイルはこのファイルの値を参照してください。
+#
+# 企業利用時: このファイルをプロジェクトごとにカスタマイズすることで、
+# 同じルール体系を異なるプロジェクトに適用できます。
+# ==============================================================================
 
 project:
   name: "Komon"
-  type: "cli-tool"
+  type: "cli-tool"                    # cli-tool | library | web-app | api-server
   language: "python"
   description: "軽量なシステム監視・アドバイザーツール"
 
 environment:
   platform: "AlmaLinux 9"
-  platform_type: "RHEL"
+  platform_type: "RHEL"               # RHEL | Debian | macOS | Windows
   shell: "bash"
   package_manager: "dnf/yum"
   python_version: "3.10+"
 
 communication:
-  language: "ja"
-  language_name: "日本語"
+  user_language: "ja"                  # ユーザーとの会話言語
+  code_language: "en"                  # コード内の言語
+  commit_language: "ja"                # コミットメッセージの言語
   use_emoji: true
 
 versioning:
   scheme: "semver"
   initial_version: "1.0.0"
   current_version: "1.27.0"
+  # バージョン情報を管理するファイル一覧（リリース時に全て同期が必要）
+  version_files:
+    - path: "version.txt"
+      format: "plain"                  # ファイル全体がバージョン番号
+    - path: "src/komon/__init__.py"
+      format: "python-dunder"          # __version__ = "X.X.X"
+    - path: "docs/CHANGELOG.md"
+      format: "changelog"              # [Unreleased] → [X.X.X] - YYYY-MM-DD
+    - path: ".kiro/steering/project-config.yml"
+      format: "yaml-field"             # current_version フィールド
 
 testing:
   framework: "pytest"
-  coverage_target: 95
+  coverage_target: 95                  # プロジェクト全体の目標（%）
+  coverage_minimum: 90                 # 最低許容値（%）
+  coverage_core_modules: 98            # コアモジュールの目標（%）
   property_testing: true
   property_framework: "hypothesis"
+  test_command: "python -m pytest tests/ -v"
+  coverage_command: "bash run_coverage.sh"
+
+quality:
+  # push前に実行する品質チェックスクリプト
+  pre_push_checks:
+    - "python scripts/check_status_consistency.py"
+  # Spec検証スクリプト
+  spec_validation:
+    - "python scripts/validate_specs.py"
+    - "python scripts/check_spec_consistency.py"
+  # コードフォーマット・リント（将来用）
+  # formatters:
+  #   - "black src/ tests/"
+  #   - "flake8 src/ tests/"
+  #   - "mypy src/"
 
 git:
   main_branch: "main"
@@ -36,6 +73,7 @@ git:
     feature: "feature/task-"
     bugfix: "bugfix/"
     refactor: "refactor/"
+  # Git認証情報（プレースホルダー。実際の値は各開発者が設定）
   user:
     name: "<GIT_USER_NAME>"
     email: "<GIT_USER_EMAIL>"
@@ -43,19 +81,27 @@ git:
 
 spec:
   location: ".kiro/specs/"
+  format: "yaml"                       # yaml | markdown
   required_files:
     - "requirements.yml"
     - "design.yml"
     - "tasks.yml"
-  validation_scripts:
-    - "scripts/validate_specs.py"
-    - "scripts/check_spec_consistency.py"
 
 changelog:
   location: "docs/CHANGELOG.md"
   format: "keep-a-changelog"
 
-# プロジェクト固有の境界線ケース（バージョニング）
+tasks:
+  location: ".kiro/tasks/"
+  active_file: "implementation-tasks.md"
+  archive_file: "completed-tasks.md"
+
+# ==============================================================================
+# プロジェクト固有のバージョニング境界ケース
+# ==============================================================================
+# 判断に迷うケースを事前に定義しておくことで、
+# 誰がKiroを操作しても同じバージョニング判断になる。
+# ==============================================================================
 versioning_boundary_cases:
   - change: "表示件数のデフォルト変更"
     version: "PATCH"
@@ -78,21 +124,12 @@ versioning_boundary_cases:
   - change: "CI/CDの導入"
     version: "なし"
     reason: "開発者向け改善"
-  - change: "Specテンプレートの追加"
-    version: "なし"
-    reason: "開発者向け改善"
   - change: "README.mdの大幅な改善"
     version: "PATCH"
     reason: "ドキュメント修正"
-  - change: "新しいドキュメントの追加（SECURITY.md等）"
-    version: "PATCH"
-    reason: "ドキュメント追加"
   - change: "エラーメッセージの改善"
     version: "PATCH"
     reason: "ユーザー体験の改善"
-  - change: "ログ出力の追加"
-    version: "PATCH"
-    reason: "デバッグ改善"
   - change: "パフォーマンス改善（2倍高速化）"
     version: "PATCH"
     reason: "機能追加ではない"
@@ -102,9 +139,3 @@ versioning_boundary_cases:
   - change: "依存パッケージの削除"
     version: "MAJOR"
     reason: "破壊的変更の可能性"
-  - change: "バグ修正 + テスト追加"
-    version: "PATCH"
-    reason: "テスト追加は開発者向け改善"
-  - change: "バグ修正 + ステアリングルール拡充"
-    version: "PATCH"
-    reason: "ルール拡充は開発者向け改善"

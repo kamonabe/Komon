@@ -1,85 +1,22 @@
-# 開発標準ガイド
+---
+inclusion: manual
+---
 
-## 🎯 目的
-KomonとOkina、および今後の全プロジェクトで共通する開発標準を定義し、
-一貫性のある高品質な開発を実現する。
+# 開発標準ガイド（オンボーディング用）
 
-## 📋 基本原則
+> このファイルは新メンバーのオンボーディングや、プロジェクト全体の方針確認時に参照する。
+> 日常の開発では auto/fileMatch のルールが自動的に適用されるため、このファイルを毎回読む必要はない。
 
-### 最優先原則：「理解に追いつける範囲で進める」
+## 基本原則
+
 ```
 人間の理解速度 > AI の生成速度
 ```
 
-この原則により：
-- ✅ コードの品質が保たれる
-- ✅ 属人化を防げる
-- ✅ 長期的なメンテナンス性が保たれる
-- ✅ バグの早期発見が可能
-- ✅ セキュリティリスクを低減
+Kiroが高速にコードを生成できても、人間が理解・レビューできる範囲で進める。
 
-## 🧪 テスト戦略
+## プロジェクト構造
 
-### テストカバレッジ目標
-- **目標**: 90%以上
-- **最低**: 80%以上
-- **重要モジュール**: 95%以上
-
-### テストレベル
-1. **ユニットテスト**: 外部依存なし
-2. **統合テスト**: 外部依存あり
-3. **プロパティテスト**: hypothesis使用
-
-### テスト実行
-```bash
-pytest tests/ -v
-pytest --cov=src --cov-report=html
-```
-
-## 🎨 コード品質
-
-### フォーマット・リント
-```bash
-black src/ tests/
-flake8 src/ tests/
-mypy src/
-```
-
-### コミット前チェック
-1. テスト実行
-2. カバレッジ確認
-3. フォーマット適用
-4. 型チェック
-
-## 📝 コミットメッセージ規約
-
-### フォーマット
-```
-<type>: <subject>
-
-<body>
-```
-
-### Type一覧
-- `feat`: 新機能
-- `fix`: バグ修正
-- `docs`: ドキュメント
-- `style`: フォーマット
-- `refactor`: リファクタリング
-- `test`: テスト追加・修正
-- `chore`: その他
-
-### 例
-```
-feat: 通知システムにSlack対応を追加
-
-MessageFormatterクラスにSlack用のフォーマット機能を実装。
-翁らしい静かで簡潔なメッセージ生成を実現。
-```
-
-## 🏗️ プロジェクト構造
-
-### 標準ディレクトリ構成
 ```
 PROJECT_NAME/
 ├── src/PROJECT_NAME/       # コアモジュール
@@ -88,45 +25,62 @@ PROJECT_NAME/
 ├── config/                 # 設定サンプル
 ├── scripts/                # 実行スクリプト
 ├── .kiro/                  # Kiro設定
-│   ├── specs/              # 仕様書
-│   └── steering/           # ステアリングルール
-├── README.md               # プロジェクト概要
-├── requirements.txt        # 依存関係
-├── requirements-dev.txt    # 開発依存関係
-├── setup.py               # パッケージ設定
-└── pytest.ini            # テスト設定
+│   ├── specs/              # 仕様書（YAML形式）
+│   ├── steering/           # ステアリングルール
+│   ├── hooks/              # 自動化hook
+│   └── tasks/              # タスク管理
+├── README.md
+├── requirements.txt
+├── requirements-dev.txt
+├── setup.py
+└── pytest.ini
 ```
 
-## 📚 ドキュメント標準
+## 品質基準の参照先
 
-### 必須ドキュメント
-- `README.md`: プロジェクト概要（日英両対応）
-- `CHANGELOG.md`: 変更履歴
-- `docs/PROJECT_STRUCTURE.md`: プロジェクト構造
+全ての数値目標（カバレッジ、閾値等）は `project-config.yml` で一元管理。
+各ルールファイルはその値を参照する。これにより、プロジェクトごとに異なる基準を設定しても、ルール体系は同じものを使える。
+
+## コード品質ツール（将来用）
+
+```bash
+black src/ tests/       # フォーマット
+flake8 src/ tests/      # リント
+mypy src/               # 型チェック
+```
+
+## ドキュメント標準
+
+必須ドキュメント:
+- `README.md`: プロジェクト概要
+- `CHANGELOG.md`: 変更履歴（keep-a-changelog形式）
 - `.kiro/specs/`: 仕様書（YAML形式）
 
-### README構成
-1. プロジェクト名と概要
-2. バッジ（ライセンス、Python版数、テスト状況）
-3. 言語選択（日本語・英語）
-4. クイックスタート
-5. 詳細ドキュメントへのリンク
+## ルール体系の全体像
 
-## 🔄 リリースプロセス
+```
+essential-rules.md (always)     ← 判断基準のみ、50行
+project-config.yml (always)     ← 数値・設定の一元管理
+    ↓ 状況に応じて自動読み込み
+development-workflow.md (auto)  ← 開発フロー
+git-workflow.md (auto)          ← Git運用
+testing-strategy.md (auto)      ← テスト戦略
+komon-customizations.md (auto)  ← プロジェクト固有
+    ↓ ファイル編集時に自動読み込み
+error-handling-and-logging.md (fileMatch: src/**/*.py)
+task-management.md (fileMatch: .kiro/tasks/**)
+spec-quality-assurance.md (fileMatch: .kiro/specs/**)
+    ↓ 必要時に手動参照
+versioning-rules.md (manual)
+release-process.md (manual)
+commit-message-rules.md (manual)
+git-ssh-setup.md (manual)
+development-standards.md (manual) ← このファイル
+```
 
-### バージョニング
-- セマンティックバージョニング（SemVer）
-- `version.txt`で管理
+## 企業利用時のカスタマイズポイント
 
-### リリース手順
-1. CHANGELOG.md更新
-2. version.txt更新
-3. テスト実行・カバレッジ確認
-4. タグ作成
-5. PyPI公開（該当する場合）
-
-## 🎯 適用プロジェクト
-
-- ✅ Komon
-- ✅ Okina
-- 🔄 今後の新プロジェクト全て
+1. `project-config.yml` をプロジェクトに合わせて編集
+2. `komon-customizations.md` を自社プロジェクト固有の内容に差し替え
+3. hookを自社のCI/CDパイプラインに合わせて調整
+4. ワークスペースルートの `.kiro/docs/extended-rules/` から必要なルールを有効化
